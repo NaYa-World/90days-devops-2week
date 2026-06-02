@@ -1,0 +1,30 @@
+/* KANBAN / JOBS CSS */
+.job-kanban{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.kanban-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+@media(max-width:1200px){
+  .kanban-grid{grid-template-columns:repeat(4,minmax(250px,1fr));overflow-x:auto;padding-bottom:12px}
+}
+@media(max-width:700px){
+  .job-kanban{grid-template-columns:repeat(2,1fr)}
+  .kanban-grid{grid-template-columns:repeat(2,1fr);overflow-x:unset;padding-bottom:0}
+}
+.k-col,.job-col{background:var(--s1);border:1px solid var(--border);border-radius:var(--r12);overflow:hidden}
+.k-col-hdr,.job-col-hdr{padding:9px 11px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;font-size:12px;font-weight:600}
+.k-count{font-family:var(--mono);font-size:9px;color:var(--sub);background:var(--s2);padding:2px 6px;border-radius:7px}
+.job-body{padding:7px;display:flex;flex-direction:column;gap:5px;max-height:460px;overflow-y:auto}
+.k-body{padding:8px;display:flex;flex-direction:column;gap:6px;max-height:calc(100vh - 290px);min-height:380px;overflow-y:auto}
+.k-card{background:var(--s2);border:1px solid var(--border);border-radius:var(--r8);padding:8px 10px;border-left:3px solid var(--kc,var(--muted));cursor:pointer;transition:all .2s cubic-bezier(0.4, 0, 0.2, 1)}
+.k-card:hover{background:var(--s3);transform:translateY(-2px);box-shadow:0 6px 16px rgba(0,0,0,0.35);border-color:var(--muted)}
+.k-card-day{font-family:var(--mono);font-size:9px;color:var(--sub)}.k-card-label{font-size:11px;font-weight:600;margin-top:2px;line-height:1.35}.k-card-pct{font-family:var(--mono);font-size:9px;color:var(--sub);margin-top:3px}
+.k-empty{color:var(--muted);font-size:12px;text-align:center;padding:14px 0}
+.job-card{background:var(--s2);border:1px solid var(--border);border-radius:var(--r8);padding:8px 10px;margin-bottom:5px}
+.job-card-company{font-weight:700;font-size:12px}.job-card-role{font-size:11px;color:var(--sub);margin-top:1px}
+.job-card-meta{font-family:var(--mono);font-size:9px;color:var(--muted);margin-top:3px}
+.job-card-actions{display:flex;gap:3px;margin-top:5px;flex-wrap:wrap}
+.job-action-btn{font-family:var(--mono);font-size:8px;padding:2px 5px;border-radius:3px;cursor:pointer;border:1px solid var(--border);background:var(--s3);color:var(--sub);transition:all .2s}
+.job-action-btn:hover{color:var(--text);border-color:var(--muted)}.job-del{color:var(--red)!important;border-color:rgba(255,95,95,.2)!important}
+.job-add-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;align-items:flex-end}
+.job-input{background:var(--s1);border:1px solid var(--border);color:var(--text);font-family:var(--body);font-size:12px;padding:7px 9px;border-radius:var(--r8);outline:none;flex:1;min-width:100px}
+.job-input:focus{border-color:var(--muted)}
+.job-source-select{background:var(--s1);border:1px solid var(--border);color:var(--text);font-family:var(--body);font-size:12px;padding:7px 9px;border-radius:var(--r8);outline:none}
+.job-save-btn{background:rgba(0,217,160,.09);border:1px solid rgba(0,217,160,.35);color:var(--green);font-family:var(--mono);font-size:10px;padding:7px 12px;border-radius:var(--r8);cursor:pointer;white-space:nowrap}
