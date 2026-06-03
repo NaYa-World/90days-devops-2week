@@ -649,10 +649,10 @@ export const App: React.FC = () => {
           <span className="bico">◎</span>Focus
         </button>
         <button
-          className={`btab ${currentView === 'labs' ? 'active' : ''}`}
-          onClick={() => handleNavItemClick('labs')}
+          className={`btab ${currentView === 'sandbox' ? 'active' : ''}`}
+          onClick={() => handleNavItemClick('sandbox')}
         >
-          <span className="bico">⌨</span>Labs
+          <span className="bico">🧑‍💻</span>Sandbox
         </button>
         <button
           className="btab"
