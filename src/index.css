@@ -13,7 +13,7 @@
 }
 [data-theme="light"]{--bg:#f0f4f8;--s1:#fff;--s2:#f8fafc;--s3:#eef2f7;--border:#d1dbe8;--text:#1a202c;--sub:#5a6a7e;--muted:#94a3b8}
 html{scroll-behavior:smooth}
-body{background:var(--bg);color:var(--text);font-family:var(--body);font-size:15px;line-height:1.6;min-height:100vh;padding-bottom:68px}
+body{background:var(--bg);color:var(--text);font-family:var(--body);font-size:15px;line-height:1.6;min-height:100vh;padding-bottom:68px;overscroll-behavior-y:none;}
 ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
 
 /* NAV */

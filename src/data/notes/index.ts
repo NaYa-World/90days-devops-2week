@@ -1,11 +1,12 @@
-import { day1 } from './day1';
-import { day2 } from './day2';
-import { day3 } from './day3';
-import { day4 } from './day4';
-import { day4_1 } from './day4-1';
-import { day5 } from './day5';
-import { day6 } from './day6';
-import { day7 } from './day7';
+import { day1 } from './week-1/day1';
+import { day2 } from './week-1/day2';
+import { day3 } from './week-1/day3';
+import { day4 } from './week-1/day4';
+import { day4_1 } from './week-1/day4-1';
+import { day5 } from './week-1/day5';
+import { day6 } from './week-1/day6';
+import { day7 } from './week-1/day7';
+import { weeklyProject } from './week-1/weekly-project';
 import { BootcampDay } from './types';
 
 export const days: BootcampDay[] = [
@@ -17,6 +18,7 @@ export const days: BootcampDay[] = [
   day5,
   day6,
   day7,
+  weeklyProject,
 ];
 
 export * from './types';

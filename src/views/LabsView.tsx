@@ -98,7 +98,7 @@ export const LabsView: React.FC<LabsViewProps> = ({ appState }) => {
                     rel="noopener noreferrer"
                     style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--amber)', decoration: 'none', padding: '5px 11px', border: '1px solid rgba(255,200,80,.3)', borderRadius: 'var(--r8)', background: 'rgba(255,200,80,.06)', textDecoration: 'none' }}
                   >
-                    默默 Open KillerCoda Lab →
+                    🚀 Open KillerCoda Lab →
                   </a>
                 )}
                 {activeLab.playdocker && (
@@ -247,3 +247,4 @@ const ExerciseCard: React.FC<ExerciseCardProps> = ({ ex, idx, isDone, formatTime
     </div>
   );
 };
+

@@ -1,4 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { Capacitor } from '@capacitor/core';
+import { Haptics, ImpactStyle } from '@capacitor/haptics';
+import { KeepAwake } from '@capacitor-community/keep-awake';
 
 interface PomodoroModalProps {
   isOpen: boolean;
@@ -8,6 +11,28 @@ interface PomodoroModalProps {
   studyHours: string;
   addNotification: (text: string) => void;
 }
+
+const playChime = () => {
+  try {
+    const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const playNote = (freq: number, start: number, duration: number) => {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0.15, start);
+      gain.gain.exponentialRampToValueAtTime(0.00001, start + duration);
+      osc.start(start);
+      osc.stop(start + duration);
+    };
+    const now = audioCtx.currentTime;
+    playNote(587.33, now, 0.25); // D5
+    playNote(880.00, now + 0.12, 0.35); // A5 (pleasant double chime)
+  } catch (err) {
+    console.warn('AudioContext not supported or blocked:', err);
+  }
+};
 
 type TimerMode = 'focus' | 'short' | 'long';
 
@@ -57,6 +82,10 @@ export const PomodoroModal: React.FC<PomodoroModalProps> = ({
             if (timerRef.current) clearInterval(timerRef.current);
             
             // Finished session!
+            playChime();
+            if (Capacitor.isNativePlatform()) {
+              Haptics.vibrate().catch(() => {});
+            }
             if (mode === 'focus') {
               incrementSessions();
               addNotification('🏆 Focus session complete! Time for a break.');
@@ -77,11 +106,33 @@ export const PomodoroModal: React.FC<PomodoroModalProps> = ({
     };
   }, [isRunning, mode, incrementSessions, addNotification, focusMins, shortMins, longMins]);
 
+  // Keep screen awake while studying with active Pomodoro timer
+  useEffect(() => {
+    if (Capacitor.isNativePlatform()) {
+      if (isOpen && isRunning) {
+        KeepAwake.keepAwake().catch(() => {});
+      } else {
+        KeepAwake.allowSleep().catch(() => {});
+      }
+    }
+    return () => {
+      if (Capacitor.isNativePlatform()) {
+        KeepAwake.allowSleep().catch(() => {});
+      }
+    };
+  }, [isOpen, isRunning]);
+
   const toggleTimer = () => {
+    if (Capacitor.isNativePlatform()) {
+      Haptics.impact({ style: ImpactStyle.Medium }).catch(() => {});
+    }
     setIsRunning(!isRunning);
   };
 
   const resetTimer = () => {
+    if (Capacitor.isNativePlatform()) {
+      Haptics.impact({ style: ImpactStyle.Light }).catch(() => {});
+    }
     setIsRunning(false);
     setTimeLeft(getDuration(mode));
   };

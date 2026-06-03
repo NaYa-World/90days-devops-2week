@@ -2,6 +2,11 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { showToast } from '../components/Toast';
 import { UseAppStateReturnType } from '../hooks/useAppState';
 import days from '../data/notes';
+import { Capacitor } from '@capacitor/core';
+import { Haptics, ImpactStyle } from '@capacitor/haptics';
+import { KeepAwake } from '@capacitor-community/keep-awake';
+import { InteractiveDiagram } from '../components/InteractiveDiagram';
+import { devopsRoadmapMindmap, cicdPipelineDiagram } from '../data/diagrams';
 import {
   ScheduleTable,
   ConceptCards,
@@ -28,6 +33,43 @@ function saveNotesState(username: string | null, s: Record<string, boolean>) {
   const key = `devops90_notes_completed_${user}`;
   try { localStorage.setItem(key, JSON.stringify(s)); } catch { /**/ }
 }
+
+interface CollapsibleSectionProps {
+  id: string;
+  title: string;
+  icon: string;
+  color: string;
+  isOpen: boolean;
+  onToggle: () => void;
+  children: React.ReactNode;
+}
+
+const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({
+  id,
+  title,
+  icon,
+  color,
+  isOpen,
+  onToggle,
+  children
+}) => {
+  return (
+    <div id={id} className={`collapsible-section ${isOpen ? 'open' : ''}`} style={{ '--section-color': color } as React.CSSProperties}>
+      <button className="collapsible-header" onClick={onToggle}>
+        <span className="collapsible-header-title">
+          <span className="icon">{icon}</span>
+          <span>{title}</span>
+        </span>
+        <span className="chevron">▶</span>
+      </button>
+      <div className="collapsible-wrapper">
+        <div className="collapsible-content">
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+};
 
 export const NotesView: React.FC<NotesViewProps> = ({ appState }) => {
   const { currentUser } = appState;
@@ -80,6 +122,72 @@ export const NotesView: React.FC<NotesViewProps> = ({ appState }) => {
   useEffect(() => {
     setNotesState(loadNotesState(currentUser));
   }, [currentUser]);
+
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
+    schedule: false,
+    concepts: false,
+    commands: false,
+    debug: false,
+    mistakes: false,
+    project: false,
+    interview: false,
+    quiz: false,
+    github: false,
+  });
+
+  const toggleSection = (sectionId: string) => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [sectionId]: !prev[sectionId]
+    }));
+  };
+
+  const setAllSections = (isOpen: boolean) => {
+    setExpandedSections({
+      schedule: isOpen,
+      concepts: isOpen,
+      commands: isOpen,
+      debug: isOpen,
+      mistakes: isOpen,
+      project: isOpen,
+      interview: isOpen,
+      quiz: isOpen,
+      github: isOpen,
+    });
+  };
+
+  useEffect(() => {
+    // Reset all sections to collapsed when activeDay changes, EXCEPT the one actively scrolled to
+    setExpandedSections(prev => {
+      const initial = {
+        schedule: false,
+        concepts: false,
+        commands: false,
+        debug: false,
+        mistakes: false,
+        project: false,
+        interview: false,
+        quiz: false,
+        github: false,
+      };
+      if (activeSection && activeSection in initial) {
+        initial[activeSection as keyof typeof initial] = true;
+      }
+      return initial;
+    });
+  }, [activeDay]);
+
+  // Prevent screen sleep while viewing study notes
+  useEffect(() => {
+    if (Capacitor.isNativePlatform()) {
+      KeepAwake.keepAwake().catch(() => {});
+    }
+    return () => {
+      if (Capacitor.isNativePlatform()) {
+        KeepAwake.allowSleep().catch(() => {});
+      }
+    };
+  }, []);
 
   const day = days[activeDay];
   const dayKeyStr = `day_${day.day}`;
@@ -163,6 +271,9 @@ export const NotesView: React.FC<NotesViewProps> = ({ appState }) => {
   }, [day, isDayCompleted]);
 
   const toggleDayComplete = () => {
+    if (Capacitor.isNativePlatform()) {
+      Haptics.impact({ style: ImpactStyle.Medium }).catch(() => {});
+    }
     const next = { ...notesState, [dayKeyStr]: !isDayCompleted };
     setNotesState(next);
     saveNotesState(currentUser, next);
@@ -180,6 +291,12 @@ export const NotesView: React.FC<NotesViewProps> = ({ appState }) => {
         [dayKey]: true
       }));
     }
+    
+    // Explicitly open the section being scrolled to
+    setExpandedSections(prev => ({
+      ...prev,
+      [sectionId]: true
+    }));
     
     setTimeout(() => {
       const element = document.getElementById(sectionId);
@@ -241,6 +358,18 @@ export const NotesView: React.FC<NotesViewProps> = ({ appState }) => {
               Daily Hours: <span style={{ color: "var(--blue)", fontWeight: 600 }}>8 hrs structured</span>
             </div>
           </div>
+        </div>
+
+        {/* INTERACTIVE ROADMAP MINDMAP */}
+        <div style={{ margin: "10px 0 24px" }}>
+          <InteractiveDiagram 
+            data={devopsRoadmapMindmap} 
+            onNodeClick={(targetDay) => {
+              setActiveView(`day${days[targetDay].day}`);
+              setActiveDay(targetDay);
+              setActiveSection('');
+            }}
+          />
         </div>
 
         {/* QUICK JUMP BUTTONS */}
@@ -663,83 +792,136 @@ export const NotesView: React.FC<NotesViewProps> = ({ appState }) => {
               <p>{day.goal.description}</p>
             </div>
 
-            {/* Schedule */}
-            <div id="schedule" style={{ marginTop: "32px", marginBottom: "16px" }}>
-              <h3 style={{ fontSize: "15px", fontWeight: 700, borderBottom: "1px solid var(--border)", paddingBottom: "8px" }}>
-                📋 8-Hour Schedule
-              </h3>
-              <ScheduleTable schedule={day.schedule} color={day.color} />
-            </div>
-
-            {/* Core Concepts */}
-            <div id="concepts" style={{ marginTop: "32px", marginBottom: "16px" }}>
-              <h3 style={{ fontSize: "15px", fontWeight: 700, borderBottom: "1px solid var(--border)", paddingBottom: "8px" }}>
-                🧠 Core Concepts — The Why Behind Every Command
-              </h3>
-              <ConceptCards concepts={day.concepts} color={day.color} />
-            </div>
-
-            {/* Command sessions */}
-            <div id="commands" style={{ marginTop: "32px", marginBottom: "16px" }}>
-              <h3 style={{ fontSize: "15px", fontWeight: 700, borderBottom: "1px solid var(--border)", paddingBottom: "8px" }}>
-                ⌨️ Exact Command Flow — Type Every Line
-              </h3>
-              {day.commands.map((session, idx) => (
-                <TerminalBlock key={idx} session={session} color={day.color} />
-              ))}
-            </div>
-
-            {/* Debug Flows */}
-            {day.debugTrees && day.debugTrees.length > 0 && (
-              <div id="debug" style={{ marginTop: "32px", marginBottom: "16px" }}>
-                <h3 style={{ fontSize: "15px", fontWeight: 700, borderBottom: "1px solid var(--border)", paddingBottom: "8px" }}>
-                  🐛 Debugging Flow — Day {day.day} Most Common Failures
-                </h3>
-                {day.debugTrees.map((tree, idx) => (
-                  <DebugFlow key={idx} tree={tree} color={day.color} />
-                ))}
+            {/* Dynamic CI/CD Flowchart for Day 4 */}
+            {day.day === 4 && (
+              <div style={{ marginTop: "32px", marginBottom: "16px" }}>
+                <InteractiveDiagram data={cicdPipelineDiagram} />
               </div>
             )}
 
-            {/* Mistakes */}
-            <div id="mistakes" style={{ marginTop: "32px", marginBottom: "16px" }}>
-              <h3 style={{ fontSize: "15px", fontWeight: 700, borderBottom: "1px solid var(--border)", paddingBottom: "8px" }}>
-                💥 Common Beginner Mistakes — Day {day.day}
-              </h3>
-              <MistakesBlock mistakes={day.mistakes} color={day.color} />
+            {/* Collapse / Expand all controls */}
+            <div className="collapse-controls-bar">
+              <button className="collapse-control-btn" onClick={() => setAllSections(true)}>
+                ↔ Expand All
+              </button>
+              <button className="collapse-control-btn" onClick={() => setAllSections(false)}>
+                ↔ Collapse All
+              </button>
             </div>
+
+            {/* Schedule */}
+            <CollapsibleSection
+              id="schedule"
+              title="8-Hour Schedule"
+              icon="📋"
+              color={day.color}
+              isOpen={!!expandedSections.schedule}
+              onToggle={() => toggleSection('schedule')}
+            >
+              <ScheduleTable schedule={day.schedule} color={day.color} />
+            </CollapsibleSection>
+
+            {/* Core Concepts */}
+            <CollapsibleSection
+              id="concepts"
+              title="Core Concepts — The Why Behind Every Command"
+              icon="🧠"
+              color={day.color}
+              isOpen={!!expandedSections.concepts}
+              onToggle={() => toggleSection('concepts')}
+            >
+              <ConceptCards concepts={day.concepts} color={day.color} />
+            </CollapsibleSection>
+
+            {/* Command sessions */}
+            <CollapsibleSection
+              id="commands"
+              title="Exact Command Flow — Type Every Line"
+              icon="⌨️"
+              color={day.color}
+              isOpen={!!expandedSections.commands}
+              onToggle={() => toggleSection('commands')}
+            >
+              {day.commands.map((session, idx) => (
+                <TerminalBlock key={idx} session={session} color={day.color} />
+              ))}
+            </CollapsibleSection>
+
+            {/* Debug Flows */}
+            {day.debugTrees && day.debugTrees.length > 0 && (
+              <CollapsibleSection
+                id="debug"
+                title={`Debugging Flow — Day ${day.day} Most Common Failures`}
+                icon="🐛"
+                color={day.color}
+                isOpen={!!expandedSections.debug}
+                onToggle={() => toggleSection('debug')}
+              >
+                {day.debugTrees.map((tree, idx) => (
+                  <DebugFlow key={idx} tree={tree} color={day.color} />
+                ))}
+              </CollapsibleSection>
+            )}
+
+            {/* Mistakes */}
+            <CollapsibleSection
+              id="mistakes"
+              title={`Common Beginner Mistakes — Day ${day.day}`}
+              icon="💥"
+              color={day.color}
+              isOpen={!!expandedSections.mistakes}
+              onToggle={() => toggleSection('mistakes')}
+            >
+              <MistakesBlock mistakes={day.mistakes} color={day.color} />
+            </CollapsibleSection>
 
             {/* Mini Project */}
-            <div id="project" style={{ marginTop: "32px", marginBottom: "16px" }}>
-              <h3 style={{ fontSize: "15px", fontWeight: 700, borderBottom: "1px solid var(--border)", paddingBottom: "8px" }}>
-                🏗 Day {day.day} Mini Project
-              </h3>
+            <CollapsibleSection
+              id="project"
+              title={`Day ${day.day} Mini Project`}
+              icon="🏗"
+              color={day.color}
+              isOpen={!!expandedSections.project}
+              onToggle={() => toggleSection('project')}
+            >
               <MiniProjectBlock project={day.project} color={day.color} />
-            </div>
+            </CollapsibleSection>
 
             {/* Interview prompts */}
-            <div id="interview" style={{ marginTop: "32px", marginBottom: "16px" }}>
-              <h3 style={{ fontSize: "15px", fontWeight: 700, borderBottom: "1px solid var(--border)", paddingBottom: "8px" }}>
-                🎤 Interview Explanation Prompts — Day {day.day} Topics
-              </h3>
+            <CollapsibleSection
+              id="interview"
+              title={`Interview Explanation Prompts — Day ${day.day} Topics`}
+              icon="🎤"
+              color={day.color}
+              isOpen={!!expandedSections.interview}
+              onToggle={() => toggleSection('interview')}
+            >
               <InterviewPrep interview={day.interview} color={day.color} />
-            </div>
+            </CollapsibleSection>
 
             {/* Interactive Quiz */}
-            <div id="quiz" style={{ marginTop: "32px", marginBottom: "16px" }}>
-              <h3 style={{ fontSize: "15px", fontWeight: 700, borderBottom: "1px solid var(--border)", paddingBottom: "8px" }}>
-                🧪 Day {day.day} Quiz — Test Yourself Before Moving On
-              </h3>
+            <CollapsibleSection
+              id="quiz"
+              title={`Day ${day.day} Quiz — Test Yourself Before Moving On`}
+              icon="🧪"
+              color={day.color}
+              isOpen={!!expandedSections.quiz}
+              onToggle={() => toggleSection('quiz')}
+            >
               <InteractiveQuiz questions={day.quiz} color={day.color} />
-            </div>
+            </CollapsibleSection>
 
             {/* Github Notes templates */}
-            <div id="github" style={{ marginTop: "32px", marginBottom: "16px" }}>
-              <h3 style={{ fontSize: "15px", fontWeight: 700, borderBottom: "1px solid var(--border)", paddingBottom: "8px" }}>
-                📂 GitHub Notes Template — Push This Tonight
-              </h3>
+            <CollapsibleSection
+              id="github"
+              title="GitHub Notes Template — Push This Tonight"
+              icon="📂"
+              color={day.color}
+              isOpen={!!expandedSections.github}
+              onToggle={() => toggleSection('github')}
+            >
               <GithubTemplateBlock github={day.github} />
-            </div>
+            </CollapsibleSection>
 
             {/* Bottom Nav */}
             <div style={{ display: "flex", justifyContent: "space-between", marginTop: "40px", paddingTop: "20px", borderTop: "1px solid var(--border)" }}>

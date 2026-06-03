@@ -784,3 +784,106 @@
     right: 24px;
   }
 }
+
+/* Collapsible Note Sections */
+.collapsible-section {
+  margin-top: 24px;
+  margin-bottom: 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--r12);
+  background: var(--s1);
+  overflow: hidden;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.collapsible-section:hover {
+  border-color: var(--muted);
+}
+
+.collapsible-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 16px 20px;
+  background: var(--s1);
+  border: none;
+  border-left: 4px solid var(--section-color, var(--green));
+  color: var(--text);
+  font-family: var(--body);
+  font-weight: 700;
+  font-size: 15px;
+  cursor: pointer;
+  text-align: left;
+  transition: background-color 0.2s ease;
+  outline: none;
+  user-select: none;
+}
+
+.collapsible-header:hover {
+  background: var(--s2);
+}
+
+.collapsible-header-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.collapsible-header-title .icon {
+  font-size: 18px;
+}
+
+.collapsible-header .chevron {
+  font-size: 10px;
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  color: var(--muted);
+}
+
+.collapsible-section.open .collapsible-header .chevron {
+  transform: rotate(90deg);
+}
+
+.collapsible-wrapper {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.collapsible-section.open .collapsible-wrapper {
+  grid-template-rows: 1fr;
+}
+
+.collapsible-content {
+  min-height: 0;
+  border-top: 1px solid var(--border);
+  padding: 20px;
+}
+
+/* Expand/Collapse All Button Bar */
+.collapse-controls-bar {
+  display: flex;
+  gap: 8px;
+  margin: 24px 0 8px;
+  justify-content: flex-end;
+}
+
+.collapse-control-btn {
+  background: var(--s2);
+  border: 1px solid var(--border);
+  color: var(--sub);
+  border-radius: var(--r6);
+  padding: 6px 12px;
+  font-size: 11px;
+  font-family: var(--mono);
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.collapse-control-btn:hover {
+  background: var(--s3);
+  color: var(--text);
+  border-color: var(--muted);
+}
+

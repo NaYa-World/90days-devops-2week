@@ -13,7 +13,7 @@ describe('App component rendering and routing tests', () => {
     render(<App />);
     expect(screen.getByText('DEV')).toBeDefined();
     expect(screen.getByText('OPS')).toBeDefined();
-    expect(screen.getAllByText('v4')[0]).toBeDefined();
+    expect(screen.getAllByText('BY GK')[0]).toBeDefined();
   });
 
   it('should render primary tabs', () => {
