@@ -1,12 +1,13 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
+import { Capacitor } from '@capacitor/core';
 import App from './App';
 import './index.css';
 
-// Register Service Worker for PWA / offline support
-if ('serviceWorker' in navigator) {
+// Register Service Worker for PWA / offline support (web only)
+if ('serviceWorker' in navigator && !Capacitor.isNativePlatform()) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').then(
+    navigator.serviceWorker.register('./sw.js').then(
       (registration) => {
         console.log('SW registered: ', registration);
       },

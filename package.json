@@ -1,7 +1,7 @@
 {
   "name": "devops-roadmap-v5",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.0.2",
   "type": "module",
   "scripts": {
     "dev": "vite --open",
@@ -14,17 +14,26 @@
     "build:android": "npm run build && npx cap sync android"
   },
   "dependencies": {
+    "@aparajita/capacitor-secure-storage": "^8.0.0",
     "@capacitor-community/keep-awake": "^8.0.1",
     "@capacitor/android": "^8.4.0",
     "@capacitor/app": "^8.1.0",
     "@capacitor/cli": "^8.4.0",
     "@capacitor/core": "^8.4.0",
+    "@capacitor/filesystem": "^8.1.2",
     "@capacitor/haptics": "^8.0.2",
     "@capacitor/keyboard": "^8.0.3",
     "@capacitor/local-notifications": "^8.2.0",
+    "@capacitor/network": "^8.0.1",
+    "@capacitor/preferences": "^8.0.1",
+    "@capacitor/push-notifications": "^8.1.1",
     "@capacitor/share": "^8.0.1",
     "@capacitor/splash-screen": "^8.0.1",
     "@capacitor/status-bar": "^8.0.2",
+    "@capawesome/capacitor-app-shortcuts": "^8.0.1",
+    "@capgo/capacitor-native-biometric": "^8.4.5",
+    "@capgo/capacitor-updater": "^8.47.5",
+    "@sentry/capacitor": "^4.0.0",
     "canvas-confetti": "^1.6.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"

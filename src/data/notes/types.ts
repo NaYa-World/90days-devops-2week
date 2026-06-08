@@ -100,13 +100,18 @@ export interface BootcampDay {
     title: string;
     description: string;
   };
-  schedule: ScheduleBlock[];
-  concepts: ConceptBlock[];
-  commands: TerminalSession[];
-  debugTrees: DebugTree[];
-  mistakes: MistakeItem[];
-  project: MiniProject;
-  interview: InterviewPrompt[];
-  quiz: QuizQuestion[];
-  github: GithubTemplate;
+  schedule?: ScheduleBlock[];
+  concepts?: ConceptBlock[];
+  commands?: TerminalSession[];
+  debugTrees?: DebugTree[];
+  mistakes?: MistakeItem[];
+  project?: MiniProject;
+  interview?: InterviewPrompt[];
+  quiz?: QuizQuestion[];
+  github?: GithubTemplate;
+  pdfUrl?: string;
+  images?: {
+    url: string;
+    caption: string;
+  }[];
 }

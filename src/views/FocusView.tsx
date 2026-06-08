@@ -3,6 +3,8 @@ import { PHASES, Phase, DayData } from '../data/phases';
 import { UseAppStateReturnType } from '../hooks/useAppState';
 import { AIService } from '../components/AIService';
 import { showToast } from '../components/Toast';
+import { Capacitor } from '@capacitor/core';
+import { Haptics, ImpactStyle, NotificationType } from '@capacitor/haptics';
 
 interface FocusViewProps {
   appState: UseAppStateReturnType;
@@ -391,7 +393,16 @@ const AIBriefWidget: React.FC<AIBriefWidgetProps> = ({
                 <button
                   key={oIdx}
                   disabled={hasAnswered}
-                  onClick={() => setSelectedOpt(oIdx)}
+                  onClick={() => {
+                    setSelectedOpt(oIdx);
+                    if (Capacitor.isNativePlatform()) {
+                      if (oIdx === quiz.answer) {
+                        Haptics.impact({ style: ImpactStyle.Light }).catch(() => {});
+                      } else {
+                        Haptics.notification({ type: NotificationType.Error }).catch(() => {});
+                      }
+                    }
+                  }}
                   style={style}
                 >
                   {opt}

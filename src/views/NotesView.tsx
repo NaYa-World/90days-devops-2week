@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { showToast } from '../components/Toast';
+import { autoSyncToGitHub } from '../components/GitHubSyncService';
 import { UseAppStateReturnType } from '../hooks/useAppState';
 import days from '../data/notes';
 import { Capacitor } from '@capacitor/core';
@@ -16,7 +17,8 @@ import {
   MiniProjectBlock,
   InterviewPrep,
   InteractiveQuiz,
-  GithubTemplateBlock
+  GithubTemplateBlock,
+  ReferenceMaterialsBlock
 } from '../components/BootcampComponents';
 
 interface NotesViewProps {
@@ -118,6 +120,7 @@ export const NotesView: React.FC<NotesViewProps> = ({ appState }) => {
   });
 
   const [notesState, setNotesState] = useState<Record<string, boolean>>(() => loadNotesState(currentUser));
+  const [activeLightboxImg, setActiveLightboxImg] = useState<{ url: string; caption: string } | null>(null);
 
   useEffect(() => {
     setNotesState(loadNotesState(currentUser));
@@ -133,6 +136,7 @@ export const NotesView: React.FC<NotesViewProps> = ({ appState }) => {
     interview: false,
     quiz: false,
     github: false,
+    reference: true, // Open by default since user will focus on PDFs/Diagrams first
   });
 
   const toggleSection = (sectionId: string) => {
@@ -153,6 +157,7 @@ export const NotesView: React.FC<NotesViewProps> = ({ appState }) => {
       interview: isOpen,
       quiz: isOpen,
       github: isOpen,
+      reference: isOpen,
     });
   };
 
@@ -169,6 +174,7 @@ export const NotesView: React.FC<NotesViewProps> = ({ appState }) => {
         interview: false,
         quiz: false,
         github: false,
+        reference: true, // Keep open by default on day switch
       };
       if (activeSection && activeSection in initial) {
         initial[activeSection as keyof typeof initial] = true;
@@ -277,6 +283,7 @@ export const NotesView: React.FC<NotesViewProps> = ({ appState }) => {
     const next = { ...notesState, [dayKeyStr]: !isDayCompleted };
     setNotesState(next);
     saveNotesState(currentUser, next);
+    autoSyncToGitHub().catch(() => {});
   };
 
   // Helper to scroll to section
@@ -559,35 +566,56 @@ export const NotesView: React.FC<NotesViewProps> = ({ appState }) => {
                 <span className="chevron">▶</span>
               </button>
               <div className="notes-sidebar-dropdown-body">
-                <button className={`notes-sidebar-link ${isSubItemActive(dayKey, 'schedule') ? 'active' : ''}`} onClick={() => handleScrollTo(dayKey, idx, 'schedule')}>
-                  <span className="dot"></span>8h Schedule
-                </button>
-                <button className={`notes-sidebar-link ${isSubItemActive(dayKey, 'concepts') ? 'active' : ''}`} onClick={() => handleScrollTo(dayKey, idx, 'concepts')}>
-                  <span className="dot"></span>Core Concepts
-                </button>
-                <button className={`notes-sidebar-link ${isSubItemActive(dayKey, 'commands') ? 'active' : ''}`} onClick={() => handleScrollTo(dayKey, idx, 'commands')}>
-                  <span className="dot"></span>Commands
-                </button>
+                {d.schedule && d.schedule.length > 0 && (
+                  <button className={`notes-sidebar-link ${isSubItemActive(dayKey, 'schedule') ? 'active' : ''}`} onClick={() => handleScrollTo(dayKey, idx, 'schedule')}>
+                    <span className="dot"></span>8h Schedule
+                  </button>
+                )}
+                {d.concepts && d.concepts.length > 0 && (
+                  <button className={`notes-sidebar-link ${isSubItemActive(dayKey, 'concepts') ? 'active' : ''}`} onClick={() => handleScrollTo(dayKey, idx, 'concepts')}>
+                    <span className="dot"></span>Core Concepts
+                  </button>
+                )}
+                {d.commands && d.commands.length > 0 && (
+                  <button className={`notes-sidebar-link ${isSubItemActive(dayKey, 'commands') ? 'active' : ''}`} onClick={() => handleScrollTo(dayKey, idx, 'commands')}>
+                    <span className="dot"></span>Commands
+                  </button>
+                )}
                 {d.debugTrees && d.debugTrees.length > 0 && (
                   <button className={`notes-sidebar-link ${isSubItemActive(dayKey, 'debug') ? 'active' : ''}`} onClick={() => handleScrollTo(dayKey, idx, 'debug')}>
                     <span className="dot"></span>Debug Tree
                   </button>
                 )}
-                <button className={`notes-sidebar-link ${isSubItemActive(dayKey, 'mistakes') ? 'active' : ''}`} onClick={() => handleScrollTo(dayKey, idx, 'mistakes')}>
-                  <span className="dot"></span>Mistakes
-                </button>
-                <button className={`notes-sidebar-link ${isSubItemActive(dayKey, 'project') ? 'active' : ''}`} onClick={() => handleScrollTo(dayKey, idx, 'project')}>
-                  <span className="dot"></span>Mini Project
-                </button>
-                <button className={`notes-sidebar-link ${isSubItemActive(dayKey, 'interview') ? 'active' : ''}`} onClick={() => handleScrollTo(dayKey, idx, 'interview')}>
-                  <span className="dot"></span>Interview Prompts
-                </button>
-                <button className={`notes-sidebar-link ${isSubItemActive(dayKey, 'quiz') ? 'active' : ''}`} onClick={() => handleScrollTo(dayKey, idx, 'quiz')}>
-                  <span className="dot"></span>Quiz
-                </button>
-                <button className={`notes-sidebar-link ${isSubItemActive(dayKey, 'github') ? 'active' : ''}`} onClick={() => handleScrollTo(dayKey, idx, 'github')}>
-                  <span className="dot"></span>GitHub Notes
-                </button>
+                {d.mistakes && d.mistakes.length > 0 && (
+                  <button className={`notes-sidebar-link ${isSubItemActive(dayKey, 'mistakes') ? 'active' : ''}`} onClick={() => handleScrollTo(dayKey, idx, 'mistakes')}>
+                    <span className="dot"></span>Mistakes
+                  </button>
+                )}
+                {d.project && (
+                  <button className={`notes-sidebar-link ${isSubItemActive(dayKey, 'project') ? 'active' : ''}`} onClick={() => handleScrollTo(dayKey, idx, 'project')}>
+                    <span className="dot"></span>Mini Project
+                  </button>
+                )}
+                {d.interview && d.interview.length > 0 && (
+                  <button className={`notes-sidebar-link ${isSubItemActive(dayKey, 'interview') ? 'active' : ''}`} onClick={() => handleScrollTo(dayKey, idx, 'interview')}>
+                    <span className="dot"></span>Interview Prompts
+                  </button>
+                )}
+                {d.quiz && d.quiz.length > 0 && (
+                  <button className={`notes-sidebar-link ${isSubItemActive(dayKey, 'quiz') ? 'active' : ''}`} onClick={() => handleScrollTo(dayKey, idx, 'quiz')}>
+                    <span className="dot"></span>Quiz
+                  </button>
+                )}
+                {d.github && (
+                  <button className={`notes-sidebar-link ${isSubItemActive(dayKey, 'github') ? 'active' : ''}`} onClick={() => handleScrollTo(dayKey, idx, 'github')}>
+                    <span className="dot"></span>GitHub Notes
+                  </button>
+                )}
+                {((d.pdfUrl) || (d.images && d.images.length > 0)) && (
+                  <button className={`notes-sidebar-link ${isSubItemActive(dayKey, 'reference') ? 'active' : ''}`} onClick={() => handleScrollTo(dayKey, idx, 'reference')}>
+                    <span className="dot"></span>Reference Materials
+                  </button>
+                )}
               </div>
             </div>
           );
@@ -675,17 +703,16 @@ export const NotesView: React.FC<NotesViewProps> = ({ appState }) => {
               }}
             >
               <option value="">Jump to Section...</option>
-              <option value="schedule">📋 8h Schedule</option>
-              <option value="concepts">🧠 Core Concepts</option>
-              <option value="commands">💻 Commands</option>
-              {day.debugTrees && day.debugTrees.length > 0 && (
-                <option value="debug">🛠️ Debug Tree</option>
-              )}
-              <option value="mistakes">⚠️ Mistakes</option>
-              <option value="project">🚀 Mini Project</option>
-              <option value="interview">🎤 Interview Prompts</option>
-              <option value="quiz">🧪 Quiz</option>
-              <option value="github">🐙 GitHub Notes</option>
+              {day.schedule && day.schedule.length > 0 && <option value="schedule">📋 8h Schedule</option>}
+              {day.concepts && day.concepts.length > 0 && <option value="concepts">🧠 Core Concepts</option>}
+              {day.commands && day.commands.length > 0 && <option value="commands">💻 Commands</option>}
+              {day.debugTrees && day.debugTrees.length > 0 && <option value="debug">🛠️ Debug Tree</option>}
+              {day.mistakes && day.mistakes.length > 0 && <option value="mistakes">⚠️ Mistakes</option>}
+              {day.project && <option value="project">🚀 Mini Project</option>}
+              {day.interview && day.interview.length > 0 && <option value="interview">🎤 Interview Prompts</option>}
+              {day.quiz && day.quiz.length > 0 && <option value="quiz">🧪 Quiz</option>}
+              {day.github && <option value="github">🐙 GitHub Notes</option>}
+              {((day.pdfUrl) || (day.images && day.images.length > 0)) && <option value="reference">📚 Reference Materials</option>}
             </select>
           </div>
         )}
@@ -810,42 +837,48 @@ export const NotesView: React.FC<NotesViewProps> = ({ appState }) => {
             </div>
 
             {/* Schedule */}
-            <CollapsibleSection
-              id="schedule"
-              title="8-Hour Schedule"
-              icon="📋"
-              color={day.color}
-              isOpen={!!expandedSections.schedule}
-              onToggle={() => toggleSection('schedule')}
-            >
-              <ScheduleTable schedule={day.schedule} color={day.color} />
-            </CollapsibleSection>
+            {day.schedule && day.schedule.length > 0 && (
+              <CollapsibleSection
+                id="schedule"
+                title="8-Hour Schedule"
+                icon="📋"
+                color={day.color}
+                isOpen={!!expandedSections.schedule}
+                onToggle={() => toggleSection('schedule')}
+              >
+                <ScheduleTable schedule={day.schedule} color={day.color} />
+              </CollapsibleSection>
+            )}
 
             {/* Core Concepts */}
-            <CollapsibleSection
-              id="concepts"
-              title="Core Concepts — The Why Behind Every Command"
-              icon="🧠"
-              color={day.color}
-              isOpen={!!expandedSections.concepts}
-              onToggle={() => toggleSection('concepts')}
-            >
-              <ConceptCards concepts={day.concepts} color={day.color} />
-            </CollapsibleSection>
+            {day.concepts && day.concepts.length > 0 && (
+              <CollapsibleSection
+                id="concepts"
+                title="Core Concepts — The Why Behind Every Command"
+                icon="🧠"
+                color={day.color}
+                isOpen={!!expandedSections.concepts}
+                onToggle={() => toggleSection('concepts')}
+              >
+                <ConceptCards concepts={day.concepts} color={day.color} />
+              </CollapsibleSection>
+            )}
 
             {/* Command sessions */}
-            <CollapsibleSection
-              id="commands"
-              title="Exact Command Flow — Type Every Line"
-              icon="⌨️"
-              color={day.color}
-              isOpen={!!expandedSections.commands}
-              onToggle={() => toggleSection('commands')}
-            >
-              {day.commands.map((session, idx) => (
-                <TerminalBlock key={idx} session={session} color={day.color} />
-              ))}
-            </CollapsibleSection>
+            {day.commands && day.commands.length > 0 && (
+              <CollapsibleSection
+                id="commands"
+                title="Exact Command Flow — Type Every Line"
+                icon="⌨️"
+                color={day.color}
+                isOpen={!!expandedSections.commands}
+                onToggle={() => toggleSection('commands')}
+              >
+                {day.commands.map((session, idx) => (
+                  <TerminalBlock key={idx} session={session} color={day.color} />
+                ))}
+              </CollapsibleSection>
+            )}
 
             {/* Debug Flows */}
             {day.debugTrees && day.debugTrees.length > 0 && (
@@ -864,64 +897,93 @@ export const NotesView: React.FC<NotesViewProps> = ({ appState }) => {
             )}
 
             {/* Mistakes */}
-            <CollapsibleSection
-              id="mistakes"
-              title={`Common Beginner Mistakes — Day ${day.day}`}
-              icon="💥"
-              color={day.color}
-              isOpen={!!expandedSections.mistakes}
-              onToggle={() => toggleSection('mistakes')}
-            >
-              <MistakesBlock mistakes={day.mistakes} color={day.color} />
-            </CollapsibleSection>
+            {day.mistakes && day.mistakes.length > 0 && (
+              <CollapsibleSection
+                id="mistakes"
+                title={`Common Beginner Mistakes — Day ${day.day}`}
+                icon="💥"
+                color={day.color}
+                isOpen={!!expandedSections.mistakes}
+                onToggle={() => toggleSection('mistakes')}
+              >
+                <MistakesBlock mistakes={day.mistakes} color={day.color} />
+              </CollapsibleSection>
+            )}
 
             {/* Mini Project */}
-            <CollapsibleSection
-              id="project"
-              title={`Day ${day.day} Mini Project`}
-              icon="🏗"
-              color={day.color}
-              isOpen={!!expandedSections.project}
-              onToggle={() => toggleSection('project')}
-            >
-              <MiniProjectBlock project={day.project} color={day.color} />
-            </CollapsibleSection>
+            {day.project && (
+              <CollapsibleSection
+                id="project"
+                title={`Day ${day.day} Mini Project`}
+                icon="🏗"
+                color={day.color}
+                isOpen={!!expandedSections.project}
+                onToggle={() => toggleSection('project')}
+              >
+                <MiniProjectBlock project={day.project} color={day.color} />
+              </CollapsibleSection>
+            )}
 
             {/* Interview prompts */}
-            <CollapsibleSection
-              id="interview"
-              title={`Interview Explanation Prompts — Day ${day.day} Topics`}
-              icon="🎤"
-              color={day.color}
-              isOpen={!!expandedSections.interview}
-              onToggle={() => toggleSection('interview')}
-            >
-              <InterviewPrep interview={day.interview} color={day.color} />
-            </CollapsibleSection>
+            {day.interview && day.interview.length > 0 && (
+              <CollapsibleSection
+                id="interview"
+                title={`Interview Explanation Prompts — Day ${day.day} Topics`}
+                icon="🎤"
+                color={day.color}
+                isOpen={!!expandedSections.interview}
+                onToggle={() => toggleSection('interview')}
+              >
+                <InterviewPrep interview={day.interview} color={day.color} />
+              </CollapsibleSection>
+            )}
 
             {/* Interactive Quiz */}
-            <CollapsibleSection
-              id="quiz"
-              title={`Day ${day.day} Quiz — Test Yourself Before Moving On`}
-              icon="🧪"
-              color={day.color}
-              isOpen={!!expandedSections.quiz}
-              onToggle={() => toggleSection('quiz')}
-            >
-              <InteractiveQuiz questions={day.quiz} color={day.color} />
-            </CollapsibleSection>
+            {day.quiz && day.quiz.length > 0 && (
+              <CollapsibleSection
+                id="quiz"
+                title={`Day ${day.day} Quiz — Test Yourself Before Moving On`}
+                icon="🧪"
+                color={day.color}
+                isOpen={!!expandedSections.quiz}
+                onToggle={() => toggleSection('quiz')}
+              >
+                <InteractiveQuiz questions={day.quiz} color={day.color} />
+              </CollapsibleSection>
+            )}
 
             {/* Github Notes templates */}
-            <CollapsibleSection
-              id="github"
-              title="GitHub Notes Template — Push This Tonight"
-              icon="📂"
-              color={day.color}
-              isOpen={!!expandedSections.github}
-              onToggle={() => toggleSection('github')}
-            >
-              <GithubTemplateBlock github={day.github} />
-            </CollapsibleSection>
+            {day.github && (
+              <CollapsibleSection
+                id="github"
+                title="GitHub Notes Template — Push This Tonight"
+                icon="📂"
+                color={day.color}
+                isOpen={!!expandedSections.github}
+                onToggle={() => toggleSection('github')}
+              >
+                <GithubTemplateBlock github={day.github} />
+              </CollapsibleSection>
+            )}
+
+            {/* Reference Materials (PDF & Diagrams) */}
+            {((day.pdfUrl) || (day.images && day.images.length > 0)) && (
+              <CollapsibleSection
+                id="reference"
+                title="Reference Materials (PDF & Diagrams)"
+                icon="📚"
+                color={day.color}
+                isOpen={!!expandedSections.reference}
+                onToggle={() => toggleSection('reference')}
+              >
+                <ReferenceMaterialsBlock 
+                  pdfUrl={day.pdfUrl} 
+                  images={day.images} 
+                  color={day.color} 
+                  onImageClick={(img) => setActiveLightboxImg(img)}
+                />
+              </CollapsibleSection>
+            )}
 
             {/* Bottom Nav */}
             <div style={{ display: "flex", justifyContent: "space-between", marginTop: "40px", paddingTop: "20px", borderTop: "1px solid var(--border)" }}>
@@ -976,6 +1038,98 @@ export const NotesView: React.FC<NotesViewProps> = ({ appState }) => {
                 Next Day →
               </button>
             </div>
+            
+            {activeLightboxImg && (
+              <div 
+                className="notes-lightbox"
+                onClick={() => setActiveLightboxImg(null)}
+                style={{
+                  position: 'fixed',
+                  inset: 0,
+                  zIndex: 1000,
+                  background: 'rgba(5, 5, 10, 0.95)',
+                  backdropFilter: 'blur(12px)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  padding: '20px',
+                  animation: 'fadeIn 0.25s ease-out'
+                }}
+              >
+                {/* Close Button */}
+                <button 
+                  onClick={() => setActiveLightboxImg(null)}
+                  style={{
+                    position: 'absolute',
+                    top: '20px',
+                    right: '20px',
+                    background: 'rgba(255,255,255,0.08)',
+                    border: 'none',
+                    borderRadius: '50%',
+                    width: '44px',
+                    height: '44px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    color: '#fff',
+                    fontSize: '20px',
+                    zIndex: 1010,
+                    transition: 'background 0.2s'
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.15)'}
+                  onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.08)'}
+                >
+                  ✕
+                </button>
+
+                {/* Main Image Container */}
+                <div 
+                  onClick={e => e.stopPropagation()}
+                  style={{
+                    position: 'relative',
+                    maxWidth: '94vw',
+                    maxHeight: '82vh',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center'
+                  }}
+                >
+                  <img 
+                    src={activeLightboxImg.url} 
+                    alt={activeLightboxImg.caption}
+                    style={{
+                      maxWidth: '100%',
+                      maxHeight: '75vh',
+                      objectFit: 'contain',
+                      borderRadius: '12px',
+                      border: '1px solid rgba(255,255,255,0.1)',
+                      boxShadow: '0 20px 50px rgba(0,0,0,0.6)'
+                    }}
+                  />
+                  {/* Caption */}
+                  <div 
+                    style={{
+                      marginTop: '16px',
+                      padding: '12px 24px',
+                      background: 'rgba(20,20,30,0.8)',
+                      border: '1px solid rgba(255,255,255,0.08)',
+                      borderRadius: '30px',
+                      color: '#fff',
+                      fontSize: '14px',
+                      fontFamily: 'var(--body)',
+                      textAlign: 'center',
+                      boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
+                      maxWidth: '600px',
+                      lineHeight: '1.5'
+                    }}
+                  >
+                    {activeLightboxImg.caption}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

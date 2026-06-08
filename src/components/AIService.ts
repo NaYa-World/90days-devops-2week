@@ -1,3 +1,5 @@
+import { SecurityService } from './SecurityService';
+
 export type AIProvider = 'claude' | 'chatgpt' | 'gemini' | 'grok';
 
 export const PROVIDER_STORAGE_KEY = 'devops90_active_ai_provider';
@@ -16,7 +18,7 @@ export function setActiveProvider(provider: AIProvider) {
   localStorage.setItem(PROVIDER_STORAGE_KEY, provider);
 }
 
-export function getProviderKey(provider: AIProvider): string {
+export async function getProviderKey(provider: AIProvider): Promise<string> {
   if (provider === 'claude' && import.meta.env.VITE_ANTHROPIC_API_KEY) {
     return import.meta.env.VITE_ANTHROPIC_API_KEY;
   }
@@ -29,30 +31,33 @@ export function getProviderKey(provider: AIProvider): string {
   if (provider === 'grok' && import.meta.env.VITE_GROK_API_KEY) {
     return import.meta.env.VITE_GROK_API_KEY;
   }
-  return localStorage.getItem(KEYS_STORAGE_KEYS[provider]) || '';
+  return SecurityService.getSecureCredential(KEYS_STORAGE_KEYS[provider]);
 }
 
-export function saveProviderKey(provider: AIProvider, key: string) {
-  localStorage.setItem(KEYS_STORAGE_KEYS[provider], key.trim());
+export async function saveProviderKey(provider: AIProvider, key: string) {
+  await SecurityService.saveSecureCredential(KEYS_STORAGE_KEYS[provider], key.trim());
 }
 
-export function clearAllKeys() {
+export async function clearAllKeys() {
   localStorage.removeItem(PROVIDER_STORAGE_KEY);
-  Object.values(KEYS_STORAGE_KEYS).forEach(k => localStorage.removeItem(k));
+  await SecurityService.removeSecureCredential(KEYS_STORAGE_KEYS.claude);
+  await SecurityService.removeSecureCredential(KEYS_STORAGE_KEYS.chatgpt);
+  await SecurityService.removeSecureCredential(KEYS_STORAGE_KEYS.gemini);
+  await SecurityService.removeSecureCredential(KEYS_STORAGE_KEYS.grok);
 }
 
 // Backward compatibility aliases
 export const ANTHROPIC_KEY_STORAGE = KEYS_STORAGE_KEYS.claude;
-export function getApiKey(): string {
+export async function getApiKey(): Promise<string> {
   return getProviderKey('claude');
 }
-export function saveApiKey(key: string) {
-  saveProviderKey('claude', key);
+export async function saveApiKey(key: string) {
+  await saveProviderKey('claude', key);
 }
 
 async function callAI(prompt: string, maxTokens: number = 1000): Promise<string> {
   const provider = getActiveProvider();
-  const key = getProviderKey(provider);
+  const key = await getProviderKey(provider);
   if (!key) {
     throw new Error(`API key for ${provider.toUpperCase()} is not configured. Please open Settings to configure it.`);
   }

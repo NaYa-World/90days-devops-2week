@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { Capacitor } from '@capacitor/core';
+import { Haptics, ImpactStyle, NotificationType } from '@capacitor/haptics';
 import { 
   ScheduleBlock, 
   ConceptBlock, 
@@ -229,6 +231,19 @@ export const InteractiveQuiz: React.FC<{ questions: QuizQuestion[]; color: strin
   
   const handleSelectOption = (questionNum: number, optionIdx: number) => {
     if (selectedOptions[questionNum] !== undefined) return;
+    
+    const question = questions.find(q => q.num === questionNum);
+    const selectedOption = question?.options[optionIdx];
+    const isCorrect = selectedOption?.isCorrect;
+
+    if (Capacitor.isNativePlatform()) {
+      if (isCorrect) {
+        Haptics.impact({ style: ImpactStyle.Light }).catch(() => {});
+      } else {
+        Haptics.notification({ type: NotificationType.Error }).catch(() => {});
+      }
+    }
+
     setSelectedOptions(prev => ({
       ...prev,
       [questionNum]: optionIdx
@@ -294,3 +309,99 @@ export const GithubTemplateBlock: React.FC<{ github: GithubTemplate }> = ({ gith
     <pre style={{ margin: 0, padding: '18px', overflowX: 'auto', fontSize: '13px', lineHeight: '1.6' }}>{github.template}</pre>
   </div>
 );
+
+export const ReferenceMaterialsBlock: React.FC<{
+  pdfUrl?: string;
+  images?: { url: string; caption: string }[];
+  color: string;
+  onImageClick: (img: { url: string; caption: string }) => void;
+}> = ({ pdfUrl, images, color, onImageClick }) => {
+  return (
+    <div className="reference-materials-block" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+      {pdfUrl && (
+        <div className="pdf-viewer-section">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', flexWrap: 'wrap', gap: '10px' }}>
+            <h4 style={{ margin: 0, color: 'var(--text)', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span>📄</span> Study Guide & PDF Material
+            </h4>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <a 
+                href={pdfUrl} 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="v4-btn-secondary"
+                style={{ padding: '6px 12px', fontSize: '12px', display: 'inline-flex', alignItems: 'center', gap: '6px', cursor: 'pointer', background: 'rgba(255,255,255,0.05)', color: 'var(--text)', border: '1px solid var(--border)', borderRadius: '6px', textDecoration: 'none' }}
+              >
+                <span>↗</span> Open in New Tab
+              </a>
+              <a 
+                href={pdfUrl} 
+                download 
+                className="v4-btn-primary"
+                style={{ padding: '6px 12px', fontSize: '12px', display: 'inline-flex', alignItems: 'center', gap: '6px', cursor: 'pointer', background: `${color}22`, color: color, border: `1px solid ${color}44`, borderRadius: '6px', textDecoration: 'none' }}
+              >
+                <span>📥</span> Download PDF
+              </a>
+            </div>
+          </div>
+          
+          {/* Responsive PDF Embedded Iframe (Hidden on mobile via CSS) */}
+          <div className="pdf-embed-wrapper" style={{ border: '1px solid var(--border)', borderRadius: '8px', overflow: 'hidden', background: '#0e0e15' }}>
+            <iframe 
+              src={`${pdfUrl}#toolbar=0`} 
+              width="100%" 
+              height="500px" 
+              style={{ border: 'none' }}
+              title="Study Notes PDF"
+            />
+          </div>
+        </div>
+      )}
+
+      {images && images.length > 0 && (
+        <div className="images-gallery-section" style={{ marginTop: pdfUrl ? '10px' : '0' }}>
+          <h4 style={{ margin: '0 0 12px 0', color: 'var(--text)', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span>🖼️</span> Visual Diagrams & Infographics
+          </h4>
+          <div className="notes-image-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '16px' }}>
+            {images.map((img, idx) => (
+              <div 
+                key={idx} 
+                className="notes-image-card" 
+                onClick={() => onImageClick(img)}
+                style={{ 
+                  background: 'var(--s1)', 
+                  border: '1px solid var(--border)', 
+                  borderRadius: '10px', 
+                  overflow: 'hidden', 
+                  cursor: 'pointer',
+                  transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)'
+                }}
+              >
+                <div style={{ position: 'relative', overflow: 'hidden', aspectRatio: '4/3', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#07070c' }}>
+                  <img 
+                    src={img.url} 
+                    alt={img.caption} 
+                    style={{ 
+                      width: '100%', 
+                      height: '100%', 
+                      objectFit: 'cover',
+                      transition: 'transform 0.3s ease'
+                    }}
+                    className="gallery-thumbnail"
+                  />
+                  <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.3)', opacity: 0, transition: 'opacity 0.2s', display: 'flex', alignItems: 'center', justifyContent: 'center' }} className="gallery-overlay">
+                    <span style={{ background: 'rgba(0,0,0,0.7)', padding: '8px 16px', borderRadius: '20px', color: '#fff', fontSize: '12px', border: '1px solid rgba(255,255,255,0.15)' }}>🔍 Zoom Diagram</span>
+                  </div>
+                </div>
+                <div style={{ padding: '10px 12px', fontSize: '12.5px', color: 'var(--sub)', lineHeight: '1.4', borderTop: '1px solid var(--border)', background: 'rgba(255,255,255,0.01)' }}>
+                  {img.caption}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};

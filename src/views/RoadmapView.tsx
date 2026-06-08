@@ -4,6 +4,8 @@ import { UseAppStateReturnType } from '../hooks/useAppState';
 import { AIService } from '../components/AIService';
 import { showToast } from '../components/Toast';
 import confetti from 'canvas-confetti';
+import { Capacitor } from '@capacitor/core';
+import { Haptics, ImpactStyle, NotificationType } from '@capacitor/haptics';
 
 const XP_MAP = { concept: 10, code: 25, quiz: 20, project: 50 };
 
@@ -704,7 +706,16 @@ const AIBriefWidget: React.FC<AIBriefWidgetProps> = ({
                 <button
                   key={oIdx}
                   disabled={hasAnswered}
-                  onClick={() => setSelectedOpt(oIdx)}
+                  onClick={() => {
+                    setSelectedOpt(oIdx);
+                    if (Capacitor.isNativePlatform()) {
+                      if (oIdx === quiz.answer) {
+                        Haptics.impact({ style: ImpactStyle.Light }).catch(() => {});
+                      } else {
+                        Haptics.notification({ type: NotificationType.Error }).catch(() => {});
+                      }
+                    }
+                  }}
                   style={style}
                 >
                   {opt}

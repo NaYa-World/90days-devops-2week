@@ -751,5 +751,12 @@ source ~/.bashrc
 
 ## 📈 Tomorrow (Day 2)
 Git + GitHub workflow + AWS account setup + first EC2 IAM user`
-  }
+  },
+  pdfUrl: '/pdfs/day1.pdf',
+  images: [
+    {
+      url: '/images/linux_permissions_chart.png',
+      caption: 'Understanding Linux File Permissions (rwx) & Octal Values'
+    }
+  ]
 };

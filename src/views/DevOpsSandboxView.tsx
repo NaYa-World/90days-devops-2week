@@ -1,5 +1,8 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { getActiveProvider, getProviderKey } from '../components/AIService';
+import { LABS, Lab, Exercise } from '../data/labs';
+import { TerminalSimulator } from '../components/TerminalSimulator';
+import { UseAppStateReturnType } from '../hooks/useAppState';
 
 interface TerminalLine {
   type: 'input' | 'output' | 'error' | 'system' | 'success';
@@ -176,11 +179,19 @@ const SCENARIOS: Scenario[] = [
 ];
 
 interface Props {
-  appState: ReturnType<typeof import('../hooks/useAppState').useAppState>;
+  appState: UseAppStateReturnType;
+  sandboxSection: 'scenarios' | 'labs' | 'free' | null;
+  setSandboxSection: React.Dispatch<React.SetStateAction<'scenarios' | 'labs' | 'free' | null>>;
 }
 
-export const DevOpsSandboxView: React.FC<Props> = ({ appState }) => {
+export const DevOpsSandboxView: React.FC<Props> = ({ 
+  appState, 
+  sandboxSection, 
+  setSandboxSection 
+}) => {
+  const { isLabDone, markLabDone, labDayDone } = appState;
   const [activeScenario, setActiveScenario] = useState<Scenario | null>(null);
+  const [activeLabDk, setActiveLabDk] = useState<string>(() => Object.keys(LABS)[0] || '');
   const [currentStep, setCurrentStep] = useState(0);
   const [cmdInput, setCmdInput] = useState('');
   const [lines, setLines] = useState<TerminalLine[]>([]);
@@ -205,7 +216,7 @@ export const DevOpsSandboxView: React.FC<Props> = ({ appState }) => {
 
   useEffect(() => {
     inputRef.current?.focus();
-  }, [activeScenario, freeMode]);
+  }, [activeScenario, freeMode, sandboxSection]);
 
   const addLine = useCallback((type: TerminalLine['type'], text: string) => {
     setLines(prev => [...prev, { type, text }]);
@@ -242,7 +253,6 @@ export const DevOpsSandboxView: React.FC<Props> = ({ appState }) => {
     if (alternates) {
       return alternates.some(alt => clean === alt.toLowerCase() || clean.startsWith(alt.toLowerCase()));
     }
-    // Fuzzy: allow if the command starts with the right verb
     const verb = expected.split(' ')[0];
     if (clean.startsWith(verb) && clean.includes(expected.split(' ').slice(-1)[0])) return true;
     return false;
@@ -252,7 +262,6 @@ export const DevOpsSandboxView: React.FC<Props> = ({ appState }) => {
     const lowerCmd = cmd.toLowerCase().trim();
     addLine('input', `$ ${cmd}`);
 
-    // Simulate basic command responses for free mode
     const responses: Record<string, string> = {
       'help': 'Available commands: ls, cd, mkdir, touch, cat, echo, chmod, chown,\n  git (init/status/add/commit/branch/checkout/merge/log),\n  df, free, top, ps, ss, netstat, curl, tail, head, grep,\n  docker (ps/images/run/build), kubectl (get/describe/apply),\n  terraform (init/plan/apply), ansible-playbook, systemctl',
       'ls': 'deploy.sh  Dockerfile  docker-compose.yml  README.md',
@@ -315,6 +324,10 @@ export const DevOpsSandboxView: React.FC<Props> = ({ appState }) => {
         const updated = { ...completedScenarios, [activeScenario.id]: true };
         setCompletedScenarios(updated);
         localStorage.setItem('devops90_sandbox_done', JSON.stringify(updated));
+
+        import('canvas-confetti').then((conf) => {
+          conf.default({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+        });
       } else {
         setCurrentStep(nextStep);
         setHintIdx(0);
@@ -355,7 +368,7 @@ export const DevOpsSandboxView: React.FC<Props> = ({ appState }) => {
 
   const askAICoach = async () => {
     const provider = getActiveProvider();
-    const key = getProviderKey(provider);
+    const key = await getProviderKey(provider);
     if (!key) {
       addLine('error', `⚠️ No API key configured for ${provider}. Go to Settings → API Keys to add one.`);
       return;
@@ -436,38 +449,321 @@ Provide a brief, helpful hint (2-3 sentences max). Don't give the exact answer �
 
   const completedCount = Object.values(completedScenarios).filter(Boolean).length;
 
-  // ─── Scenario Selection Screen ───
-  if (!activeScenario && !freeMode) {
+  // ─── Main Sandbox Selection Landing Page ───
+  if (sandboxSection === null) {
     return (
       <div className="wrap" style={{ maxWidth: '1100px', margin: '0 auto', padding: '24px 16px' }}>
         <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-          <h1 style={{ fontSize: '26px', fontWeight: 800, marginBottom: '8px', background: 'linear-gradient(135deg, var(--green), var(--blue, #4fa8ff))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-            🧑‍💻 DevOps CLI Sandbox
+          <h1 style={{ fontSize: '28px', fontWeight: 800, marginBottom: '8px', background: 'linear-gradient(135deg, var(--green), var(--blue, #4fa8ff))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+            🧑‍💻 DevOps Unified CLI Sandbox
           </h1>
-          <p style={{ color: 'var(--sub)', fontSize: '13px', maxWidth: '500px', margin: '0 auto' }}>
-            Practice real-world DevOps commands in a safe, simulated terminal. Complete scenarios to build muscle memory.
+          <p style={{ color: 'var(--sub)', fontSize: '14px', maxWidth: '550px', margin: '0 auto' }}>
+            A single consolidated home for all hands-on terminal exercises, guided scenarios, and free-practice command simulations.
           </p>
-          <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', marginTop: '16px', flexWrap: 'wrap' }}>
-            <div style={{ background: 'var(--s2)', padding: '8px 16px', borderRadius: '20px', fontSize: '12px', color: 'var(--green)', fontFamily: 'var(--mono)' }}>
-              {completedCount}/{SCENARIOS.length} Scenarios Done
-            </div>
-            <button
-              onClick={startFreeMode}
-              style={{
-                background: 'rgba(79,168,255,.1)',
-                border: '1px solid rgba(79,168,255,.3)',
-                color: '#4fa8ff',
-                padding: '8px 20px',
-                borderRadius: '20px',
-                fontSize: '12px',
-                fontFamily: 'var(--mono)',
-                cursor: 'pointer',
-                transition: 'all .2s ease'
-              }}
-            >
-              🧪 Free Practice Mode
-            </button>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px' }}>
+          {/* Card 1: Guided Scenarios */}
+          <div
+            onClick={() => setSandboxSection('scenarios')}
+            className="v4-card"
+            style={{
+              background: 'var(--s1)',
+              border: '1px solid var(--border)',
+              borderRadius: '20px',
+              padding: '24px',
+              cursor: 'pointer',
+              transition: 'all .25s ease',
+              position: 'relative',
+              overflow: 'hidden'
+            }}
+            onMouseOver={e => {
+              (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-4px)';
+              (e.currentTarget as HTMLDivElement).style.borderColor = 'var(--blue)';
+              (e.currentTarget as HTMLDivElement).style.boxShadow = '0 12px 30px rgba(0,0,0,.45)';
+            }}
+            onMouseOut={e => {
+              (e.currentTarget as HTMLDivElement).style.transform = 'translateY(0)';
+              (e.currentTarget as HTMLDivElement).style.borderColor = 'var(--border)';
+              (e.currentTarget as HTMLDivElement).style.boxShadow = 'none';
+            }}
+          >
+            <div style={{ fontSize: '36px', marginBottom: '16px' }}>🔀</div>
+            <h3 style={{ fontSize: '18px', fontWeight: 700, marginBottom: '8px', color: '#fff' }}>Guided Scenarios</h3>
+            <p style={{ fontSize: '13px', color: 'var(--sub)', lineHeight: '1.6', marginBottom: '16px' }}>
+              Structured step-by-step challenges for Git workflows, Linux File Ops, and Server Diagnostics. Real-time validation.
+            </p>
+            <span style={{ fontSize: '12px', color: 'var(--blue)', fontFamily: 'var(--mono)', fontWeight: 600 }}>
+              Start Scenarios →
+            </span>
           </div>
+
+          {/* Card 2: Daily Lab Exercises */}
+          <div
+            onClick={() => {
+              setSandboxSection('labs');
+              setActiveLabDk(Object.keys(LABS)[0] || '');
+            }}
+            className="v4-card"
+            style={{
+              background: 'var(--s1)',
+              border: '1px solid var(--border)',
+              borderRadius: '20px',
+              padding: '24px',
+              cursor: 'pointer',
+              transition: 'all .25s ease',
+              position: 'relative',
+              overflow: 'hidden'
+            }}
+            onMouseOver={e => {
+              (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-4px)';
+              (e.currentTarget as HTMLDivElement).style.borderColor = 'var(--green)';
+              (e.currentTarget as HTMLDivElement).style.boxShadow = '0 12px 30px rgba(0,0,0,.45)';
+            }}
+            onMouseOut={e => {
+              (e.currentTarget as HTMLDivElement).style.transform = 'translateY(0)';
+              (e.currentTarget as HTMLDivElement).style.borderColor = 'var(--border)';
+              (e.currentTarget as HTMLDivElement).style.boxShadow = 'none';
+            }}
+          >
+            <div style={{ fontSize: '36px', marginBottom: '16px' }}>⌨</div>
+            <h3 style={{ fontSize: '18px', fontWeight: 700, marginBottom: '8px', color: '#fff' }}>Daily Labs (Days 1–10)</h3>
+            <p style={{ fontSize: '13px', color: 'var(--sub)', lineHeight: '1.6', marginBottom: '16px' }}>
+              Interactive daily terminal exercises covering Linux basics, processes, grep/sed/awk, SSH, Docker, and Docker Compose.
+            </p>
+            <span style={{ fontSize: '12px', color: 'var(--green)', fontFamily: 'var(--mono)', fontWeight: 600 }}>
+              Start Daily Labs →
+            </span>
+          </div>
+
+          {/* Card 3: Free Practice Terminal */}
+          <div
+            onClick={() => {
+              setSandboxSection('free');
+              startFreeMode();
+            }}
+            className="v4-card"
+            style={{
+              background: 'var(--s1)',
+              border: '1px solid var(--border)',
+              borderRadius: '20px',
+              padding: '24px',
+              cursor: 'pointer',
+              transition: 'all .25s ease',
+              position: 'relative',
+              overflow: 'hidden'
+            }}
+            onMouseOver={e => {
+              (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-4px)';
+              (e.currentTarget as HTMLDivElement).style.borderColor = 'var(--amber)';
+              (e.currentTarget as HTMLDivElement).style.boxShadow = '0 12px 30px rgba(0,0,0,.45)';
+            }}
+            onMouseOut={e => {
+              (e.currentTarget as HTMLDivElement).style.transform = 'translateY(0)';
+              (e.currentTarget as HTMLDivElement).style.borderColor = 'var(--border)';
+              (e.currentTarget as HTMLDivElement).style.boxShadow = 'none';
+            }}
+          >
+            <div style={{ fontSize: '36px', marginBottom: '16px' }}>🧪</div>
+            <h3 style={{ fontSize: '18px', fontWeight: 700, marginBottom: '8px', color: '#fff' }}>Free Practice Mode</h3>
+            <p style={{ fontSize: '13px', color: 'var(--sub)', lineHeight: '1.6', marginBottom: '16px' }}>
+              Open terminal simulator to run any command. Ideal for custom testing with AI Coach guidance.
+            </p>
+            <span style={{ fontSize: '12px', color: 'var(--amber)', fontFamily: 'var(--mono)', fontWeight: 600 }}>
+              Launch Terminal →
+            </span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ─── Daily Labs View ───
+  if (sandboxSection === 'labs') {
+    const activeLab: Lab | undefined = LABS[activeLabDk];
+    const done = activeLab ? labDayDone(activeLabDk) : 0;
+    const total = activeLab ? activeLab.exercises.length : 0;
+    const pct = total ? Math.round((done / total) * 100) : 0;
+
+    const formatTime = (secs: number) => {
+      if (secs < 60) return secs + 's';
+      return Math.floor(secs / 60) + 'm ' + (secs % 60) + 's';
+    };
+
+    return (
+      <div className="wrap" style={{ maxWidth: '1000px', margin: '0 auto', padding: '24px 16px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '8px' }}>
+          <button
+            onClick={() => {
+              setSandboxSection(null);
+            }}
+            style={{
+              background: 'var(--s2)',
+              border: '1px solid var(--border)',
+              color: 'var(--text)',
+              padding: '6px 14px',
+              borderRadius: '8px',
+              fontSize: '12px',
+              cursor: 'pointer',
+              fontFamily: 'var(--mono)'
+            }}
+          >
+            ← Back to Sandbox Selection
+          </button>
+          <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text)' }}>
+            ⌨ Daily DevOps Labs (Days 1–10)
+          </div>
+          <div></div>
+        </div>
+
+        <div style={{ background: 'rgba(255,200,80,.06)', border: '1px solid rgba(255,200,80,.2)', borderRadius: 'var(--r12)', padding: '11px 13px', marginBottom: '16px', fontSize: '13px', color: 'var(--sub)' }}>
+          <strong style={{ color: 'var(--amber)' }}>Note:</strong> For Docker/K8s days, open KillerCoda in a new tab, run commands there, then enter them here to auto-verify.
+        </div>
+
+        {/* Lab selectors */}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '18px' }}>
+          {Object.keys(LABS).map(dk => {
+            const lab = LABS[dk];
+            const labDone = labDayDone(dk);
+            const labTotal = lab.exercises.length;
+            const isComplete = labDone === labTotal && labTotal > 0;
+            const isActive = dk === activeLabDk;
+
+            return (
+              <button
+                key={dk}
+                className={`lab-day-btn ${isComplete ? 'lab-day-done' : ''}`}
+                style={{
+                  background: isActive ? 'var(--s2)' : 'var(--s1)',
+                  borderColor: isComplete ? 'var(--green)' : 'var(--border)',
+                  color: isComplete ? 'var(--green)' : 'var(--sub)',
+                  fontFamily: 'var(--mono)',
+                  fontSize: '11px',
+                  padding: '5px 11px',
+                  borderRadius: 'var(--r8)',
+                  cursor: 'pointer',
+                  transition: 'all .2s',
+                  borderStyle: 'solid',
+                  borderWidth: '1px'
+                }}
+                onClick={() => setActiveLabDk(dk)}
+              >
+                {lab.day} {labDone > 0 ? `(${labDone}/${labTotal})` : ''}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Active Lab Area */}
+        {activeLab && (
+          <div id="lab-exercises-area">
+            <div style={{ background: 'var(--s1)', border: '1px solid var(--border)', borderRadius: 'var(--r12)', padding: '16px 18px', marginBottom: '12px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                <div>
+                  <div style={{ fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--green)', marginBottom: '3px' }}>
+                    {activeLab.day} · {activeLab.type.toUpperCase()} LAB
+                  </div>
+                  <div style={{ fontSize: '16px', fontWeight: 700 }}>{activeLab.title}</div>
+                </div>
+                <div style={{ fontFamily: 'var(--mono)', fontSize: '13px', color: done === total && total > 0 ? 'var(--green)' : 'var(--sub)' }}>
+                  {done}/{total} done
+                </div>
+              </div>
+              <div style={{ fontSize: '13px', color: 'var(--sub)', marginBottom: '10px' }}>{activeLab.intro}</div>
+              <div style={{ height: '4px', background: 'var(--s3)', borderRadius: '2px' }}>
+                <div style={{ height: '100%', background: 'var(--green)', borderRadius: '2px', width: `${pct}%`, transition: 'width .4s' }}></div>
+              </div>
+
+              {/* Docker/K8s playgound links */}
+              {(activeLab.type === 'docker' || activeLab.type === 'k8s') && (
+                <div style={{ display: 'flex', gap: '8px', marginTop: '10px', flexWrap: 'wrap' }}>
+                  {activeLab.killercoda && (
+                    <a
+                      href={activeLab.killercoda}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--amber)', padding: '5px 11px', border: '1px solid rgba(255,200,80,.3)', borderRadius: 'var(--r8)', background: 'rgba(255,200,80,.06)', textDecoration: 'none' }}
+                    >
+                      🚀 Open KillerCoda Lab →
+                    </a>
+                  )}
+                  {activeLab.playdocker && (
+                    <a
+                      href={activeLab.playdocker}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--blue)', padding: '5px 11px', border: '1px solid rgba(79,168,255,.3)', borderRadius: 'var(--r8)', background: 'rgba(79,168,255,.06)', textDecoration: 'none' }}
+                    >
+                      🐳 Play With Docker →
+                    </a>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Terminal (for terminal-type labs) */}
+            {activeLab.type === 'terminal' && (
+              <TerminalSimulator
+                dk={activeLabDk}
+                lab={activeLab}
+                isLabDone={(exId) => isLabDone(activeLabDk, exId)}
+                markLabDone={(exId) => markLabDone(activeLabDk, exId)}
+                onExercisePassed={() => {
+                  const updatedDone = labDayDone(activeLabDk) + 1;
+                  if (updatedDone === total) {
+                    import('canvas-confetti').then((conf) => {
+                      conf.default({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+                    });
+                  }
+                }}
+              />
+            )}
+
+            {/* Exercise list */}
+            {activeLab.exercises.map((ex, idx) => {
+              const isExDone = isLabDone(activeLabDk, ex.id);
+              return (
+                <ExerciseCard
+                  key={ex.id}
+                  ex={ex}
+                  idx={idx}
+                  isDone={isExDone}
+                  formatTime={formatTime}
+                />
+              );
+            })}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // ─── Guided Scenarios List ───
+  if (sandboxSection === 'scenarios' && !activeScenario) {
+    return (
+      <div className="wrap" style={{ maxWidth: '1100px', margin: '0 auto', padding: '24px 16px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+          <button
+            onClick={() => {
+              setSandboxSection(null);
+            }}
+            style={{
+              background: 'var(--s2)',
+              border: '1px solid var(--border)',
+              color: 'var(--text)',
+              padding: '6px 14px',
+              borderRadius: '8px',
+              fontSize: '12px',
+              cursor: 'pointer',
+              fontFamily: 'var(--mono)'
+            }}
+          >
+            ← Back to Sandbox Selection
+          </button>
+          <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text)' }}>
+            🔀 Guided Scenarios
+          </div>
+          <div></div>
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '16px' }}>
@@ -517,7 +813,7 @@ Provide a brief, helpful hint (2-3 sentences max). Don't give the exact answer �
     );
   }
 
-  // ─── Terminal View ───
+  // ─── Scenario/Free Terminal View ───
   const progress = activeScenario
     ? Math.round(((currentStep + (currentStep >= activeScenario.steps.length ? 0 : 0)) / activeScenario.steps.length) * 100)
     : 0;
@@ -527,7 +823,11 @@ Provide a brief, helpful hint (2-3 sentences max). Don't give the exact answer �
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '8px' }}>
         <button
-          onClick={() => { setActiveScenario(null); setFreeMode(false); setLines([]); }}
+          onClick={() => { 
+            setActiveScenario(null); 
+            setFreeMode(false); 
+            setLines([]); 
+          }}
           style={{
             background: 'var(--s2)',
             border: '1px solid var(--border)',
@@ -539,7 +839,7 @@ Provide a brief, helpful hint (2-3 sentences max). Don't give the exact answer �
             fontFamily: 'var(--mono)'
           }}
         >
-          ← Back to Scenarios
+          ← Back to Selection
         </button>
         <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text)' }}>
           {activeScenario ? `${activeScenario.icon} ${activeScenario.title}` : '🧪 Free Practice'}
@@ -685,6 +985,109 @@ Provide a brief, helpful hint (2-3 sentences max). Don't give the exact answer �
             {cmd}
           </button>
         ))}
+      </div>
+    </div>
+  );
+};
+
+interface ExerciseCardProps {
+  ex: Exercise;
+  idx: number;
+  isDone: boolean;
+  formatTime: (secs: number) => string;
+}
+
+const ExerciseCard: React.FC<ExerciseCardProps> = ({ ex, idx, isDone, formatTime }) => {
+  const [showHint, setShowHint] = useState(false);
+
+  return (
+    <div
+      style={{
+        background: 'var(--s1)',
+        border: `1px solid ${isDone ? 'rgba(0,217,160,.35)' : 'var(--border)'}`,
+        borderRadius: 'var(--r12)',
+        padding: '14px 16px',
+        marginBottom: '8px',
+        transition: 'all .2s'
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+        <div
+          style={{
+            width: '22px',
+            height: '22px',
+            borderRadius: '50%',
+            background: isDone ? 'var(--green)' : 'var(--s3)',
+            border: `1.5px solid ${isDone ? 'var(--green)' : 'var(--border)'}`,
+            flexShrink: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontFamily: 'var(--mono)',
+            fontSize: '11px',
+            marginTop: '1px'
+          }}
+        >
+          {isDone ? (
+            <span style={{ color: '#000', fontWeight: 700 }}>✓</span>
+          ) : (
+            <span style={{ color: 'var(--sub)' }}>{idx + 1}</span>
+          )}
+        </div>
+        <div style={{ flex: 1 }}>
+          <div
+            style={{
+              fontSize: '13.5px',
+              fontWeight: 600,
+              marginBottom: '5px',
+              color: isDone ? 'var(--sub)' : 'var(--text)',
+              textDecoration: isDone ? 'line-through' : 'none'
+            }}
+          >
+            {ex.prompt}
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+            <button
+              onClick={() => setShowHint(!showHint)}
+              style={{
+                background: 'none',
+                border: '1px solid var(--border)',
+                color: 'var(--sub)',
+                fontFamily: 'var(--mono)',
+                fontSize: '10px',
+                padding: '3px 9px',
+                borderRadius: '4px',
+                cursor: 'pointer'
+              }}
+            >
+              {showHint ? '🙈 Hide hint' : '💡 Hint'}
+            </button>
+            <span style={{ fontFamily: 'var(--mono)', fontSize: '10px', color: 'var(--amber)' }}>
+              +{ex.xp} XP
+            </span>
+            {isDone && (
+              <span style={{ fontFamily: 'var(--mono)', fontSize: '10px', color: 'var(--green)' }}>
+                {ex.ok}
+              </span>
+            )}
+          </div>
+          {showHint && (
+            <div
+              style={{
+                marginTop: '8px',
+                background: 'var(--s3)',
+                borderRadius: 'var(--r8)',
+                padding: '8px 11px',
+                fontFamily: 'var(--mono)',
+                fontSize: '11px',
+                color: 'var(--amber)',
+                whiteSpace: 'pre-wrap'
+              }}
+            >
+              {ex.hint}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

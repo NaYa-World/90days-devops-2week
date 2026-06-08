@@ -462,5 +462,12 @@ aws sts get-caller-identity       # Check active user and account ID
 
 ## 📈 Tomorrow (Day 3)
 Launching EC2 via CLI, configuring security groups, deploying a live web server`
-  }
+  },
+  pdfUrl: '/pdfs/day2.pdf',
+  images: [
+    {
+      url: '/images/git_workflows_chart.png',
+      caption: 'Git Workflows, Branching, Stash, and Safe Undo'
+    }
+  ]
 };

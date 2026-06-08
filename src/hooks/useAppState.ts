@@ -4,6 +4,10 @@ import { PROJECTS } from '../data/projects';
 import { QBANK } from '../data/qbank';
 import { LABS } from '../data/labs';
 import { showToast } from '../components/Toast';
+import { BackupService } from '../components/BackupService';
+import { Capacitor } from '@capacitor/core';
+import { Haptics, ImpactStyle } from '@capacitor/haptics';
+import { autoSyncToGitHub } from '../components/GitHubSyncService';
 
 export interface AppNotification {
   id: number;
@@ -237,6 +241,11 @@ export function useAppState() {
 
       const key = `${LOCAL_STORAGE_KEY_PREFIX}${user.toLowerCase()}`;
       localStorage.setItem(key, JSON.stringify(flat));
+
+      // Trigger background state backup on native devices
+      if (Capacitor.isNativePlatform()) {
+        BackupService.autoBackup().catch(() => {});
+      }
     } catch (_) {}
   };
 
@@ -246,6 +255,7 @@ export function useAppState() {
       saveStateToStorage(next, currentUser);
       return next;
     });
+    autoSyncToGitHub().catch(() => {});
   };
 
   // User auth methods
@@ -709,6 +719,9 @@ export function useAppState() {
   // QBank
   const qDone = (qId: string) => !!state.qdone[qId];
   const toggleQ = (qId: string) => {
+    if (Capacitor.isNativePlatform()) {
+      Haptics.impact({ style: ImpactStyle.Light }).catch(() => {});
+    }
     updateState(prev => ({
       ...prev,
       qdone: { ...prev.qdone, [qId]: !prev.qdone[qId] },
@@ -874,6 +887,9 @@ export function useAppState() {
   };
 
   const toggleTask = (pi: number, di: number, ti: number) => {
+    if (Capacitor.isNativePlatform()) {
+      Haptics.impact({ style: ImpactStyle.Light }).catch(() => {});
+    }
     const id = tid(pi, di, ti);
     const wasDone = !!state.completedTasks[id];
     const task = PHASES[pi]?.data[di]?.tasks[ti];

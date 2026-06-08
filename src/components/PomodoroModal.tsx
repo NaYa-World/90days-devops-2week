@@ -18,17 +18,28 @@ const playChime = () => {
     const playNote = (freq: number, start: number, duration: number) => {
       const osc = audioCtx.createOscillator();
       const gain = audioCtx.createGain();
+      osc.type = 'triangle';
       osc.connect(gain);
       gain.connect(audioCtx.destination);
       osc.frequency.value = freq;
-      gain.gain.setValueAtTime(0.15, start);
+      gain.gain.setValueAtTime(0.6, start);
       gain.gain.exponentialRampToValueAtTime(0.00001, start + duration);
       osc.start(start);
       osc.stop(start + duration);
     };
     const now = audioCtx.currentTime;
-    playNote(587.33, now, 0.25); // D5
-    playNote(880.00, now + 0.12, 0.35); // A5 (pleasant double chime)
+    // Play a louder sequence of digital alarm beeps (4 groups of double-beeps)
+    playNote(1000.00, now, 0.15);
+    playNote(1000.00, now + 0.20, 0.15);
+
+    playNote(1000.00, now + 0.60, 0.15);
+    playNote(1000.00, now + 0.80, 0.15);
+
+    playNote(1000.00, now + 1.20, 0.15);
+    playNote(1000.00, now + 1.40, 0.15);
+
+    playNote(1000.00, now + 1.80, 0.15);
+    playNote(1000.00, now + 2.00, 0.30);
   } catch (err) {
     console.warn('AudioContext not supported or blocked:', err);
   }
@@ -84,7 +95,10 @@ export const PomodoroModal: React.FC<PomodoroModalProps> = ({
             // Finished session!
             playChime();
             if (Capacitor.isNativePlatform()) {
-              Haptics.vibrate().catch(() => {});
+              Haptics.impact({ style: ImpactStyle.Heavy }).catch(() => {});
+              setTimeout(() => {
+                Haptics.impact({ style: ImpactStyle.Heavy }).catch(() => {});
+              }, 150);
             }
             if (mode === 'focus') {
               incrementSessions();

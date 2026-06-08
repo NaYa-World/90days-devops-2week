@@ -4,6 +4,10 @@ const config: CapacitorConfig = {
   appId: 'com.gk.devops',
   appName: '90 Days DevOps',
   webDir: 'dist',
+  server: {
+    androidScheme: 'https',
+    cleartext: true
+  },
   plugins: {
     SplashScreen: {
       launchShowDuration: 3000,
