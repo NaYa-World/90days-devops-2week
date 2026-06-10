@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite --open",
     "notes": "vite --open /notes.html",
-    "build": "tsc && vite build",
+    "build:mindmap": "npm run build --prefix ../mindmap && mkdir -p public/mindmap && cp -r ../mindmap/dist/* public/mindmap/",
+    "build": "npm run build:mindmap && tsc && vite build",
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",

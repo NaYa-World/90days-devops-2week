@@ -14,6 +14,8 @@ import { day11 } from './week-2/day11';
 import { day12 } from './week-2/day12';
 import { day13 } from './week-2/day13';
 import { day14 } from './week-2/day14';
+import { day15 } from './week-3/day15';
+import { day16 } from './week-3/day16';
 import { BootcampDay } from './types';
 
 export const days: BootcampDay[] = [
@@ -33,6 +35,8 @@ export const days: BootcampDay[] = [
   day12,
   day13,
   day14,
+  day15,
+  day16,
 ];
 
 export * from './types';
