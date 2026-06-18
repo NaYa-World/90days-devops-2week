@@ -7,18 +7,62 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Dependencies
 node_modules
+
+# Build output
 dist
 dist-ssr
 *.local
+
+# APK binaries — use GitHub Releases for distribution
+*.apk
+
+# Android build artifacts
+android/app/build/
+android/.gradle/
+android/build/
+android/captures/
+android/local.properties
+
+# Debug artifacts
+debug.js
+debug.cjs
+page_dump.html
+
+# Environment & secrets
+.env
+.env.local
+.env.production
+.env.staging
+*.pem
+*.key
 
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
 .idea
-.DS_Store
 *.suo
 *.ntvsca*
 *.njsproj
 *.sln
 *.sw?
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/playwright/.auth/
+
+# Capacitor generated
+android/app/src/main/assets/public/
+
+# Misc
+*.tsbuildinfo
+.vercel
+.turbo
