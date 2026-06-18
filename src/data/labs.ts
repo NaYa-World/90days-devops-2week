@@ -11,7 +11,7 @@ export interface Lab {
   day: string;
   title: string;
   intro: string;
-  type: 'terminal' | 'docker';
+  type: 'terminal' | 'docker' | 'k8s';
   killercoda?: string;
   playdocker?: string;
   exercises: Exercise[];

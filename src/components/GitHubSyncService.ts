@@ -1,10 +1,12 @@
+import { SecurityService } from './SecurityService';
+
 /**
  * Background GitHub auto-sync utility.
  * Automatically saves all devops90 state keys from localStorage
  * and pushes them as a progress.json file to the configured repository.
  */
 export const autoSyncToGitHub = async (): Promise<void> => {
-  const pat = localStorage.getItem('devops90_github_pat') || '';
+  const pat = await SecurityService.getSecureCredential('devops90_github_pat') || '';
   const ghUsername = localStorage.getItem('devops90_github_username') || '';
   const repo = localStorage.getItem('devops90_github_repo') || '';
   const branch = localStorage.getItem('devops90_github_branch') || 'main';

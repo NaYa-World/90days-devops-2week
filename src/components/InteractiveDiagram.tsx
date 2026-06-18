@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useRef } from 'react';
 import { DiagramData, DiagramNode } from '../data/diagrams';
 import { Capacitor } from '@capacitor/core';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
@@ -9,6 +9,11 @@ interface InteractiveDiagramProps {
 }
 
 export const InteractiveDiagram: React.FC<InteractiveDiagramProps> = ({ data, onNodeClick }) => {
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStart = useRef({ x: 0, y: 0 });
+
   // Determine bounds of diagram to size the view box
   const minX = Math.min(...data.nodes.map(n => n.x)) - 60;
   const maxX = Math.max(...data.nodes.map(n => n.x)) + 80;
@@ -18,13 +23,39 @@ export const InteractiveDiagram: React.FC<InteractiveDiagramProps> = ({ data, on
   const width = Math.max(450, maxX - minX);
   const height = Math.max(300, maxY - minY);
   
-  const handleNodeClick = (node: DiagramNode) => {
+  const handleNodeClick = (e: React.MouseEvent | React.TouchEvent, node: DiagramNode) => {
+    e.stopPropagation();
     if (node.targetDay !== undefined && onNodeClick) {
       if (Capacitor.isNativePlatform()) {
         Haptics.impact({ style: ImpactStyle.Light }).catch(() => {});
       }
       onNodeClick(node.targetDay);
     }
+  };
+
+  const handlePointerDown = (e: React.PointerEvent) => {
+    setIsDragging(true);
+    dragStart.current = { x: e.clientX - pan.x, y: e.clientY - pan.y };
+    if (e.target instanceof Element) {
+      e.target.setPointerCapture(e.pointerId);
+    }
+  };
+
+  const handlePointerMove = (e: React.PointerEvent) => {
+    if (!isDragging) return;
+    setPan({ x: e.clientX - dragStart.current.x, y: e.clientY - dragStart.current.y });
+  };
+
+  const handlePointerUp = (e: React.PointerEvent) => {
+    setIsDragging(false);
+    if (e.target instanceof Element) {
+      e.target.releasePointerCapture(e.pointerId);
+    }
+  };
+
+  const handleWheel = (e: React.WheelEvent) => {
+    const zoomDelta = e.deltaY * -0.001;
+    setZoom(prev => Math.max(0.5, Math.min(3, prev + zoomDelta)));
   };
 
   const getNodeColor = (type?: string) => {
@@ -66,12 +97,13 @@ export const InteractiveDiagram: React.FC<InteractiveDiagramProps> = ({ data, on
       border: '1px solid var(--border)',
       borderRadius: '12px',
       padding: '16px',
-      overflowX: 'auto',
+      overflow: 'hidden',
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
       boxShadow: '0 4px 20px rgba(0,0,0,0.25)',
-      margin: '20px 0'
+      margin: '20px 0',
+      touchAction: 'none'
     }}>
       <div style={{
         alignSelf: 'stretch',
@@ -83,13 +115,27 @@ export const InteractiveDiagram: React.FC<InteractiveDiagramProps> = ({ data, on
         paddingBottom: '8px'
       }}>
         <span style={{ fontSize: '14px', fontWeight: 'bold', color: 'var(--text)' }}>🧭 {data.title}</span>
-        {onNodeClick && <span style={{ fontSize: '11px', color: 'var(--muted)' }}>💡 Tap nodes to navigate</span>}
+        {onNodeClick && <span style={{ fontSize: '11px', color: 'var(--muted)' }}>💡 Drag to pan, scroll to zoom</span>}
       </div>
       
-      <div style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
+      <div 
+        style={{ width: '100%', height: '400px', cursor: isDragging ? 'grabbing' : 'grab', position: 'relative' }}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerUp}
+        onWheel={handleWheel}
+      >
         <svg 
           viewBox={`${minX} ${minY} ${width} ${height}`} 
-          style={{ width: '100%', minWidth: '300px', height: 'auto', overflow: 'visible' }}
+          style={{ 
+            width: '100%', 
+            height: '100%', 
+            overflow: 'visible',
+            transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
+            transformOrigin: 'center',
+            transition: isDragging ? 'none' : 'transform 0.1s ease-out'
+          }}
         >
           {/* Arrowhead marker definition */}
           <defs>
@@ -146,7 +192,7 @@ export const InteractiveDiagram: React.FC<InteractiveDiagramProps> = ({ data, on
                 <g 
                   key={node.id} 
                   transform={`translate(${node.x - boxWidth / 2}, ${node.y - boxHeight / 2})`}
-                  onClick={() => handleNodeClick(node)}
+                  onClick={(e) => handleNodeClick(e, node)}
                   style={{ cursor: hasLink ? 'pointer' : 'default' }}
                 >
                   {/* Node Box with subtle glow */}

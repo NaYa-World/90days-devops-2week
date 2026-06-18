@@ -3,6 +3,7 @@ import { showToast } from '../components/Toast';
 import { autoSyncToGitHub } from '../components/GitHubSyncService';
 import { UseAppStateReturnType } from '../hooks/useAppState';
 import days from '../data/notes';
+import { SecurityService } from '../components/SecurityService';
 import { Capacitor } from '@capacitor/core';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
 import { KeepAwake } from '@capacitor-community/keep-awake';
@@ -73,6 +74,71 @@ const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({
   );
 };
 
+const PersonalNotesBlock: React.FC<{ day: number, currentUser: string | null }> = ({ day, currentUser }) => {
+  const user = currentUser ? currentUser.toLowerCase() : 'guest';
+  const key = `devops90_personal_notes_${user}_day_${day}`;
+  const [note, setNote] = useState(() => localStorage.getItem(key) || '');
+  const [savedStatus, setSavedStatus] = useState('');
+
+  useEffect(() => {
+    setNote(localStorage.getItem(key) || '');
+    setSavedStatus('');
+  }, [key]);
+
+  const handleSave = () => {
+    localStorage.setItem(key, note);
+    setSavedStatus('Saved!');
+    setTimeout(() => setSavedStatus(''), 2000);
+  };
+
+  return (
+    <div style={{ padding: '16px', background: 'var(--s1)', borderRadius: '8px', border: '1px solid var(--border)' }}>
+      <p style={{ fontSize: '13px', color: 'var(--sub)', margin: '0 0 12px 0' }}>
+        Write down your daily progress, thoughts, or reminders here. This is saved locally.
+      </p>
+      <textarea
+        value={note}
+        onChange={e => setNote(e.target.value)}
+        placeholder="Type your notes here..."
+        style={{
+          width: '100%',
+          minHeight: '150px',
+          padding: '12px',
+          background: 'var(--s2)',
+          border: '1px solid var(--border)',
+          borderRadius: '6px',
+          color: 'var(--text)',
+          fontFamily: 'var(--body)',
+          fontSize: '14px',
+          lineHeight: '1.5',
+          resize: 'vertical',
+          marginBottom: '12px',
+          outline: 'none'
+        }}
+      />
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <button
+          onClick={handleSave}
+          style={{
+            padding: '8px 16px',
+            background: 'var(--green)',
+            color: '#000',
+            border: 'none',
+            borderRadius: '6px',
+            fontWeight: 'bold',
+            cursor: 'pointer',
+            fontSize: '13px'
+          }}
+        >
+          Save Notes
+        </button>
+        {savedStatus && <span style={{ color: 'var(--green)', fontSize: '13px', fontFamily: 'var(--mono)' }}>✅ {savedStatus}</span>}
+      </div>
+    </div>
+  );
+};
+
+
 export const NotesView: React.FC<NotesViewProps> = ({ appState }) => {
   const { currentUser } = appState;
   const [syncLoading, setSyncLoading] = useState(false);
@@ -137,6 +203,7 @@ export const NotesView: React.FC<NotesViewProps> = ({ appState }) => {
     quiz: false,
     github: false,
     reference: true, // Open by default since user will focus on PDFs/Diagrams first
+    personalNote: true,
   });
 
   const toggleSection = (sectionId: string) => {
@@ -158,12 +225,13 @@ export const NotesView: React.FC<NotesViewProps> = ({ appState }) => {
       quiz: isOpen,
       github: isOpen,
       reference: isOpen,
+      personalNote: isOpen,
     });
   };
 
   useEffect(() => {
     // Reset all sections to collapsed when activeDay changes, EXCEPT the one actively scrolled to
-    setExpandedSections(prev => {
+    setExpandedSections(() => {
       const initial = {
         schedule: false,
         concepts: false,
@@ -175,6 +243,7 @@ export const NotesView: React.FC<NotesViewProps> = ({ appState }) => {
         quiz: false,
         github: false,
         reference: true, // Keep open by default on day switch
+        personalNote: true,
       };
       if (activeSection && activeSection in initial) {
         initial[activeSection as keyof typeof initial] = true;
@@ -200,7 +269,7 @@ export const NotesView: React.FC<NotesViewProps> = ({ appState }) => {
   const isDayCompleted = !!notesState[dayKeyStr];
 
   const syncToGitHub = useCallback(async () => {
-    const pat = localStorage.getItem('devops90_github_pat') || '';
+    const pat = await SecurityService.getSecureCredential('devops90_github_pat') || '';
     const ghUsername = localStorage.getItem('devops90_github_username') || '';
     const repo = localStorage.getItem('devops90_github_repo') || '';
     const branch = localStorage.getItem('devops90_github_branch') || 'main';
@@ -223,7 +292,7 @@ export const NotesView: React.FC<NotesViewProps> = ({ appState }) => {
     try {
       const filePath = `notes/day${day.day}.md`;
       const today = new Date().toISOString().split('T')[0];
-      const content = day.github.template.replace(/YYYY-MM-DD/g, today);
+      const content = day.github?.template?.replace(/YYYY-MM-DD/g, today) || `# Day ${day.day}\n\nNotes for Day ${day.day}`;
       const base64Content = btoa(unescape(encodeURIComponent(content)));
 
       // Check if file already exists (to get SHA for update)
@@ -241,7 +310,7 @@ export const NotesView: React.FC<NotesViewProps> = ({ appState }) => {
 
       // PUT the file
       const body: Record<string, string> = {
-        message: day.github.commitMessage || `Add Day ${day.day} notes: ${day.title}`,
+        message: day.github?.commitMessage || `Add Day ${day.day} notes: ${day.title}`,
         content: base64Content,
         branch
       };
@@ -713,6 +782,7 @@ export const NotesView: React.FC<NotesViewProps> = ({ appState }) => {
               {day.quiz && day.quiz.length > 0 && <option value="quiz">🧪 Quiz</option>}
               {day.github && <option value="github">🐙 GitHub Notes</option>}
               {((day.pdfUrl) || (day.images && day.images.length > 0)) && <option value="reference">📚 Reference Materials</option>}
+              <option value="personalNote">📝 Personal Notes</option>
             </select>
           </div>
         )}
@@ -984,6 +1054,18 @@ export const NotesView: React.FC<NotesViewProps> = ({ appState }) => {
                 />
               </CollapsibleSection>
             )}
+
+            {/* Daily Progress Notes */}
+            <CollapsibleSection
+              id="personalNote"
+              title={`My Daily Progress Notes — Day ${day.day}`}
+              icon="📝"
+              color={day.color}
+              isOpen={!!expandedSections.personalNote}
+              onToggle={() => toggleSection('personalNote')}
+            >
+              <PersonalNotesBlock day={day.day} currentUser={currentUser} />
+            </CollapsibleSection>
 
             {/* Bottom Nav */}
             <div style={{ display: "flex", justifyContent: "space-between", marginTop: "40px", paddingTop: "20px", borderTop: "1px solid var(--border)" }}>

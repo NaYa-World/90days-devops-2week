@@ -1,7 +1,7 @@
 {
   "name": "devops-roadmap-v5",
   "private": true,
-  "version": "1.0.2",
+  "version": "1.0.3",
   "type": "module",
   "scripts": {
     "dev": "vite --open",
@@ -41,8 +41,10 @@
   },
   "devDependencies": {
     "@capacitor/assets": "^3.0.5",
+    "@playwright/test": "^1.61.0",
     "@testing-library/react": "^14.2.1",
     "@types/canvas-confetti": "^1.6.0",
+    "@types/node": "^25.9.3",
     "@types/react": "^18.2.56",
     "@types/react-dom": "^18.2.19",
     "@vitejs/plugin-react": "^4.2.1",

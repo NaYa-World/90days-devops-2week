@@ -271,7 +271,7 @@ ${builtProjects.map(p => `- **[${p.repoName}](https://github.com/${username}/${p
                 const improveTip = getRepoImproveTip(g.repo);
                 return (
                   <div key={g.repo.id} style={{ background: 'var(--s2)', border: '1px solid var(--border)', borderRadius: '8px', padding: '10px 13px', marginBottom: '6px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifycontent: 'space-between', marginBottom: '4px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
                       <div style={{ fontFamily: 'var(--mono)', fontSize: '12px', color: 'var(--text)' }}>{g.repo.name}</div>
                       <div style={{ fontFamily: 'var(--mono)', fontSize: '10px', marginLeft: 'auto', color: g.score >= 60 ? 'var(--green)' : g.score >= 40 ? 'var(--amber)' : 'var(--red)' }}>
                         Score: {g.score}/100

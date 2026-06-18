@@ -5,8 +5,6 @@ import {
   AIProvider,
   getActiveProvider,
   setActiveProvider,
-  getProviderKey,
-  saveProviderKey,
   clearAllKeys
 } from './components/AIService';
 import { LocalNotifications } from '@capacitor/local-notifications';
@@ -23,7 +21,7 @@ import { BackupService } from './components/BackupService';
 import { SecurityService } from './components/SecurityService';
 import { MonitoringService } from './components/MonitoringService';
 import { OTAService } from './components/OTAService';
-import { NotificationService } from './components/NotificationService';
+// import { NotificationService } from './components/NotificationService';
 import { AppShortcuts } from '@capawesome/capacitor-app-shortcuts';
 import { Network } from '@capacitor/network';
 import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
@@ -33,6 +31,7 @@ import { showToast } from './components/Toast';
 // Lazy load views for optimal code splitting & bundle size reduction
 const RoadmapView = React.lazy(() => import('./views/RoadmapView').then(m => ({ default: m.RoadmapView })));
 const RoadmapV2View = React.lazy(() => import('./views/RoadmapV2View').then(m => ({ default: m.RoadmapV2View })));
+const RoadmapV3View = React.lazy(() => import('./views/RoadmapV3View').then(m => ({ default: m.RoadmapV3View })));
 const KanbanView = React.lazy(() => import('./views/KanbanView').then(m => ({ default: m.KanbanView })));
 const FocusView = React.lazy(() => import('./views/FocusView').then(m => ({ default: m.FocusView })));
 const JobsView = React.lazy(() => import('./views/JobsView').then(m => ({ default: m.JobsView })));
@@ -91,6 +90,7 @@ export const App: React.FC = () => {
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [reminderTime, setReminderTime] = useState(() => localStorage.getItem('devops90_reminder_time') || '09:00');
+  const [uiScale, setUiScale] = useState(() => parseFloat(localStorage.getItem('devops90_ui_scale') || '1.0'));
   const [activeProvider, setActiveProviderState] = useState<AIProvider>('claude');
 
   const [providerKeys, setProviderKeys] = useState<Record<AIProvider, string>>({
@@ -161,6 +161,7 @@ export const App: React.FC = () => {
         shortcutListener.then(sub => sub.remove());
       };
     }
+    return undefined;
   }, []);
 
   // Register Daily Challenge listener for local notification clicks
@@ -171,8 +172,8 @@ export const App: React.FC = () => {
         'localNotificationActionPerformed',
         (action) => {
           const id = action.notification.id;
-          if (id >= 9001 && id <= 9007) {
-            const weekday = id - 9000;
+          if ((id >= 9001 && id <= 9007) || (id >= 9101 && id <= 9107)) {
+            const weekday = id >= 9101 ? id - 9100 : id - 9000;
             setChallengeWeekday(weekday);
             setIsChallengeOpen(true);
           }
@@ -214,13 +215,14 @@ export const App: React.FC = () => {
       darkQuery.addEventListener('change', handleThemeChange);
       return () => darkQuery.removeEventListener('change', handleThemeChange);
     }
+    return undefined;
   }, [syncWithSystemTheme]);
 
   // Check initial notification status
   useEffect(() => {
     if (Capacitor.isNativePlatform()) {
       LocalNotifications.getPending().then(res => {
-        if (res.notifications.some(n => n.id >= 9001 && n.id <= 9007)) {
+        if (res.notifications.some(n => (n.id >= 9001 && n.id <= 9007) || (n.id >= 9101 && n.id <= 9107))) {
           setNotificationsEnabled(true);
         }
       }).catch(() => {});
@@ -234,6 +236,11 @@ export const App: React.FC = () => {
       StatusBar.setBackgroundColor({ color: '#07090f' }).catch(() => {});
     }
   }, []);
+
+  // Apply UI Scale for Font Size Increase
+  useEffect(() => {
+    (document.documentElement.style as any).zoom = uiScale.toString();
+  }, [uiScale]);
 
   // On native mobile devices, run auto-restore on startup
   useEffect(() => {
@@ -263,6 +270,7 @@ export const App: React.FC = () => {
         sub.then(listener => listener.remove());
       };
     }
+    return undefined;
   }, []);
 
   // Prevent background scrolling when settings or pomo modal is open
@@ -284,6 +292,10 @@ export const App: React.FC = () => {
       
       let lastBackPress = 0;
       const backListener = CapacitorApp.addListener('backButton', () => {
+        if (isSettingsOpen) { setIsSettingsOpen(false); return; }
+        if (isPomoOpen) { setIsPomoOpen(false); return; }
+        if (isDrawerOpen) { setIsDrawerOpen(false); return; }
+
         setCurrentView(prevView => {
           if (prevView !== 'roadmap') {
             return 'roadmap';
@@ -300,10 +312,11 @@ export const App: React.FC = () => {
       });
 
       return () => {
-        backListener.then(l => l.remove());
+        backListener.then(listener => listener.remove());
       };
     }
-  }, []);
+    return undefined;
+  }, [isSettingsOpen, isPomoOpen, isDrawerOpen]);
 
 
   const handleReminderTimeChange = async (newTime: string) => {
@@ -312,11 +325,15 @@ export const App: React.FC = () => {
     
     if (notificationsEnabled && Capacitor.isNativePlatform()) {
       try {
-        const ids = Array.from({ length: 7 }, (_, i) => ({ id: 9000 + i + 1 }));
+        const ids = [
+          ...Array.from({ length: 7 }, (_, i) => ({ id: 9000 + i + 1 })),
+          ...Array.from({ length: 7 }, (_, i) => ({ id: 9100 + i + 1 }))
+        ];
         await LocalNotifications.cancel({ notifications: ids });
         
         const [hourStr, minStr] = newTime.split(':');
         const hr = parseInt(hourStr, 10);
+        const hr2 = (hr + 12) % 24;
         const mn = parseInt(minStr, 10);
         
         const notifications = [];
@@ -341,7 +358,23 @@ export const App: React.FC = () => {
                 hour: hr,
                 minute: mn
               },
-              every: 'week'
+              every: 'week' as any
+            },
+            channelId: 'study-reminders',
+            sound: 'default'
+          });
+
+          notifications.push({
+            id: 9100 + msg.weekday,
+            title: msg.title + ' (Evening Reminder)',
+            body: msg.body,
+            schedule: {
+              on: {
+                weekday: msg.weekday,
+                hour: hr2,
+                minute: mn
+              },
+              every: 'week' as any
             },
             channelId: 'study-reminders',
             sound: 'default'
@@ -382,6 +415,7 @@ export const App: React.FC = () => {
 
           const [hourStr, minStr] = reminderTime.split(':');
           const hr = parseInt(hourStr || '9', 10);
+          const hr2 = (hr + 12) % 24;
           const mn = parseInt(minStr || '0', 10);
 
           const notifications = [];
@@ -406,7 +440,23 @@ export const App: React.FC = () => {
                   hour: hr,
                   minute: mn
                 },
-                every: 'week'
+                every: 'week' as any
+              },
+              channelId: 'study-reminders',
+              sound: 'default'
+            });
+
+            notifications.push({
+              id: 9100 + msg.weekday,
+              title: msg.title + ' (Evening Reminder)',
+              body: msg.body,
+              schedule: {
+                on: {
+                  weekday: msg.weekday,
+                  hour: hr2,
+                  minute: mn
+                },
+                every: 'week' as any
               },
               channelId: 'study-reminders',
               sound: 'default'
@@ -420,7 +470,10 @@ export const App: React.FC = () => {
           alert('Notification permission denied.');
         }
       } else {
-        const ids = Array.from({ length: 7 }, (_, i) => ({ id: 9000 + i + 1 }));
+        const ids = [
+          ...Array.from({ length: 7 }, (_, i) => ({ id: 9000 + i + 1 })),
+          ...Array.from({ length: 7 }, (_, i) => ({ id: 9100 + i + 1 }))
+        ];
         await LocalNotifications.cancel({ notifications: ids });
         setNotificationsEnabled(false);
         alert('Study reminders disabled.');
@@ -474,6 +527,7 @@ export const App: React.FC = () => {
     const chatgptKey = await SecurityService.getSecureCredential('devops90_openai_api_key');
     const geminiKey = await SecurityService.getSecureCredential('devops90_gemini_api_key');
     const grokKey = await SecurityService.getSecureCredential('devops90_grok_api_key');
+    const githubPat = await SecurityService.getSecureCredential('devops90_github_pat');
 
     setProviderKeys({
       claude: claudeKey,
@@ -482,7 +536,7 @@ export const App: React.FC = () => {
       grok: grokKey
     });
     setGithubSettings({
-      pat: localStorage.getItem('devops90_github_pat') || '',
+      pat: githubPat,
       username: localStorage.getItem('devops90_github_username') || '',
       repo: localStorage.getItem('devops90_github_repo') || '',
       branch: localStorage.getItem('devops90_github_branch') || 'main'
@@ -498,7 +552,7 @@ export const App: React.FC = () => {
     await SecurityService.saveSecureCredential('devops90_grok_api_key', providerKeys.grok);
     
     // Save GitHub settings
-    localStorage.setItem('devops90_github_pat', githubSettings.pat.trim());
+    await SecurityService.saveSecureCredential('devops90_github_pat', githubSettings.pat.trim());
     localStorage.setItem('devops90_github_username', githubSettings.username.trim());
     localStorage.setItem('devops90_github_repo', githubSettings.repo.trim());
     localStorage.setItem('devops90_github_branch', githubSettings.branch.trim() || 'main');
@@ -649,6 +703,18 @@ export const App: React.FC = () => {
       //   return <ReportView appState={appState} />;
       case 'projects':
         return <ProjectsView appState={appState} switchView={setCurrentView} />;
+      case 'roadmap-v2':
+          return (
+            <React.Suspense fallback={<div style={{ padding: 40, color: 'var(--sub)', textAlign: 'center' }}>Loading original v2 roadmap...</div>}>
+              <RoadmapV2View appState={appState} switchView={setCurrentView} />
+            </React.Suspense>
+          );
+        case 'roadmap-v3':
+          return (
+            <React.Suspense fallback={<div style={{ padding: 40, color: 'var(--sub)', textAlign: 'center' }}>Loading notes-driven roadmap...</div>}>
+              <RoadmapV3View appState={appState} switchView={setCurrentView} />
+            </React.Suspense>
+          );
       case 'github-rewriter':
         return <GithubRewriterView appState={appState} />;
       case 'resume':
@@ -698,7 +764,7 @@ export const App: React.FC = () => {
     }
   };
 
-  const primaryViews = ['roadmap', 'kanban', 'focus', 'labs'];
+  // const primaryViews = ['roadmap', 'kanban', 'focus', 'labs'];
 
   const handleNavItemClick = (view: string) => {
     if (Capacitor.isNativePlatform()) {
@@ -790,6 +856,13 @@ export const App: React.FC = () => {
             style={{ background: currentView === 'roadmap-v2' ? 'rgba(0,217,160,.15)' : undefined, color: currentView === 'roadmap-v2' ? 'var(--green)' : undefined }}
           >
             💥 v2 Roadmap
+          </button>
+          <button
+            className={`nav-tab ${currentView === 'roadmap-v3' ? 'active' : ''}`}
+            onClick={() => handleNavItemClick('roadmap-v3')}
+            style={{ background: currentView === 'roadmap-v3' ? 'rgba(168,85,247,.15)' : undefined, color: currentView === 'roadmap-v3' ? 'var(--purple)' : undefined }}
+          >
+            🚀 v3 Roadmap
           </button>
           <button
             className={`nav-tab ${currentView === 'kanban' ? 'active' : ''}`}
@@ -939,6 +1012,10 @@ export const App: React.FC = () => {
               <button className={`ham-item ${currentView === 'roadmap-v2' ? 'active' : ''}`} onClick={() => handleNavItemClick('roadmap-v2')}
                 style={{ color: currentView === 'roadmap-v2' ? 'var(--green)' : undefined }}>
                 <span className="ham-ico">💥</span>v2 Roadmap
+              </button>
+              <button className={`ham-item ${currentView === 'roadmap-v3' ? 'active' : ''}`} onClick={() => handleNavItemClick('roadmap-v3')}
+                style={{ color: currentView === 'roadmap-v3' ? 'var(--purple)' : undefined }}>
+                <span className="ham-ico">🚀</span>v3 Roadmap
               </button>
               <button className={`ham-item ${currentView === 'qbank' ? 'active' : ''}`} onClick={() => handleNavItemClick('qbank')}>
                 <span className="ham-ico">❓</span>Q-Bank
@@ -1094,7 +1171,7 @@ export const App: React.FC = () => {
                 <span className="ham-badge hot">hot</span>
               </button>
               <button className={`ham-item ${currentView === 'diagram' ? 'active' : ''}`} onClick={() => handleNavItemClick('diagram')}>
-                <span className="ham-ico">🎨</span>Diagram Builder
+                <span className="ham-ico">🎨</span>MindMap
                 <span className="ham-badge hot">new</span>
               </button>
               <button className={`ham-item ${currentView === 'devops-flows' ? 'active' : ''}`} onClick={() => handleNavItemClick('devops-flows')}>
@@ -1336,6 +1413,26 @@ export const App: React.FC = () => {
                 )}
                 <div style={{ marginTop: '4px' }}>Safe, client-side only.</div>
               </div>
+            </div>
+
+            {/* App UI Scaling (Font Size) */}
+            <div style={{ marginBottom: '16px' }}>
+              <label className="v4-label">App Text Size (Zoom)</label>
+              <select
+                value={uiScale}
+                onChange={e => {
+                  const val = parseFloat(e.target.value);
+                  setUiScale(val);
+                  localStorage.setItem('devops90_ui_scale', val.toString());
+                }}
+                className="v4-select"
+                style={{ width: '100%', background: 'var(--s2)', border: '1px solid var(--border)', color: 'var(--text)', padding: '8px 11px', borderRadius: 'var(--r8)', outline: 'none', fontSize: '13px' }}
+              >
+                <option value={1.0}>Normal (100%)</option>
+                <option value={1.1}>Large (110%)</option>
+                <option value={1.25}>Extra Large (125%)</option>
+                <option value={1.5}>Huge (150%)</option>
+              </select>
             </div>
 
             {/* Android Notifications Toggle */}

@@ -50,7 +50,7 @@ export const SecurityService = {
       return;
     }
     try {
-      await SecureStorage.set({ key, value: value.trim() });
+      await SecureStorage.set(key, value.trim());
     } catch (e) {
       console.warn("SecureStorage set failed, falling back to localStorage:", e);
       localStorage.setItem(key, value.trim());
@@ -66,8 +66,8 @@ export const SecurityService = {
       return localStorage.getItem(key) || '';
     }
     try {
-      const res = await SecureStorage.get({ key });
-      return res.value || '';
+      const res = await SecureStorage.get(key) as any;
+      return typeof res === 'string' ? res : String(res?.value ?? res ?? '');
     } catch (_) {
       // Fallback
       return localStorage.getItem(key) || '';
@@ -81,7 +81,7 @@ export const SecurityService = {
     localStorage.removeItem(key);
     if (!Capacitor.isNativePlatform()) return;
     try {
-      await SecureStorage.remove({ key });
+      await SecureStorage.remove(key);
     } catch (_) {}
   }
 };

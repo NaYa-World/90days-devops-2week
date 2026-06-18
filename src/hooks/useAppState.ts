@@ -796,7 +796,7 @@ export function useAppState() {
   };
 
   // Smart Next task
-  const getSmartNext = useCallback(() => {
+  const getSmartNext = useCallback((): { pi: number; di: number; d: typeof PHASES[0]['data'][0]; ph: typeof PHASES[0] } | null => {
     let weakestPi = 0;
     let weakestPct = 100;
     PHASES.forEach((ph, pi) => {
