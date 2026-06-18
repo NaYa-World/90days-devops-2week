@@ -8,11 +8,11 @@ pnpm-debug.log*
 lerna-debug.log*
 
 # Dependencies
-node_modules
+node_modules/
 
 # Build output
-dist
-dist-ssr
+dist/
+dist-ssr/
 *.local
 
 # APK binaries — use GitHub Releases for distribution
