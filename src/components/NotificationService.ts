@@ -39,30 +39,28 @@ export const NotificationService = {
   },
 
   async scheduleDailyReminders() {
-    const now = new Date();
-
-    const morning = new Date(now);
-    morning.setHours(3, 0, 0, 0);
-    if (morning <= now) morning.setDate(morning.getDate() + 1);
-
-    const evening = new Date(now);
-    evening.setHours(20, 0, 0, 0);
-    if (evening <= now) evening.setDate(evening.getDate() + 1);
-
     await LocalNotifications.schedule({
       notifications: [
         {
           id: 1001,
           title: '🔧 DevOps Morning Check-in',
           body: "Your 90-day streak doesn't build itself. What's today's task?",
-          schedule: { at: morning, every: 'day', allowWhileIdle: true },
+          schedule: {
+            on: { hour: 9, minute: 0 },
+            every: 'day',
+            allowWhileIdle: true
+          },
           channelId: 'devops90-reminders',
         },
         {
           id: 1002,
           title: '📊 Evening Progress Check',
           body: 'Did you log today? Day skipped = streak broken.',
-          schedule: { at: evening, every: 'day', allowWhileIdle: true },
+          schedule: {
+            on: { hour: 20, minute: 0 },
+            every: 'day',
+            allowWhileIdle: true
+          },
           channelId: 'devops90-reminders',
         },
       ],
