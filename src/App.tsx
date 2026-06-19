@@ -660,10 +660,9 @@ export const App: React.FC = () => {
         );
       case 'roadmap-v2':
         return (
-          <RoadmapV2View
-            appState={appState}
-            switchView={setCurrentView}
-          />
+          <React.Suspense fallback={<div style={{ padding: 40, color: 'var(--sub)', textAlign: 'center' }}>Loading original v2 roadmap...</div>}>
+            <RoadmapV2View appState={appState} switchView={setCurrentView} />
+          </React.Suspense>
         );
       case 'kanban':
         return (
@@ -703,12 +702,6 @@ export const App: React.FC = () => {
       //   return <ReportView appState={appState} />;
       case 'projects':
         return <ProjectsView appState={appState} switchView={setCurrentView} />;
-      case 'roadmap-v2':
-          return (
-            <React.Suspense fallback={<div style={{ padding: 40, color: 'var(--sub)', textAlign: 'center' }}>Loading original v2 roadmap...</div>}>
-              <RoadmapV2View appState={appState} switchView={setCurrentView} />
-            </React.Suspense>
-          );
         case 'roadmap-v3':
           return (
             <React.Suspense fallback={<div style={{ padding: 40, color: 'var(--sub)', textAlign: 'center' }}>Loading notes-driven roadmap...</div>}>
