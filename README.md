@@ -23,25 +23,30 @@ npm run build
 
 ---
 
-## 🔑 AI Features Setup
+## 🔑 AI Features Setup & Security
 
-Most AI features (mock interviews, resume ATS scanning, LinkedIn posts, code review) require an Anthropic API key.
+Most AI features (mock interviews, resume ATS scanning, LinkedIn posts, code review) utilize Claude. This application supports two secure methods to load keys:
 
-**How to add your key:**
-1. Open the app in your browser
-2. Click **🔑 Keys** in the top-right navigation
-3. Paste your Anthropic API key (`sk-ant-...`)
-4. Click Save
+### 1. Production Mode (Server-Side Proxy - Recommended)
+When deploying to serverless-compatible environments (such as Vercel), set the API keys as environment variables in your hosting provider's dashboard:
+* `ANTHROPIC_API_KEY`
+* `OPENAI_API_KEY`
+* `GEMINI_API_KEY`
+* `GROK_API_KEY`
 
-Or create a `.env` file in the project root:
-```
-VITE_ANTHROPIC_API_KEY=sk-ant-api03-your-key-here
-```
+In this mode, client requests are routed through a server-side API proxy (`/api/chat.ts`). No API keys are exposed to the client browser.
 
-> **Note:** If AI features show errors, open DevTools (F12) → Console and check:
-> - `401` → wrong or missing API key
-> - `CORS blocked` → use the `.env` file method instead of the settings modal
-> - `model_not_found` → the model name in AIService.ts needs updating to `claude-sonnet-4-20250514`
+### 2. Desktop/Local Mode (Client-Side Storage Fallback)
+For local runs, standalone usage, or running as a native mobile app (Capacitor/Android), keys can be supplied directly:
+- **Keys Settings Modal**: Click **🔑 Keys** in the top-right navigation and paste your keys securely.
+- **Local Environment File**: Create a `.env` file in the project root:
+  ```env
+  VITE_ANTHROPIC_API_KEY=sk-ant-api03-your-key-here
+  ```
+
+> **Note:** If AI features return errors, check that:
+> - You have a valid API key set either in the settings UI or as a server environment variable.
+> - In local mode, ensure the key is not restricted by CORS (Vite `.env` method is recommended locally to bypass CORS limits).
 
 ---
 
