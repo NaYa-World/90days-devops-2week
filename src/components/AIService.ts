@@ -58,6 +58,35 @@ export async function saveApiKey(key: string) {
 async function callAI(prompt: string, maxTokens: number = 1000): Promise<string> {
   const provider = getActiveProvider();
   const key = await getProviderKey(provider);
+
+  // 1. Try serverless backend proxy first
+  try {
+    const response = await fetch('/api/chat', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        provider,
+        prompt,
+        maxTokens,
+        clientKey: key || undefined
+      })
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      if (data.text !== undefined) {
+        return data.text;
+      }
+    } else {
+      console.warn(`Serverless proxy returned status ${response.status}. Falling back to direct client call.`);
+    }
+  } catch (err) {
+    console.warn('Serverless proxy connection failed. Falling back to direct client call.', err);
+  }
+
+  // 2. Direct client-side fallback if proxy is unavailable
   if (!key) {
     throw new Error(`API key for ${provider.toUpperCase()} is not configured. Please open Settings to configure it.`);
   }
@@ -72,7 +101,7 @@ async function callAI(prompt: string, maxTokens: number = 1000): Promise<string>
         'dangerously-allow-browser': 'true'
       },
       body: JSON.stringify({
-        model: 'claude-3-5-sonnet-20241022',
+        model: 'claude-sonnet-4-6',
         max_tokens: maxTokens,
         messages: [{ role: 'user', content: prompt }]
       })
