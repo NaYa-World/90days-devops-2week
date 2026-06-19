@@ -20,7 +20,7 @@ const config: CapacitorConfig = {
     },
     // ✅ ADD THIS BLOCK
     LocalNotifications: {
-      smallIcon: 'ic_stat_notify',
+      smallIcon: 'ic_launcher',
       iconColor: '#3B82F6',
       channels: [
         {
@@ -32,6 +32,15 @@ const config: CapacitorConfig = {
           vibration: true,
           lights: true,
           lightColor: '#3B82F6',
+        },
+        {
+          id: 'study-reminders',
+          name: 'Study Reminders',
+          description: 'DevOps study reminders scheduled daily',
+          importance: 5,
+          visibility: 1,
+          vibration: true,
+          sound: 'default'
         }
       ]
     }
