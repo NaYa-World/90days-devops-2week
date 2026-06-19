@@ -67,5 +67,10 @@ android/app/src/main/assets/public/
 .vercel
 .turbo
 
-#
-gemini.md  
+# Capacitor & Mobile generated native directories to exclude
+mobile_flutter/
+
+# Additional system/editor files
+.DS_Store
+*.log
+gemini.md
