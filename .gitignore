@@ -66,3 +66,6 @@ android/app/src/main/assets/public/
 *.tsbuildinfo
 .vercel
 .turbo
+
+#
+gemini.md  
