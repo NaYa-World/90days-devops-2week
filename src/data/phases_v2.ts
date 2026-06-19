@@ -14,7 +14,7 @@ export const PHASES_V2: Phase[] = [
   // Everything you learn is to fix something that is already broken.
   // ════════════════════════════════════════════════════════════════════════════
   {
-    title: 'Weeks 1–2 — Your First Real Server (It Will Break)',
+    title: 'Weeks 1–2 — Your First Real Server (It Will Break) [Est. AWS Spend: ~$0 - Free Tier]',
     days:  'Days 1–14',
     icon:  '💥',
     color: '#00d9a0',
@@ -33,6 +33,7 @@ export const PHASES_V2: Phase[] = [
           { t: '⚠️ GOTCHA: t2.micro is free tier but only for 12 months. Set a billing alert at $5 RIGHT NOW in AWS console so you never get a surprise invoice.', k: 'concept' },
           { t: 'DEPLOY a real app — write a 10-line Python Flask app (or Node.js), run it on port 5000: python3 app.py &', k: 'project' },
           { t: '🎤 INTERVIEW: "Tell me about a deployment you did." This is day 1 of your answer. Write 3 sentences about what you just did.', k: 'quiz' },
+          { t: '📦 ARTIFACT CHECKLIST: Commit a screenshot of your working "Welcome to nginx" page and the Flask/Node code to /linux/week1/ in your personal portfolio repo.', k: 'project' },
         ],
       },
       {
@@ -268,6 +269,7 @@ export const PHASES_V2: Phase[] = [
           { t: '🔴 SCENARIO: You need to containerise the Flask app you built in Week 1. Not a tutorial hello-world. Your actual app with its actual requirements.', k: 'concept' },
           { t: '💡 WHAT A DOCKERFILE IS: A recipe. Each line creates a new layer in the image. Docker caches layers — if line 5 did not change, it reuses the cached result instead of rerunning it. This is why the order of instructions matters enormously for build speed.', k: 'concept' },
           { t: 'WRITE your Dockerfile:\nFROM python:3.11-slim\n\nWORKDIR /app\n\n# Copy dependencies FIRST (before code) so this layer caches\nCOPY requirements.txt .\nRUN pip install --no-cache-dir -r requirements.txt\n\n# Now copy the code (changes often, should be last)\nCOPY . .\n\nEXPOSE 5000\n\nCMD ["python", "app.py"]', k: 'code' },
+          { t: '📦 ARTIFACT CHECKLIST: Commit your Dockerfile and requirements.txt to /docker/week3/ in your personal portfolio repo.', k: 'project' },
           { t: 'BUILD the image: docker build -t myapp:v1 . — the . means "use the current directory as context." The -t gives it a name and tag.', k: 'code' },
           { t: 'RUN it: docker run -p 5000:5000 --env-file .env myapp:v1 — the --env-file passes your environment variables without baking them into the image', k: 'code' },
           { t: '📝 NOTE: python:3.11-slim vs python:3.11 — "slim" is a minimal base image. The full python:3.11 image is 900MB. slim is 120MB. Always use slim or alpine unless you have a specific reason not to.', k: 'concept' },
@@ -629,7 +631,7 @@ export const PHASES_V2: Phase[] = [
   // Your server is a pet. Make it cattle.
   // ════════════════════════════════════════════════════════════════════════════
   {
-    title: 'Weeks 7–8 — Cloud & Infrastructure as Code',
+    title: 'Weeks 7–8 — Cloud & Infrastructure as Code [Est. AWS Spend: ~$8/month]',
     days:  'Days 43–56',
     icon:  '☁️',
     color: '#ffc850',
@@ -760,7 +762,7 @@ export const PHASES_V2: Phase[] = [
   // If you cannot see it, you cannot fix it.
   // ════════════════════════════════════════════════════════════════════════════
   {
-    title: 'Weeks 9–10 — Monitoring & Observability',
+    title: 'Weeks 9–10 — Monitoring & Observability [Est. AWS Spend: ~$5/month]',
     days:  'Days 57–70',
     icon:  '📊',
     color: '#ff5f5f',
@@ -860,7 +862,7 @@ export const PHASES_V2: Phase[] = [
   // After 10 weeks with Docker, you now understand WHY Kubernetes exists.
   // ════════════════════════════════════════════════════════════════════════════
   {
-    title: 'Weeks 11–12 — Kubernetes (After You Feel Why You Need It)',
+    title: 'Weeks 11–12 — Kubernetes (After You Feel Why You Need It) [Est. AWS Spend: ~$10/month]',
     days:  'Days 71–84',
     icon:  '⚙️',
     color: '#4fa8ff',
@@ -1047,7 +1049,7 @@ export const PHASES_V2: Phase[] = [
   // Each day is what you would actually do on the job, in the order you'd do it.
   // ════════════════════════════════════════════════════════════════════════════
   {
-    title: 'Weeks 14–15 — Enterprise CI/CD: Your First Two Weeks at an MNC',
+    title: 'Weeks 14–15 — Enterprise CI/CD: Your First Two Weeks at an MNC [Est. AWS Spend: ~$8/month]',
     days:  'Days 91–98',
     icon:  '🏢',
     color: '#f59e0b',
