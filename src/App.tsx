@@ -21,7 +21,8 @@ import { BackupService } from './components/BackupService';
 import { SecurityService } from './components/SecurityService';
 import { MonitoringService } from './components/MonitoringService';
 import { OTAService } from './components/OTAService';
-// import { NotificationService } from './components/NotificationService';
+import { NotificationService } from './components/NotificationService';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { AppShortcuts } from '@capawesome/capacitor-app-shortcuts';
 import { Network } from '@capacitor/network';
 import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
@@ -70,7 +71,7 @@ export const App: React.FC = () => {
     markNotificationsRead
   } = appState;
 
-  const [currentView, setCurrentView] = useState<string>('roadmap');
+  const [currentView, setCurrentView] = useState<string>('roadmap-v2');
   const [focusDay, setFocusDay] = useState<string>('0_0');
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const [showAnim, setShowAnim] = useState<boolean>(true);
@@ -139,7 +140,7 @@ export const App: React.FC = () => {
       });
 
 
-      // NotificationService.init(); // Commented out to prevent Firebase startup crash (requires google-services.json)
+      NotificationService.init(); // Initialized using local notifications (no Firebase dependency)
 
       // Configure native App Shortcuts (Home screen quick actions)
       AppShortcuts.set({
@@ -709,23 +710,41 @@ export const App: React.FC = () => {
             </React.Suspense>
           );
       case 'github-rewriter':
-        return <GithubRewriterView appState={appState} />;
+        return (
+          <ErrorBoundary name="GitHub Rewriter">
+            <GithubRewriterView appState={appState} />
+          </ErrorBoundary>
+        );
       case 'resume':
-        return <ResumeView appState={appState} />;
+        return (
+          <ErrorBoundary name="Resume Scorer">
+            <ResumeView appState={appState} />
+          </ErrorBoundary>
+        );
       case 'mock':
-        return <MockInterviewView appState={appState} switchView={setCurrentView} />;
+        return (
+          <ErrorBoundary name="Mock Interview">
+            <MockInterviewView appState={appState} switchView={setCurrentView} />
+          </ErrorBoundary>
+        );
       case 'skillgap':
         return (
-          <SkillGapView
-            appState={appState}
-            setFocusDay={setFocusDay}
-            switchView={setCurrentView}
-          />
+          <ErrorBoundary name="Skill Gap Analyser">
+            <SkillGapView
+              appState={appState}
+              setFocusDay={setFocusDay}
+              switchView={setCurrentView}
+            />
+          </ErrorBoundary>
         );
       case 'buildlog':
         return <BuildLogView appState={appState} />;
       case 'linkedin':
-        return <LinkedInView appState={appState} />;
+        return (
+          <ErrorBoundary name="LinkedIn Post Generator">
+            <LinkedInView appState={appState} />
+          </ErrorBoundary>
+        );
       case 'readiness':
         return <ReadinessView appState={appState} />;
       // case 'reviews':
@@ -831,18 +850,12 @@ export const App: React.FC = () => {
           <span></span>
           <span></span>
         </button>
-        <div className="nav-brand" onClick={() => handleNavItemClick('roadmap')} style={{ cursor: 'pointer' }}>
+        <div className="nav-brand" onClick={() => handleNavItemClick('roadmap-v2')} style={{ cursor: 'pointer' }}>
           <span className="g">DEV</span>
           <span className="p">OPS</span>
           <span className="v">BY GK</span>
         </div>
         <div className="nav-tabs">
-          <button
-            className={`nav-tab ${currentView === 'roadmap' ? 'active' : ''}`}
-            onClick={() => handleNavItemClick('roadmap')}
-          >
-            ☑ Roadmap
-          </button>
           <button
             className={`nav-tab ${currentView === 'roadmap-v2' ? 'active' : ''}`}
             onClick={() => handleNavItemClick('roadmap-v2')}
@@ -856,6 +869,12 @@ export const App: React.FC = () => {
             style={{ background: currentView === 'roadmap-v3' ? 'rgba(168,85,247,.15)' : undefined, color: currentView === 'roadmap-v3' ? 'var(--purple)' : undefined }}
           >
             🚀 v3 Roadmap
+          </button>
+          <button
+            className={`nav-tab ${currentView === 'roadmap' ? 'active' : ''}`}
+            onClick={() => handleNavItemClick('roadmap')}
+          >
+            ☑ v4 Reference
           </button>
           <button
             className={`nav-tab ${currentView === 'kanban' ? 'active' : ''}`}
@@ -1249,10 +1268,10 @@ export const App: React.FC = () => {
       {/* Mobile Bottom Navigation Bar */}
       <div id="bottom-bar">
         <button
-          className={`btab ${currentView === 'roadmap' ? 'active' : ''}`}
-          onClick={() => handleNavItemClick('roadmap')}
+          className={`btab ${currentView === 'roadmap-v2' ? 'active' : ''}`}
+          onClick={() => handleNavItemClick('roadmap-v2')}
         >
-          <span className="bico">☑</span>Map
+          <span className="bico">💥</span>V2 Map
         </button>
         <button
           className={`btab ${currentView === 'kanban' ? 'active' : ''}`}
