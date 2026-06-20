@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
+
 import { PHASES } from '../data/phases';
-import { PHASES_V2 } from '../data/phases_v2';
 import { days as notesDays } from '../data/notes';
 import { UseAppStateReturnType } from '../hooks/useAppState';
 
@@ -15,13 +15,13 @@ interface KanbanItem {
   pi?: number;
   d: any;
   di: number;
-  type: 'v1' | 'v2' | 'notes';
+  type: 'v1' | 'notes';
 }
 
-function loadV2State(key: string): Record<string, boolean> {
+function loadV1State(key: string): Record<string, boolean> {
   try { return JSON.parse(localStorage.getItem(key) || '{}'); } catch { return {}; }
 }
-function v2key(pi: number, di: number, ti: number) { return `v2_${pi}_${di}_${ti}`; }
+function v1key(pi: number, di: number, ti: number) { return `v1_${pi}_${di}_${ti}`; }
 
 function loadNotesState(username: string | null): Record<string, boolean> {
   const user = username ? username.toLowerCase() : 'guest';
@@ -35,11 +35,11 @@ export const KanbanView: React.FC<KanbanViewProps> = ({
   setFocusDay,
 }) => {
   const { dayStatus, dayDone, dayTotal, currentUser } = appState;
-  const [boardType, setBoardType] = useState<'v1' | 'v2' | 'notes'>('v2');
+  const [boardType, setBoardType] = useState<'v1' | 'notes'>('v1');
   const [kbPhase, setKbPhase] = useState<string>('all');
 
-  const userKey = `devops90_v2_tasks_${(currentUser || 'guest').toLowerCase()}`;
-  const v2state = loadV2State(userKey);
+  const userKey = `devops90_v1_tasks_${(currentUser || 'guest').toLowerCase()}`;
+  const v1state = loadV1State(userKey);
 
   const notesState = loadNotesState(currentUser);
 
@@ -63,7 +63,7 @@ export const KanbanView: React.FC<KanbanViewProps> = ({
     PHASES_V2.forEach((ph, pi) => {
       if (kbPhase !== 'all' && kbPhase !== String(pi)) return;
       ph.data.forEach((d, di) => {
-        const dDone = d.tasks.filter((_: any, ti: any) => !!v2state[v2key(pi, di, ti)]).length;
+        const dDone = d.tasks.filter((_: any, ti: any) => !!v1state[v1key(pi, di, ti)]).length;
         const dTotal = d.tasks.length;
         const status = dDone === 0 ? 'backlog' : dDone === dTotal ? 'done' : (dDone / dTotal >= 0.5 ? 'review' : 'inprogress');
         cols[status].push({ ph, pi, d, di, type: 'v2' });
@@ -82,7 +82,7 @@ export const KanbanView: React.FC<KanbanViewProps> = ({
       setFocusDay(`${item.pi}_${item.di}`);
       switchView('focus');
     } else if (item.type === 'v2') {
-      localStorage.setItem('devops90_v2_active_day', `${item.pi}_${item.di}`);
+      localStorage.setItem('devops90_v1_active_day', `${item.pi}_${item.di}`);
       switchView('roadmap-v2');
     } else if (item.type === 'notes') {
       localStorage.setItem('devops90_active_notes_day', String(item.di));
@@ -118,8 +118,7 @@ export const KanbanView: React.FC<KanbanViewProps> = ({
             className="v4-select"
             style={{ padding: '6px 12px', fontSize: '13px' }}
           >
-            <option value="v2">Problem-First Roadmap (v2)</option>
-            <option value="v1">v4 Reference Roadmap</option>
+            <option value="v1">DevOps Roadmap</option>
             <option value="notes">Bootcamp Notes (Days 1–4)</option>
           </select>
         </div>
@@ -134,7 +133,7 @@ export const KanbanView: React.FC<KanbanViewProps> = ({
               >
                 All Phases
               </button>
-              {(boardType === 'v1' ? PHASES : PHASES_V2).map((ph, pi) => (
+              {PHASES.map((ph, pi) => (
                 <button 
                   key={pi}
                   className={`fpill ${kbPhase === String(pi) ? 'active' : ''}`}
@@ -188,7 +187,7 @@ export const KanbanView: React.FC<KanbanViewProps> = ({
                       labelStr = item.d.label;
                       accentColor = item.ph.color;
                     } else if (item.type === 'v2') {
-                      dDone = item.d.tasks.filter((_: any, ti: any) => !!v2state[v2key(item.pi!, item.di, ti)]).length;
+                      dDone = item.d.tasks.filter((_: any, ti: any) => !!v1state[v1key(item.pi!, item.di, ti)]).length;
                       dTotal = item.d.tasks.length;
                       pct = dTotal ? Math.round((dDone / dTotal) * 100) : 0;
                       dayNumStr = item.d.day;

@@ -47,7 +47,7 @@ export const App: React.FC = () => {
     markNotificationsRead
   } = appState;
 
-  const [currentView, setCurrentView] = useState<string>('roadmap-v2');
+  const [currentView, setCurrentView] = useState<string>('roadmap');
   const [focusDay, setFocusDay] = useState<string>('0_0');
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const [showAnim, setShowAnim] = useState<boolean>(true);
@@ -525,18 +525,18 @@ export const App: React.FC = () => {
           <span></span>
           <span></span>
         </button>
-        <div className="nav-brand" onClick={() => handleNavItemClick('roadmap-v2')} style={{ cursor: 'pointer' }}>
+        <div className="nav-brand" onClick={() => handleNavItemClick('roadmap')} style={{ cursor: 'pointer' }}>
           <span className="g">DEV</span>
           <span className="p">OPS</span>
           <span className="v">BY GK</span>
         </div>
         <div className="nav-tabs">
           <button
-            className={`nav-tab ${currentView === 'roadmap-v2' ? 'active' : ''}`}
-            onClick={() => handleNavItemClick('roadmap-v2')}
-            style={{ background: currentView === 'roadmap-v2' ? 'rgba(0,217,160,.15)' : undefined, color: currentView === 'roadmap-v2' ? 'var(--green)' : undefined }}
+            className={`nav-tab ${currentView === 'roadmap' ? 'active' : ''}`}
+            onClick={() => handleNavItemClick('roadmap')}
+            style={{ background: currentView === 'roadmap' ? 'rgba(0,217,160,.15)' : undefined, color: currentView === 'roadmap' ? 'var(--green)' : undefined }}
           >
-            💥 v2 Roadmap
+            💥 DevOps Roadmap
           </button>
           <button
             className={`nav-tab ${currentView === 'roadmap-v3' ? 'active' : ''}`}
@@ -544,12 +544,6 @@ export const App: React.FC = () => {
             style={{ background: currentView === 'roadmap-v3' ? 'rgba(168,85,247,.15)' : undefined, color: currentView === 'roadmap-v3' ? 'var(--purple)' : undefined }}
           >
             🚀 v3 Roadmap
-          </button>
-          <button
-            className={`nav-tab ${currentView === 'roadmap' ? 'active' : ''}`}
-            onClick={() => handleNavItemClick('roadmap')}
-          >
-            ☑ v4 Reference
           </button>
           <button
             className={`nav-tab ${currentView === 'kanban' ? 'active' : ''}`}
@@ -641,10 +635,10 @@ export const App: React.FC = () => {
       {/* Mobile Bottom Navigation Bar */}
       <div id="bottom-bar">
         <button
-          className={`btab ${currentView === 'roadmap-v2' ? 'active' : ''}`}
-          onClick={() => handleNavItemClick('roadmap-v2')}
+          className={`btab ${currentView === 'roadmap' ? 'active' : ''}`}
+          onClick={() => handleNavItemClick('roadmap')}
         >
-          <span className="bico">💥</span>V2 Map
+          <span className="bico">💥</span>Roadmap
         </button>
         <button
           className={`btab ${currentView === 'kanban' ? 'active' : ''}`}
