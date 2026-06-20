@@ -99,7 +99,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         onClick={e => e.stopPropagation()}
       >
         {/* Fixed Header */}
-        <div style={{ padding: '22px 22px 10px', position: 'relative', flexShrink: 0 }}>
+        <div style={{ padding: '22px 22px 14px', position: 'relative', flexShrink: 0, borderBottom: '1px solid var(--border)' }}>
           <button
             onClick={onClose}
             style={{
@@ -120,10 +120,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           </div>
         </div>
 
-        {/* Fixed AI Provider Settings, Reminders & Save */}
-        <div style={{ padding: '0 22px 14px', borderBottom: '1px solid var(--border)', flexShrink: 0 }}>
+        {/* Scrollable Content Part */}
+        <div style={{ padding: '20px 22px', overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: '20px' }}>
           {/* Active Provider Selector */}
-          <div style={{ marginBottom: '16px' }}>
+          <div>
             <label className="v4-label">Active AI Provider</label>
             <select
               value={activeProvider}
@@ -148,7 +148,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           </div>
 
           {/* Provider API Key Input */}
-          <div style={{ marginBottom: '16px' }}>
+          <div>
             <label className="v4-label">
               {activeProvider === 'claude' && 'Anthropic API Key'}
               {activeProvider === 'chatgpt' && 'OpenAI API Key'}
@@ -239,7 +239,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           </div>
 
           {/* App UI Scaling (Font Size) */}
-          <div style={{ marginBottom: '16px' }}>
+          <div>
             <label className="v4-label">App Text Size (Zoom)</label>
             <select
               value={uiScale}
@@ -260,38 +260,37 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 fontSize: '13px'
               }}
             >
-              <option value={1.0}>Normal (100%)</option>
-              <option value={1.1}>Large (110%)</option>
-              <option value={1.25}>Extra Large (125%)</option>
-              <option value={1.5}>Huge (150%)</option>
+              <option value="0.85">Small (85%)</option>
+              <option value="1">Normal (100%)</option>
+              <option value="1.15">Large (115%)</option>
+              <option value="1.3">Extra Large (130%)</option>
             </select>
           </div>
 
-          {/* Android Notifications Toggle */}
-          <div style={{ marginBottom: '16px' }}>
-            <label
-              className="v4-label"
-              style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
-            >
-              <span>Study Reminders</span>
+          {/* Study Reminders */}
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+              <span className="v4-label" style={{ margin: 0 }}>Study Reminders</span>
               <button
                 onClick={toggleStudyReminders}
                 style={{
-                  background: notificationsEnabled ? 'var(--blue)' : 'var(--border)',
-                  color: '#fff',
+                  background: notificationsEnabled ? 'var(--green)' : 'rgba(255,255,255,0.08)',
+                  color: notificationsEnabled ? '#000' : 'var(--sub)',
                   border: 'none',
-                  padding: '4px 12px',
+                  padding: '4px 10px',
                   borderRadius: '12px',
+                  fontSize: '10px',
+                  fontWeight: 'bold',
+                  fontFamily: 'var(--mono)',
                   cursor: 'pointer',
-                  fontSize: '12px',
-                  fontWeight: 'bold'
+                  transition: 'all 0.2s ease'
                 }}
               >
                 {notificationsEnabled ? 'ON' : 'OFF'}
               </button>
-            </label>
+            </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '10px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <span style={{ fontSize: '12px', color: 'var(--muted)' }}>Morning Reminder</span>
               <input
                 type="time"
@@ -356,33 +355,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             )}
           </div>
 
-          <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: '12px' }}>
-            <button className="v4-btn-secondary" onClick={onClose}>
-              Cancel
-            </button>
-            <button
-              className="v4-btn-primary"
-              onClick={handleSaveSettings}
-              style={{
-                padding: '8px 16px',
-                background: 'rgba(0,217,160,.1)',
-                border: '1px solid rgba(0,217,160,.4)',
-                color: 'var(--green)',
-                fontFamily: 'var(--mono)',
-                fontSize: '10px',
-                borderRadius: 'var(--r8)',
-                cursor: 'pointer'
-              }}
-            >
-              Save Key
-            </button>
-          </div>
-        </div>
-
-        {/* Scrollable Bottom Part */}
-        <div style={{ padding: '16px 22px 22px', overflowY: 'auto', flex: 1 }}>
           {/* GitHub Sync Status */}
-          <div style={{ marginBottom: '18px', paddingTop: '16px', borderTop: '1px solid var(--border)' }}>
+          <div style={{ paddingTop: '16px', borderTop: '1px solid var(--border)' }}>
             <div style={{ fontSize: '13px', fontWeight: 700, marginBottom: '12px', color: 'var(--text)' }}>
               🐙 GitHub Sync Status
             </div>
@@ -468,6 +442,29 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               Automatically match the application's appearance with your system's light/dark mode settings.
             </div>
           </div>
+        </div>
+
+        {/* Fixed Footer */}
+        <div style={{ padding: '12px 22px 20px', borderTop: '1px solid var(--border)', flexShrink: 0, display: 'flex', gap: '8px', justifyContent: 'flex-end', background: 'var(--s1)' }}>
+          <button className="v4-btn-secondary" onClick={onClose}>
+            Cancel
+          </button>
+          <button
+            className="v4-btn-primary"
+            onClick={handleSaveSettings}
+            style={{
+              padding: '8px 16px',
+              background: 'rgba(0,217,160,.1)',
+              border: '1px solid rgba(0,217,160,.4)',
+              color: 'var(--green)',
+              fontFamily: 'var(--mono)',
+              fontSize: '10px',
+              borderRadius: 'var(--r8)',
+              cursor: 'pointer'
+            }}
+          >
+            Save Key
+          </button>
         </div>
       </div>
     </div>
