@@ -123,7 +123,18 @@ export const App: React.FC = () => {
       });
 
 
-      NotificationService.init(notificationsEnabled, morningTime, eveningTime); // Initialized using local notifications (no Firebase dependency)
+      // Check notification permission and sync state to avoid UI mismatch if permissions were manually revoked
+      LocalNotifications.checkPermissions().then(perm => {
+        if (perm.display !== 'granted' && notificationsEnabled) {
+          setNotificationsEnabled(false);
+          localStorage.setItem('devops90_notifications_enabled', 'false');
+          NotificationService.sync(false, morningTime, eveningTime);
+        } else {
+          NotificationService.init(notificationsEnabled, morningTime, eveningTime);
+        }
+      }).catch(() => {
+        NotificationService.init(notificationsEnabled, morningTime, eveningTime);
+      });
 
       // Configure native App Shortcuts (Home screen quick actions)
       AppShortcuts.set({
@@ -237,11 +248,19 @@ export const App: React.FC = () => {
     }
   }, []);
 
-  // Run native state backup when app goes to background
+  // Run native state backup when app goes to background, or check permissions when resuming
   useEffect(() => {
     if (Capacitor.isNativePlatform()) {
       const sub = CapacitorApp.addListener('appStateChange', (state) => {
-        if (!state.isActive) {
+        if (state.isActive) {
+          LocalNotifications.checkPermissions().then(perm => {
+            if (perm.display !== 'granted' && notificationsEnabled) {
+              setNotificationsEnabled(false);
+              localStorage.setItem('devops90_notifications_enabled', 'false');
+              NotificationService.sync(false, morningTime, eveningTime);
+            }
+          }).catch(() => {});
+        } else {
           BackupService.autoBackup().catch(err => {
             console.error("devops90: App background backup failed:", err);
           });
@@ -252,7 +271,7 @@ export const App: React.FC = () => {
       };
     }
     return undefined;
-  }, []);
+  }, [notificationsEnabled, morningTime, eveningTime]);
 
   // Prevent background scrolling when settings or pomo modal is open
   useEffect(() => {
