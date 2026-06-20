@@ -14,7 +14,7 @@ import {
 } from './components/AIService';
 import { LocalNotifications } from '@capacitor/local-notifications';
 import { StatusBar, Style } from '@capacitor/status-bar';
-import { Haptics, ImpactStyle, NotificationType } from '@capacitor/haptics';
+import { Haptics, ImpactStyle } from '@capacitor/haptics';
 import { Share } from '@capacitor/share';
 import { Capacitor } from '@capacitor/core';
 import { App as CapacitorApp } from '@capacitor/app';
@@ -27,7 +27,6 @@ import { SecurityService } from './components/SecurityService';
 import { MonitoringService } from './components/MonitoringService';
 import { OTAService } from './components/OTAService';
 import { NotificationService } from './components/NotificationService';
-import { ErrorBoundary } from './components/ErrorBoundary';
 import { AppShortcuts } from '@capawesome/capacitor-app-shortcuts';
 import { Network } from '@capacitor/network';
 import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
@@ -70,8 +69,11 @@ export const App: React.FC = () => {
   const [isPomoOpen, setIsPomoOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isNotifOpen, setIsNotifOpen] = useState(false);
-  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
-  const [reminderTime, setReminderTime] = useState(() => localStorage.getItem('devops90_reminder_time') || '09:00');
+  const [notificationsEnabled, setNotificationsEnabled] = useState(() => {
+    return localStorage.getItem('devops90_notifications_enabled') === 'true';
+  });
+  const [morningTime, setMorningTime] = useState(() => localStorage.getItem('devops90_morning_time') || '09:00');
+  const [eveningTime, setEveningTime] = useState(() => localStorage.getItem('devops90_evening_time') || '20:00');
   const [uiScale, setUiScale] = useState(() => parseFloat(localStorage.getItem('devops90_ui_scale') || '1.0'));
   const [activeProvider, setActiveProviderState] = useState<AIProvider>('claude');
 
@@ -121,7 +123,7 @@ export const App: React.FC = () => {
       });
 
 
-      NotificationService.init(); // Initialized using local notifications (no Firebase dependency)
+      NotificationService.init(notificationsEnabled, morningTime, eveningTime); // Initialized using local notifications (no Firebase dependency)
 
       // Configure native App Shortcuts (Home screen quick actions)
       AppShortcuts.set({
@@ -153,6 +155,7 @@ export const App: React.FC = () => {
       notifListener = LocalNotifications.addListener(
         'localNotificationActionPerformed',
         (action) => {
+          console.log('devops90 [Tapped]:', action.notification);
           const id = action.notification.id;
           if ((id >= 9001 && id <= 9007) || (id >= 9101 && id <= 9107)) {
             const weekday = id >= 9101 ? id - 9100 : id - 9000;
@@ -200,16 +203,12 @@ export const App: React.FC = () => {
     return undefined;
   }, [syncWithSystemTheme]);
 
-  // Check initial notification status
+  // Sync notification service on status or time changes
   useEffect(() => {
     if (Capacitor.isNativePlatform()) {
-      LocalNotifications.getPending().then(res => {
-        if (res.notifications.some(n => (n.id >= 9001 && n.id <= 9007) || (n.id >= 9101 && n.id <= 9107))) {
-          setNotificationsEnabled(true);
-        }
-      }).catch(() => {});
+      NotificationService.init(notificationsEnabled, morningTime, eveningTime);
     }
-  }, []);
+  }, [notificationsEnabled, morningTime, eveningTime]);
 
   // Theme the native status bar on launch
   useEffect(() => {
@@ -301,73 +300,21 @@ export const App: React.FC = () => {
   }, [isSettingsOpen, isPomoOpen, isDrawerOpen]);
 
 
-  const handleReminderTimeChange = async (newTime: string) => {
-    setReminderTime(newTime);
-    localStorage.setItem('devops90_reminder_time', newTime);
-    
-    if (notificationsEnabled && Capacitor.isNativePlatform()) {
-      try {
-        const ids = [
-          ...Array.from({ length: 7 }, (_, i) => ({ id: 9000 + i + 1 })),
-          ...Array.from({ length: 7 }, (_, i) => ({ id: 9100 + i + 1 }))
-        ];
-        await LocalNotifications.cancel({ notifications: ids });
-        
-        const [hourStr, minStr] = newTime.split(':');
-        const hr = parseInt(hourStr, 10);
-        const hr2 = (hr + 12) % 24;
-        const mn = parseInt(minStr, 10);
-        
-        const notifications = [];
-        const challengeNotifications = CHALLENGES.map(ch => {
-          const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-          const dayName = daysOfWeek[ch.weekday - 1];
-          return {
-            weekday: ch.weekday,
-            title: `🏆 DevOps Daily Challenge (${dayName})`,
-            body: `Today's challenge: ${ch.question.substring(0, 90)}...`
-          };
-        });
+  const handleMorningTimeChange = async (newTime: string) => {
+    setMorningTime(newTime);
+    localStorage.setItem('devops90_morning_time', newTime);
+    if (Capacitor.isNativePlatform()) {
+      await NotificationService.sync(notificationsEnabled, newTime, eveningTime);
+      showToast(`Morning reminder updated to ${newTime}`);
+    }
+  };
 
-        for (const msg of challengeNotifications) {
-          notifications.push({
-            id: 9000 + msg.weekday,
-            title: msg.title,
-            body: msg.body,
-            schedule: {
-              on: {
-                weekday: msg.weekday,
-                hour: hr,
-                minute: mn
-              },
-              every: 'week' as any
-            },
-            channelId: 'study-reminders',
-            sound: 'default'
-          });
-
-          notifications.push({
-            id: 9100 + msg.weekday,
-            title: msg.title + ' (Evening Reminder)',
-            body: msg.body,
-            schedule: {
-              on: {
-                weekday: msg.weekday,
-                hour: hr2,
-                minute: mn
-              },
-              every: 'week' as any
-            },
-            channelId: 'study-reminders',
-            sound: 'default'
-          });
-        }
-
-        await LocalNotifications.schedule({ notifications });
-        showToast(`Study reminders updated to ${newTime}!`);
-      } catch (err) {
-        console.error('Failed to reschedule notifications:', err);
-      }
+  const handleEveningTimeChange = async (newTime: string) => {
+    setEveningTime(newTime);
+    localStorage.setItem('devops90_evening_time', newTime);
+    if (Capacitor.isNativePlatform()) {
+      await NotificationService.sync(notificationsEnabled, morningTime, newTime);
+      showToast(`Evening reminder updated to ${newTime}`);
     }
   };
 
@@ -376,88 +323,25 @@ export const App: React.FC = () => {
       alert('Study reminders are only supported on native Android/iOS devices.');
       return;
     }
+    const nextEnabled = !notificationsEnabled;
     try {
-      if (!notificationsEnabled) {
+      if (nextEnabled) {
         let permStatus = await LocalNotifications.checkPermissions();
         if (permStatus.display !== 'granted') {
           permStatus = await LocalNotifications.requestPermissions();
         }
         if (permStatus.display === 'granted') {
-          if (Capacitor.isNativePlatform()) {
-            await LocalNotifications.createChannel({
-              id: 'study-reminders',
-              name: 'Study Reminders',
-              description: 'DevOps study reminders scheduled daily',
-              importance: 5,
-              visibility: 1,
-              vibration: true,
-              sound: 'default'
-            });
-          }
-
-          const [hourStr, minStr] = reminderTime.split(':');
-          const hr = parseInt(hourStr || '9', 10);
-          const hr2 = (hr + 12) % 24;
-          const mn = parseInt(minStr || '0', 10);
-
-          const notifications = [];
-          const challengeNotifications = CHALLENGES.map(ch => {
-            const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-            const dayName = daysOfWeek[ch.weekday - 1];
-            return {
-              weekday: ch.weekday,
-              title: `🏆 DevOps Daily Challenge (${dayName})`,
-              body: `Today's challenge: ${ch.question.substring(0, 90)}...`
-            };
-          });
-
-          for (const msg of challengeNotifications) {
-            notifications.push({
-              id: 9000 + msg.weekday,
-              title: msg.title,
-              body: msg.body,
-              schedule: {
-                on: {
-                  weekday: msg.weekday,
-                  hour: hr,
-                  minute: mn
-                },
-                every: 'week' as any
-              },
-              channelId: 'study-reminders',
-              sound: 'default'
-            });
-
-            notifications.push({
-              id: 9100 + msg.weekday,
-              title: msg.title + ' (Evening Reminder)',
-              body: msg.body,
-              schedule: {
-                on: {
-                  weekday: msg.weekday,
-                  hour: hr2,
-                  minute: mn
-                },
-                every: 'week' as any
-              },
-              channelId: 'study-reminders',
-              sound: 'default'
-            });
-          }
-
-          await LocalNotifications.schedule({ notifications });
+          await NotificationService.sync(true, morningTime, eveningTime);
           setNotificationsEnabled(true);
-          alert(`Study reminders enabled! You will receive a daily DevOps challenge notification at ${reminderTime}.`);
+          localStorage.setItem('devops90_notifications_enabled', 'true');
+          alert(`Study reminders enabled! You will receive daily check-ins at ${morningTime} and ${eveningTime}.`);
         } else {
           alert('Notification permission denied.');
         }
       } else {
-        const ids = [
-          ...Array.from({ length: 7 }, (_, i) => ({ id: 9000 + i + 1 })),
-          ...Array.from({ length: 7 }, (_, i) => ({ id: 9100 + i + 1 }))
-        ];
-        await LocalNotifications.cancel({ notifications: ids });
+        await NotificationService.sync(false, morningTime, eveningTime);
         setNotificationsEnabled(false);
+        localStorage.setItem('devops90_notifications_enabled', 'false');
         alert('Study reminders disabled.');
       }
     } catch (err) {
@@ -882,8 +766,10 @@ export const App: React.FC = () => {
         setUiScale={setUiScale}
         notificationsEnabled={notificationsEnabled}
         toggleStudyReminders={toggleStudyReminders}
-        reminderTime={reminderTime}
-        handleReminderTimeChange={handleReminderTimeChange}
+        morningTime={morningTime}
+        handleMorningTimeChange={handleMorningTimeChange}
+        eveningTime={eveningTime}
+        handleEveningTimeChange={handleEveningTimeChange}
         handleSaveSettings={handleSaveSettings}
         syncWithSystemTheme={syncWithSystemTheme}
         setSyncWithSystemTheme={setSyncWithSystemTheme}
@@ -891,6 +777,12 @@ export const App: React.FC = () => {
         currentUser={currentUser}
         handleExportBackup={handleExportBackup}
         handleImportBackupFile={handleImportBackupFile}
+        handleTestNotification={async () => {
+          if (Capacitor.isNativePlatform()) {
+            await NotificationService.testFireNow();
+            showToast('Test notification scheduled in 10 seconds. Close the app to see it!');
+          }
+        }}
       />
 
       <DailyChallengeModal
