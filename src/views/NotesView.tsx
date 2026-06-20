@@ -269,13 +269,14 @@ export const NotesView: React.FC<NotesViewProps> = ({ appState }) => {
   const isDayCompleted = !!notesState[dayKeyStr];
 
   const syncToGitHub = useCallback(async () => {
-    const pat = await SecurityService.getSecureCredential('devops90_github_pat') || '';
-    const ghUsername = localStorage.getItem('devops90_github_username') || '';
-    const repo = localStorage.getItem('devops90_github_repo') || '';
+    const oauthToken = localStorage.getItem('devops90_github_token') || '';
+    const pat = oauthToken || await SecurityService.getSecureCredential('devops90_github_pat') || '';
+    const ghUsername = (oauthToken ? currentUser : localStorage.getItem('devops90_github_username')) || '';
+    const repo = localStorage.getItem('devops90_github_repo') || 'devops-notes';
     const branch = localStorage.getItem('devops90_github_branch') || 'main';
 
     if (!pat || !ghUsername || !repo) {
-      showToast('⚠️ GitHub settings missing. Go to Settings → API Keys to configure GitHub PAT, username, and repo.');
+      showToast('⚠️ GitHub settings missing. Go to Settings & Profile to configure GitHub username and repo.');
       setSyncStatus('error');
       setTimeout(() => setSyncStatus('idle'), 3000);
       return;
@@ -294,6 +295,35 @@ export const NotesView: React.FC<NotesViewProps> = ({ appState }) => {
       const today = new Date().toISOString().split('T')[0];
       const content = day.github?.template?.replace(/YYYY-MM-DD/g, today) || `# Day ${day.day}\n\nNotes for Day ${day.day}`;
       const base64Content = btoa(unescape(encodeURIComponent(content)));
+
+      // 1. Check if repository exists, if not, try to create it
+      const repoCheck = await fetch(`https://api.github.com/repos/${ghUsername}/${repo}`, {
+        headers: { Authorization: `Bearer ${pat}`, Accept: 'application/vnd.github.v3+json' }
+      });
+      
+      if (repoCheck.status === 404) {
+        // Repository doesn't exist, create it!
+        const createRes = await fetch('https://api.github.com/user/repos', {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${pat}`,
+            Accept: 'application/vnd.github.v3+json',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            name: repo,
+            description: 'My DevOps 90 Days Bootcamp study notes',
+            private: false,
+            auto_init: true
+          })
+        });
+        if (!createRes.ok) {
+          const createErr = await createRes.text();
+          throw new Error(`Repository '${repo}' not found and creation failed: ${createErr}`);
+        }
+        // Wait for GitHub database replication
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      }
 
       // Check if file already exists (to get SHA for update)
       let sha: string | undefined;
@@ -343,7 +373,7 @@ export const NotesView: React.FC<NotesViewProps> = ({ appState }) => {
       setSyncLoading(false);
       setTimeout(() => setSyncStatus('idle'), 4000);
     }
-  }, [day, isDayCompleted]);
+  }, [day, isDayCompleted, currentUser]);
 
   const toggleDayComplete = () => {
     if (Capacitor.isNativePlatform()) {

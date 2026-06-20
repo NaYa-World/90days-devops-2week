@@ -1,3 +1,5 @@
+import { Capacitor } from '@capacitor/core';
+
 export interface DeviceFlowResponse {
   device_code: string;
   user_code: string;
@@ -14,7 +16,10 @@ export const GitHubOAuthService = {
   CLIENT_ID: 'Ov23liEmS0mPcDXsVsOd',
 
   async initiateDeviceFlow(): Promise<DeviceFlowResponse> {
-    const res = await fetch('https://github.com/login/device/code', {
+    const isLocalWeb = !Capacitor.isNativePlatform() && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+    const baseUrl = isLocalWeb ? '/github-oauth' : 'https://github.com';
+
+    const res = await fetch(`${baseUrl}/login/device/code`, {
       method: 'POST',
       headers: {
         'Accept': 'application/json',
@@ -22,12 +27,13 @@ export const GitHubOAuthService = {
       },
       body: JSON.stringify({
         client_id: this.CLIENT_ID,
-        scope: 'gist user'
+        scope: 'gist user repo'
       })
     });
 
     if (!res.ok) {
-      throw new Error('Failed to initiate device flow');
+      const errorText = await res.text();
+      throw new Error(`Failed to initiate device flow: ${res.status} ${errorText}`);
     }
 
     return res.json();
@@ -38,7 +44,10 @@ export const GitHubOAuthService = {
     return new Promise((resolve, reject) => {
       const poll = async () => {
         try {
-          const res = await fetch('https://github.com/login/oauth/access_token', {
+          const isLocalWeb = !Capacitor.isNativePlatform() && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+          const baseUrl = isLocalWeb ? '/github-oauth' : 'https://github.com';
+
+          const res = await fetch(`${baseUrl}/login/oauth/access_token`, {
             method: 'POST',
             headers: {
               'Accept': 'application/json',
