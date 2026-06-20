@@ -471,7 +471,7 @@ export const App: React.FC = () => {
       if (Capacitor.isNativePlatform()) {
         Haptics.impact({ style: ImpactStyle.Medium }).catch(() => {});
         await Share.share({
-          title: 'My 90 Days DevOps Journey 🚀',
+          title: 'My 90 Days DevOps Notes 🚀',
           text: `I'm learning DevOps! Current study stats: ${studyHours} hours of focus sessions. Join me in the 90 Days DevOps Challenge!`,
           url: 'https://github.com/NaYaGK/sitecore-ww',
           dialogTitle: 'Share your DevOps Progress',
@@ -479,7 +479,7 @@ export const App: React.FC = () => {
       } else {
         if (navigator.share) {
           await navigator.share({
-            title: 'My 90 Days DevOps Journey 🚀',
+            title: 'My 90 Days DevOps Notes 🚀',
             text: `I'm learning DevOps! Current study stats: ${studyHours} hours of focus sessions. Join me in the 90 Days DevOps Challenge!`,
             url: 'https://github.com/NaYaGK/sitecore-ww',
           });
