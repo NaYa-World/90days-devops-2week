@@ -35,7 +35,7 @@ export const KanbanView: React.FC<KanbanViewProps> = ({
   setFocusDay,
 }) => {
   const { dayStatus, dayDone, dayTotal, currentUser } = appState;
-  const [boardType, setBoardType] = useState<'v1' | 'v2' | 'notes'>('v1');
+  const [boardType, setBoardType] = useState<'v1' | 'v2' | 'notes'>('v2');
   const [kbPhase, setKbPhase] = useState<string>('all');
 
   const userKey = `devops90_v2_tasks_${(currentUser || 'guest').toLowerCase()}`;
@@ -118,8 +118,8 @@ export const KanbanView: React.FC<KanbanViewProps> = ({
             className="v4-select"
             style={{ padding: '6px 12px', fontSize: '13px' }}
           >
-            <option value="v1">Original Roadmap (v1)</option>
             <option value="v2">Problem-First Roadmap (v2)</option>
+            <option value="v1">v4 Reference Roadmap</option>
             <option value="notes">Bootcamp Notes (Days 1–4)</option>
           </select>
         </div>
