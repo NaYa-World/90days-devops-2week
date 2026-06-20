@@ -10,10 +10,6 @@ interface SettingsModalProps {
   setActiveProviderState: (provider: AIProvider) => void;
   providerKeys: Record<AIProvider, string>;
   setProviderKeys: React.Dispatch<React.SetStateAction<Record<AIProvider, string>>>;
-  githubSettings: { pat: string; username: string; repo: string; branch: string };
-  setGithubSettings: React.Dispatch<
-    React.SetStateAction<{ pat: string; username: string; repo: string; branch: string }>
-  >;
   uiScale: number;
   setUiScale: (scale: number) => void;
   notificationsEnabled: boolean;
@@ -37,8 +33,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   setActiveProviderState,
   providerKeys,
   setProviderKeys,
-  githubSettings,
-  setGithubSettings,
   uiScale,
   setUiScale,
   notificationsEnabled,
@@ -387,115 +381,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
         {/* Scrollable Bottom Part */}
         <div style={{ padding: '16px 22px 22px', overflowY: 'auto', flex: 1 }}>
-          {/* GitHub Notes Sync */}
-          <div style={{ marginBottom: '18px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-              <span style={{ fontSize: '16px' }}>🦑</span>
-              <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text)' }}>GitHub Notes Sync</span>
-            </div>
-            <div style={{ fontSize: '11px', color: 'var(--sub)', marginBottom: '12px', lineHeight: '1.4' }}>
-              Configure these to sync Bootcamp Notes directly to your GitHub repository. You need a{' '}
-              <a
-                href="https://github.com/settings/tokens"
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{ color: 'var(--green)', textDecoration: 'underline' }}
-              >
-                GitHub Personal Access Token
-              </a>{' '}
-              with <code>repo</code> scope.
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '12px' }}>
-              <div>
-                <label className="v4-label" style={{ fontSize: '10px' }}>GitHub Username</label>
-                <input
-                  type="text"
-                  className="v4-input"
-                  value={githubSettings.username}
-                  onChange={e => setGithubSettings({ ...githubSettings, username: e.target.value })}
-                  placeholder="your-username"
-                  style={{
-                    width: '100%',
-                    background: 'var(--bg)',
-                    border: '1px solid var(--border)',
-                    color: 'var(--text)',
-                    fontSize: '12px',
-                    padding: '6px 9px',
-                    borderRadius: 'var(--r8)',
-                    outline: 'none',
-                    fontFamily: 'var(--mono)'
-                  }}
-                />
-              </div>
-              <div>
-                <label className="v4-label" style={{ fontSize: '10px' }}>Repository Name</label>
-                <input
-                  type="text"
-                  className="v4-input"
-                  value={githubSettings.repo}
-                  onChange={e => setGithubSettings({ ...githubSettings, repo: e.target.value })}
-                  placeholder="devops-notes"
-                  style={{
-                    width: '100%',
-                    background: 'var(--bg)',
-                    border: '1px solid var(--border)',
-                    color: 'var(--text)',
-                    fontSize: '12px',
-                    padding: '6px 9px',
-                    borderRadius: 'var(--r8)',
-                    outline: 'none',
-                    fontFamily: 'var(--mono)'
-                  }}
-                />
-              </div>
-            </div>
-
-            <div style={{ marginBottom: '12px' }}>
-              <label className="v4-label" style={{ fontSize: '10px' }}>GitHub Personal Access Token (PAT)</label>
-              <input
-                type="password"
-                className="v4-input"
-                value={githubSettings.pat}
-                onChange={e => setGithubSettings({ ...githubSettings, pat: e.target.value })}
-                placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"
-                style={{
-                  width: '100%',
-                  background: 'var(--bg)',
-                  border: '1px solid var(--border)',
-                  color: 'var(--text)',
-                  fontSize: '12px',
-                  padding: '6px 9px',
-                  borderRadius: 'var(--r8)',
-                  outline: 'none',
-                  fontFamily: 'var(--mono)'
-                }}
-              />
-            </div>
-
-            <div style={{ marginBottom: '4px' }}>
-              <label className="v4-label" style={{ fontSize: '10px' }}>Branch (Default: main)</label>
-              <input
-                type="text"
-                className="v4-input"
-                value={githubSettings.branch}
-                onChange={e => setGithubSettings({ ...githubSettings, branch: e.target.value })}
-                placeholder="main"
-                style={{
-                  width: '100%',
-                  background: 'var(--bg)',
-                  border: '1px solid var(--border)',
-                  color: 'var(--text)',
-                  fontSize: '12px',
-                  padding: '6px 9px',
-                  borderRadius: 'var(--r8)',
-                  outline: 'none',
-                  fontFamily: 'var(--mono)'
-                }}
-              />
-            </div>
-          </div>
-
           {/* GitHub Sync Status */}
           <div style={{ marginBottom: '18px', paddingTop: '16px', borderTop: '1px solid var(--border)' }}>
             <div style={{ fontSize: '13px', fontWeight: 700, marginBottom: '12px', color: 'var(--text)' }}>

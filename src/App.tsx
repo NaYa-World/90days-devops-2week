@@ -79,7 +79,6 @@ export const App: React.FC = () => {
     gemini: '',
     grok: ''
   });
-  const [githubSettings, setGithubSettings] = useState({ pat: '', username: '', repo: '', branch: 'main' });
 
   const [openHamSections, setOpenHamSections] = useState<Record<string, boolean>>({
     study: true,
@@ -401,26 +400,16 @@ export const App: React.FC = () => {
   };
 
   const handleOpenSettings = async () => {
-    const active = getActiveProvider();
-    setActiveProviderState(active);
-
     const claudeKey = await SecurityService.getSecureCredential('devops90_anthropic_api_key');
     const chatgptKey = await SecurityService.getSecureCredential('devops90_openai_api_key');
     const geminiKey = await SecurityService.getSecureCredential('devops90_gemini_api_key');
     const grokKey = await SecurityService.getSecureCredential('devops90_grok_api_key');
-    const githubPat = await SecurityService.getSecureCredential('devops90_github_pat');
 
     setProviderKeys({
       claude: claudeKey,
       chatgpt: chatgptKey,
       gemini: geminiKey,
       grok: grokKey
-    });
-    setGithubSettings({
-      pat: githubPat,
-      username: localStorage.getItem('devops90_github_username') || '',
-      repo: localStorage.getItem('devops90_github_repo') || '',
-      branch: localStorage.getItem('devops90_github_branch') || 'main'
     });
     setIsSettingsOpen(true);
   };
@@ -432,11 +421,6 @@ export const App: React.FC = () => {
     await SecurityService.saveSecureCredential('devops90_gemini_api_key', providerKeys.gemini);
     await SecurityService.saveSecureCredential('devops90_grok_api_key', providerKeys.grok);
     
-    // Save GitHub settings
-    await SecurityService.saveSecureCredential('devops90_github_pat', githubSettings.pat.trim());
-    localStorage.setItem('devops90_github_username', githubSettings.username.trim());
-    localStorage.setItem('devops90_github_repo', githubSettings.repo.trim());
-    localStorage.setItem('devops90_github_branch', githubSettings.branch.trim() || 'main');
     setIsSettingsOpen(false);
 
     if (Capacitor.isNativePlatform()) {
@@ -689,8 +673,6 @@ export const App: React.FC = () => {
         setActiveProviderState={setActiveProviderState}
         providerKeys={providerKeys}
         setProviderKeys={setProviderKeys}
-        githubSettings={githubSettings}
-        setGithubSettings={setGithubSettings}
         uiScale={uiScale}
         setUiScale={setUiScale}
         notificationsEnabled={notificationsEnabled}

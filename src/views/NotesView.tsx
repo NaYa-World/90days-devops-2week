@@ -270,13 +270,13 @@ export const NotesView: React.FC<NotesViewProps> = ({ appState }) => {
 
   const syncToGitHub = useCallback(async () => {
     const oauthToken = localStorage.getItem('devops90_github_token') || '';
-    const pat = oauthToken || await SecurityService.getSecureCredential('devops90_github_pat') || '';
-    const ghUsername = (oauthToken ? currentUser : localStorage.getItem('devops90_github_username')) || '';
-    const repo = localStorage.getItem('devops90_github_repo') || 'devops-notes';
-    const branch = localStorage.getItem('devops90_github_branch') || 'main';
+    const pat = oauthToken;
+    const ghUsername = currentUser || '';
+    const repo = '90days-devops-my-notes';
+    const branch = 'main';
 
-    if (!pat || !ghUsername || !repo) {
-      showToast('⚠️ GitHub settings missing. Go to Settings & Profile to configure GitHub username and repo.');
+    if (!oauthToken || !ghUsername) {
+      showToast('⚠️ Please sign in with GitHub in Settings & Profile (top-right menu) to sync your notes.');
       setSyncStatus('error');
       setTimeout(() => setSyncStatus('idle'), 3000);
       return;
