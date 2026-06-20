@@ -585,8 +585,6 @@ export const App: React.FC = () => {
     return (
       <LoginScreen
         loginUser={loginUser}
-        registerUser={registerUser}
-        getAccounts={getAccounts}
       />
     );
   }

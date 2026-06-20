@@ -1,88 +1,125 @@
-import { SecurityService } from './SecurityService';
+export const GitHubSyncService = {
+  GIST_FILENAME: 'devops90_backup.json',
+  
+  async getToken(): Promise<string | null> {
+    return localStorage.getItem('devops90_github_token');
+  },
 
-/**
- * Background GitHub auto-sync utility.
- * Automatically saves all devops90 state keys from localStorage
- * and pushes them as a progress.json file to the configured repository.
- */
-export const autoSyncToGitHub = async (): Promise<void> => {
-  const pat = await SecurityService.getSecureCredential('devops90_github_pat') || '';
-  const ghUsername = localStorage.getItem('devops90_github_username') || '';
-  const repo = localStorage.getItem('devops90_github_repo') || '';
-  const branch = localStorage.getItem('devops90_github_branch') || 'main';
+  async autoSyncToGitHub(): Promise<void> {
+    const token = await this.getToken();
+    if (!token) return;
 
-  // Return early if GitHub integration is not configured
-  if (!pat || !ghUsername || !repo) {
-    return;
-  }
-
-  try {
-    // 1. Gather all progress data
-    const progressData: Record<string, string> = {};
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key && key.startsWith('devops90')) {
-        const val = localStorage.getItem(key);
-        if (val !== null) {
-          progressData[key] = val;
-        }
-      }
-    }
-
-    const progressStr = JSON.stringify(progressData, null, 2);
-    const base64Content = btoa(unescape(encodeURIComponent(progressStr)));
-    const filePath = 'progress.json';
-
-    // 2. Check if the file exists to get its SHA (required for updating files in GitHub API)
-    let sha: string | undefined;
     try {
-      const checkRes = await fetch(
-        `https://api.github.com/repos/${ghUsername}/${repo}/contents/${filePath}?ref=${branch}`,
-        {
-          headers: {
-            Authorization: `Bearer ${pat}`,
-            Accept: 'application/vnd.github.v3+json'
-          }
+      const progressData: Record<string, string> = {};
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith('devops90') && key !== 'devops90_github_token') {
+          const val = localStorage.getItem(key);
+          if (val !== null) progressData[key] = val;
         }
-      );
-      if (checkRes.ok) {
-        const existing = await checkRes.json();
-        sha = existing.sha;
       }
-    } catch (_) {
-      // File doesn't exist yet, which is fine
-    }
 
-    // 3. PUT the file back
-    const body: Record<string, string> = {
-      message: `Sync DevOps study progress: ${new Date().toISOString()}`,
-      content: base64Content,
-      branch
-    };
-    if (sha) {
-      body.sha = sha;
+      const content = JSON.stringify(progressData, null, 2);
+      
+      // 1. Find existing Gist
+      const existingGistId = await this.findBackupGist(token);
+      
+      if (existingGistId) {
+        // Update gist
+        await fetch(`https://api.github.com/gists/${existingGistId}`, {
+          method: 'PATCH',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/vnd.github.v3+json',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            files: {
+              [this.GIST_FILENAME]: { content }
+            }
+          })
+        });
+        console.log('devops90: Backup Gist updated.');
+      } else {
+        // Create new gist
+        await fetch('https://api.github.com/gists', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/vnd.github.v3+json',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            description: 'DevOps 90 Days App Backup',
+            public: false,
+            files: {
+              [this.GIST_FILENAME]: { content }
+            }
+          })
+        });
+        console.log('devops90: New Backup Gist created.');
+      }
+    } catch (err) {
+      console.error('devops90: Gist sync failed', err);
     }
+  },
 
-    const res = await fetch(
-      `https://api.github.com/repos/${ghUsername}/${repo}/contents/${filePath}`,
-      {
-        method: 'PUT',
+  async findBackupGist(token: string): Promise<string | null> {
+    try {
+      const res = await fetch('https://api.github.com/gists', {
         headers: {
-          Authorization: `Bearer ${pat}`,
-          Accept: 'application/vnd.github.v3+json',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(body)
-      }
-    );
-
-    if (res.ok) {
-      console.log('devops90: Background progress synced to GitHub successfully.');
-    } else {
-      const errText = await res.text();
-      console.warn('devops90: Background progress sync failed:', errText);
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/vnd.github.v3+json'
+        }
+      });
+      if (!res.ok) return null;
+      const gists = await res.json();
+      const backupGist = gists.find((g: any) => Object.keys(g.files).includes(this.GIST_FILENAME));
+      return backupGist ? backupGist.id : null;
+    } catch (e) {
+      return null;
     }
-  } catch (err) {
-    console.error('devops90: Error during GitHub background sync:', err);
+  },
+
+  async restoreFromGitHub(token: string): Promise<boolean> {
+    try {
+      const gistId = await this.findBackupGist(token);
+      if (!gistId) return false;
+
+      const res = await fetch(`https://api.github.com/gists/${gistId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/vnd.github.v3+json'
+        }
+      });
+      if (!res.ok) return false;
+      
+      const gist = await res.json();
+      const file = gist.files[this.GIST_FILENAME];
+      if (!file || !file.content) return false;
+
+      const data = JSON.parse(file.content);
+      
+      // Clean existing state
+      for (let i = localStorage.length - 1; i >= 0; i--) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith('devops90') && key !== 'devops90_github_token') {
+          localStorage.removeItem(key);
+        }
+      }
+
+      // Restore new state
+      Object.keys(data).forEach(key => {
+        localStorage.setItem(key, data[key]);
+      });
+
+      console.log('devops90: Successfully restored state from Gist.');
+      return true;
+    } catch (e) {
+      console.error('devops90: Restore failed', e);
+      return false;
+    }
   }
 };
+
+export const autoSyncToGitHub = () => GitHubSyncService.autoSyncToGitHub();
