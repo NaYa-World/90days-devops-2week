@@ -7,7 +7,7 @@ import { showToast } from '../components/Toast';
 import { BackupService } from '../components/BackupService';
 import { Capacitor } from '@capacitor/core';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
-import { autoSyncToGitHub } from '../components/GitHubSyncService';
+import { autoSyncToGitHub, GitHubSyncService } from '../components/GitHubSyncService';
 
 export interface AppNotification {
   id: number;
@@ -259,33 +259,22 @@ export function useAppState() {
   };
 
   // User auth methods
-  const getAccounts = (): { username: string; password?: string }[] => {
-    try {
-      const accounts = localStorage.getItem('devops90_accounts');
-      return accounts ? JSON.parse(accounts) : [];
-    } catch (_) {
-      return [];
-    }
-  };
-
-  const loginUser = (username: string, password?: string): boolean => {
+  const loginUser = (username: string, token: string): boolean => {
     const trimmed = username.trim();
     if (!trimmed) return false;
-    const accounts = getAccounts();
-    const match = accounts.find(a => a.username.toLowerCase() === trimmed.toLowerCase());
-    if (match) {
-      if (password && match.password && match.password !== password) {
-        return false;
-      }
-      const actualUser = match.username;
-      localStorage.setItem('devops90_current_user', actualUser);
-      setCurrentUser(actualUser);
-      
-      const key = `${LOCAL_STORAGE_KEY_PREFIX}${actualUser.toLowerCase()}`;
+    
+    // Store token and current user
+    localStorage.setItem('devops90_github_token', token);
+    localStorage.setItem('devops90_current_user', trimmed);
+    setCurrentUser(trimmed);
+    
+    // Attempt to restore state from GitHub immediately
+    GitHubSyncService.restoreFromGitHub(token).then(restored => {
+      const key = `${LOCAL_STORAGE_KEY_PREFIX}${trimmed.toLowerCase()}`;
       const stored = localStorage.getItem(key);
       const loadedState = stored ? parseState(stored) : getBlankState();
 
-      // Check and add pending tasks reminder
+      // Remind user of pending tasks if they have any
       const allTaskIds = allIds();
       const completedCount = allTaskIds.filter(id => !!loadedState.completedTasks[id]).length;
       const pendingCount = allTaskIds.length - completedCount;
@@ -301,8 +290,6 @@ export function useAppState() {
             read: false
           };
           loadedState.notifications = [newNotif, ...(loadedState.notifications || [])].slice(0, 30);
-          
-          // Write back update immediately so it is persisted
           try {
             const rawStored = stored ? JSON.parse(stored) : {};
             rawStored._notifications = loadedState.notifications;
@@ -312,23 +299,13 @@ export function useAppState() {
       }
 
       setState(loadedState);
-      return true;
-    }
-    return false;
-  };
+      if (restored) {
+        showToast('Successfully restored backup from GitHub Gist!');
+      } else {
+        showToast('Welcome to DevOps 90 Days! Cloud backup initialized.');
+      }
+    });
 
-  const registerUser = (username: string, password?: string): boolean => {
-    const trimmed = username.trim();
-    if (!trimmed) return false;
-    const accounts = getAccounts();
-    const exists = accounts.some(a => a.username.toLowerCase() === trimmed.toLowerCase());
-    if (exists) return false;
-
-    const newAccounts = [...accounts, { username: trimmed, password }];
-    localStorage.setItem('devops90_accounts', JSON.stringify(newAccounts));
-    localStorage.setItem('devops90_current_user', trimmed);
-    setCurrentUser(trimmed);
-    setState(getBlankState());
     return true;
   };
 
@@ -336,6 +313,14 @@ export function useAppState() {
     localStorage.removeItem('devops90_current_user');
     setCurrentUser(null);
     setState(getBlankState());
+  };
+
+  const registerUser = (username: string, token: string = '') => {
+    loginUser(username, token);
+  };
+
+  const getAccounts = () => {
+    return currentUser ? [currentUser] : [];
   };
 
   // Notifications methods

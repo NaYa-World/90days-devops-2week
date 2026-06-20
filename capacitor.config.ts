@@ -17,6 +17,24 @@ const config: CapacitorConfig = {
       showSpinner: false,
       splashFullScreen: true,
       splashImmersive: true
+    },
+    LocalNotifications: {
+      smallIcon: 'ic_stat_notify',
+      iconColor: '#3B82F6',
+      sound: 'default',
+      channels: [
+        {
+          id: 'devops90-reminders',
+          name: 'Daily Reminders',
+          description: 'Twice-daily DevOps progress nudges and daily challenges',
+          importance: 5,
+          visibility: 1,
+          vibration: true,
+          lights: true,
+          lightColor: '#3B82F6',
+          sound: 'default'
+        }
+      ]
     }
   }
 };

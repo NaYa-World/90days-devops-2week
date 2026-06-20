@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite --open",
     "notes": "vite --open /notes.html",
-    "build:mindmap": "npm run build --prefix ../mindmap && mkdir -p public/mindmap && cp -r ../mindmap/dist/* public/mindmap/",
+    "build:mindmap": "test -d ../mindmap && npm run build --prefix ../mindmap && mkdir -p public/mindmap && cp -r ../mindmap/dist/* public/mindmap/ || echo 'Mindmap project not found, skipping build.'",
     "build": "npm run build:mindmap && tsc && vite build",
     "preview": "vite preview",
     "test": "vitest run",

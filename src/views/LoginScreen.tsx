@@ -1,44 +1,38 @@
 import React, { useState } from 'react';
+import { GitHubOAuthService, DeviceFlowResponse } from '../components/GitHubOAuthService';
 
 interface LoginScreenProps {
-  loginUser: (username: string, password?: string) => boolean;
-  registerUser: (username: string, password?: string) => boolean;
-  getAccounts: () => { username: string; password?: string }[];
+  loginUser: (username: string, token: string) => boolean;
 }
 
-export const LoginScreen: React.FC<LoginScreenProps> = ({ loginUser, registerUser, getAccounts }) => {
-  const [isLogin, setIsLogin] = useState(true);
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+export const LoginScreen: React.FC<LoginScreenProps> = ({ loginUser }) => {
+  const [loading, setLoading] = useState(false);
+  const [deviceFlow, setDeviceFlow] = useState<DeviceFlowResponse | null>(null);
   const [error, setError] = useState('');
-  
-  const accounts = getAccounts();
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-
-    if (!username.trim()) {
-      setError('Username is required');
-      return;
+  const handleGitHubLogin = async () => {
+    try {
+      setLoading(true);
+      setError('');
+      
+      const flowInfo = await GitHubOAuthService.initiateDeviceFlow();
+      setDeviceFlow(flowInfo);
+      
+      // Start polling for token
+      const token = await GitHubOAuthService.pollForAccessToken(flowInfo.device_code, flowInfo.interval);
+      
+      // We got the token! Fetch user profile
+      const profile = await GitHubOAuthService.getUserProfile(token);
+      
+      // Login the user in the app state
+      loginUser(profile.login, token);
+      
+    } catch (err: any) {
+      setError(err.message || 'Authentication failed. Please try again.');
+      setDeviceFlow(null);
+    } finally {
+      setLoading(false);
     }
-
-    if (isLogin) {
-      const success = loginUser(username, password);
-      if (!success) {
-        setError('Invalid username or password');
-      }
-    } else {
-      const success = registerUser(username, password);
-      if (!success) {
-        setError('Username already exists or is invalid');
-      }
-    }
-  };
-
-  const handleSelectAccount = (accUsername: string) => {
-    setUsername(accUsername);
-    setIsLogin(true);
   };
 
   return (
@@ -60,10 +54,11 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ loginUser, registerUse
         borderRadius: '20px',
         padding: '32px 24px',
         boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
-        position: 'relative'
+        position: 'relative',
+        textAlign: 'center'
       }}>
         {/* Brand */}
-        <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+        <div style={{ marginBottom: '32px' }}>
           <div style={{ fontFamily: 'monospace', fontSize: '11px', color: 'var(--green)', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '6px' }}>
             90 Days DevOps v4
           </div>
@@ -71,46 +66,8 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ loginUser, registerUse
             Apprentice Portal
           </h2>
           <p style={{ color: 'var(--sub)', fontSize: '12px', marginTop: '6px' }}>
-            Local-first account system. All progress is saved on your device.
+            Authenticate with GitHub to sync your progress securely.
           </p>
-        </div>
-
-        {/* Tab switchers */}
-        <div style={{ display: 'flex', background: '#141b26', borderRadius: '10px', padding: '4px', marginBottom: '20px' }}>
-          <button
-            onClick={() => { setIsLogin(true); setError(''); }}
-            style={{
-              flex: 1,
-              background: isLogin ? '#1c2436' : 'transparent',
-              border: 'none',
-              borderRadius: '8px',
-              color: isLogin ? '#fff' : '#7d8fa8',
-              padding: '8px',
-              fontSize: '13px',
-              fontWeight: 600,
-              cursor: 'pointer',
-              transition: 'all 0.2s'
-            }}
-          >
-            Sign In
-          </button>
-          <button
-            onClick={() => { setIsLogin(false); setError(''); }}
-            style={{
-              flex: 1,
-              background: !isLogin ? '#1c2436' : 'transparent',
-              border: 'none',
-              borderRadius: '8px',
-              color: !isLogin ? '#fff' : '#7d8fa8',
-              padding: '8px',
-              fontSize: '13px',
-              fontWeight: 600,
-              cursor: 'pointer',
-              transition: 'all 0.2s'
-            }}
-          >
-            Register
-          </button>
         </div>
 
         {error && (
@@ -121,117 +78,89 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ loginUser, registerUse
             padding: '10px 14px',
             borderRadius: '8px',
             fontSize: '12.5px',
-            marginBottom: '16px',
+            marginBottom: '24px',
             fontFamily: 'monospace'
           }}>
             ⚠ {error}
           </div>
         )}
 
-        {/* Form */}
-        <form onSubmit={handleSubmit}>
-          <div style={{ marginBottom: '16px' }}>
-            <label style={{ display: 'block', fontSize: '12px', color: '#7d8fa8', marginBottom: '6px', fontFamily: 'monospace' }}>
-              USERNAME
-            </label>
-            <input
-              type="text"
-              value={username}
-              onChange={e => setUsername(e.target.value)}
-              placeholder="e.g. karthik"
-              style={{
-                width: '100%',
-                background: '#07090f',
-                border: '1px solid #222d42',
-                borderRadius: '8px',
-                padding: '10px 12px',
-                fontSize: '14px',
-                color: '#fff',
-                outline: 'none',
-                transition: 'border-color 0.2s'
-              }}
-              onFocus={e => e.currentTarget.style.borderColor = 'var(--green)'}
-              onBlur={e => e.currentTarget.style.borderColor = '#222d42'}
-            />
-          </div>
-
-          <div style={{ marginBottom: '24px' }}>
-            <label style={{ display: 'block', fontSize: '12px', color: '#7d8fa8', marginBottom: '6px', fontFamily: 'monospace' }}>
-              PASSWORD (OPTIONAL)
-            </label>
-            <input
-              type="password"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              placeholder="••••••••"
-              style={{
-                width: '100%',
-                background: '#07090f',
-                border: '1px solid #222d42',
-                borderRadius: '8px',
-                padding: '10px 12px',
-                fontSize: '14px',
-                color: '#fff',
-                outline: 'none',
-                transition: 'border-color 0.2s'
-              }}
-              onFocus={e => e.currentTarget.style.borderColor = 'var(--green)'}
-              onBlur={e => e.currentTarget.style.borderColor = '#222d42'}
-            />
-          </div>
-
+        {!deviceFlow ? (
           <button
-            type="submit"
+            onClick={handleGitHubLogin}
+            disabled={loading}
             style={{
               width: '100%',
-              background: 'var(--green)',
-              color: '#000',
+              background: '#2ea043',
+              color: '#fff',
               border: 'none',
               borderRadius: '8px',
-              padding: '12px',
-              fontSize: '14px',
+              padding: '14px',
+              fontSize: '15px',
               fontWeight: 'bold',
-              cursor: 'pointer',
-              transition: 'transform 0.1s'
+              cursor: loading ? 'not-allowed' : 'pointer',
+              transition: 'all 0.2s',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '10px',
+              opacity: loading ? 0.7 : 1
             }}
-            onMouseDown={e => e.currentTarget.style.transform = 'scale(0.98)'}
-            onMouseUp={e => e.currentTarget.style.transform = 'scale(1)'}
+            onMouseOver={e => !loading && (e.currentTarget.style.background = '#2c974b')}
+            onMouseOut={e => !loading && (e.currentTarget.style.background = '#2ea043')}
           >
-            {isLogin ? 'Enter Workspace →' : 'Create Profile →'}
+            {loading ? (
+              <span>Initiating Auth Flow...</span>
+            ) : (
+              <>
+                <svg viewBox="0 0 16 16" width="20" height="20" fill="currentColor">
+                  <path d="M8 0c4.42 0 8 3.58 8 8a8.013 8.013 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.27.01-1.13.01-2.2 0-.75-.25-1.23-.54-1.48 1.78-.2 3.65-.88 3.65-3.95 0-.88-.31-1.59-.82-2.15.08-.2.36-1.02-.08-2.12 0 0-.67-.22-2.2.82-.64-.18-1.32-.27-2-.27-.68 0-1.36.09-2 .27-1.53-1.03-2.2-.82-2.2-.82-.44 1.1-.16 1.92-.08 2.12-.51.56-.82 1.28-.82 2.15 0 3.06 1.86 3.75 3.64 3.95-.23.2-.44.55-.51 1.07-.46.21-1.61.55-2.33-.66-.15-.24-.6-.83-1.23-.82-.67.01-.27.38.01.53.34.19.73.9.82 1.13.16.45.68 1.31 2.69.94 0 .67.01 1.3.01 1.49 0 .21-.15.45-.55.38A7.995 7.995 0 0 1 0 8c0-4.42 3.58-8 8-8Z"></path>
+                </svg>
+                Continue with GitHub
+              </>
+            )}
           </button>
-        </form>
-
-        {/* Saved Profiles Switcher */}
-        {accounts.length > 0 && (
-          <div style={{ marginTop: '28px', paddingTop: '20px', borderTop: '1px solid #222d42' }}>
-            <div style={{ fontSize: '11px', color: '#7d8fa8', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '10px', fontFamily: 'monospace' }}>
-              Saved Profiles on Device
+        ) : (
+          <div style={{
+            background: '#141b26',
+            border: '1px solid #222d42',
+            borderRadius: '12px',
+            padding: '24px',
+            textAlign: 'center'
+          }}>
+            <h3 style={{ margin: '0 0 16px 0', fontSize: '18px' }}>Action Required</h3>
+            <p style={{ fontSize: '14px', color: 'var(--sub)', margin: '0 0 20px 0', lineHeight: 1.5 }}>
+              1. Open <a href={deviceFlow.verification_uri} target="_blank" rel="noreferrer" style={{ color: 'var(--blue)' }}>{deviceFlow.verification_uri}</a>
+              <br/>
+              2. Enter the code below to authorize this app:
+            </p>
+            
+            <div style={{
+              background: '#07090f',
+              border: '2px dashed #222d42',
+              borderRadius: '8px',
+              padding: '16px',
+              fontSize: '28px',
+              fontWeight: 800,
+              letterSpacing: '4px',
+              color: 'var(--green)',
+              marginBottom: '20px',
+              fontFamily: 'monospace'
+            }}>
+              {deviceFlow.user_code}
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '120px', overflowY: 'auto' }}>
-              {accounts.map((acc, idx) => (
-                <div
-                  key={idx}
-                  onClick={() => handleSelectAccount(acc.username)}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    background: '#141b26',
-                    border: '1px solid #222d42',
-                    borderRadius: '8px',
-                    padding: '8px 12px',
-                    cursor: 'pointer',
-                    fontSize: '13px',
-                    transition: 'all 0.15s'
-                  }}
-                  onMouseOver={e => e.currentTarget.style.borderColor = '#00d9a0'}
-                  onMouseOut={e => e.currentTarget.style.borderColor = '#222d42'}
-                >
-                  <span style={{ fontWeight: 600 }}>👤 {acc.username}</span>
-                  <span style={{ fontSize: '10px', color: '#4a5568', fontFamily: 'monospace' }}>Select</span>
-                </div>
-              ))}
+            
+            <div style={{ fontSize: '12px', color: '#7d8fa8' }}>
+              <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', background: '#ffc850', marginRight: '6px', animation: 'pulse 1.5s infinite' }}></span>
+              Waiting for authorization...
             </div>
+            <style>{`
+              @keyframes pulse {
+                0% { opacity: 0.4; }
+                50% { opacity: 1; }
+                100% { opacity: 0.4; }
+              }
+            `}</style>
           </div>
         )}
       </div>

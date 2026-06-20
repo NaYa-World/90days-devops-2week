@@ -25,46 +25,51 @@ test.describe('DevOps90 Core Workflows', () => {
 
     await page.screenshot({ path: 'test-results/after-login.png' });
 
-    // Verify login success by checking for Roadmap tab
-    await expect(page.locator('.nav-btn', { hasText: 'Roadmap' })).toBeVisible({ timeout: 15000 });
+    // Verify login success by checking for v2 Roadmap tab
+    await expect(page.locator('.nav-tab', { hasText: 'v2 Roadmap' })).toBeVisible({ timeout: 15000 });
 
     // 3. Roadmap Interaction
-    // Expand Phase 1 if not expanded
-    const phase1Header = page.locator('h3', { hasText: 'Phase 1: Linux & Scripting Foundation' });
+    // Phase 1 (Weeks 1-2) is already expanded by default, but let's make sure the header is visible.
+    const phase1Header = page.getByText('Weeks 1–2 — Your First Real Server').first();
     await expect(phase1Header).toBeVisible();
+
+    // Expand Day 1
+    const day1Header = page.locator('#day-0-0').getByText('Day 1', { exact: true });
+    await day1Header.click();
     
-    // Check off the first task (Day 1)
-    const day1Checkbox = page.locator('input[type="checkbox"]').first();
-    await day1Checkbox.check();
+    // Toggle the first task (🔴 SCENARIO: ...)
+    const firstTask = page.locator('#day-0-0').getByText('🔴 SCENARIO:').first();
+    await firstTask.click();
     
-    // Assert XP increments
-    const xpCounter = page.getByText(/XP: \d+/);
-    await expect(xpCounter).toBeVisible();
-    await expect(day1Checkbox).toBeChecked();
+    // Assert XP and Done stats increment
+    await expect(page.getByText('XP', { exact: true })).toBeVisible();
+    await expect(page.getByText('~15', { exact: true })).toBeVisible();
+    await expect(page.getByText('Done', { exact: true })).toBeVisible();
 
     // 4. Navigation & Views
     // Switch to Focus Mode
-    await page.locator('.nav-btn', { hasText: 'Focus' }).click();
-    await expect(page.locator('h1', { hasText: 'Focus Mode' })).toBeVisible();
+    await page.locator('.nav-tab', { hasText: 'Focus' }).click();
+    await expect(page.getByRole('button', { name: 'Focus Today' })).toBeVisible();
 
     // Switch to Notes
     await page.locator('.nav-btn', { hasText: 'Notes' }).click();
-    await expect(page.locator('h2', { hasText: 'Study Notes Repository' })).toBeVisible();
+    await expect(page.getByText('Trainer Beside You.').first()).toBeVisible();
 
-    // Switch to Labs
-    await page.locator('.nav-btn', { hasText: 'Labs' }).click();
-    await expect(page.locator('h1', { hasText: 'DevOps Labs' })).toBeVisible();
+    // Switch to Labs via Sidebar Drawer
+    await page.locator('#ham-btn').click();
+    await page.locator('.ham-item', { hasText: 'Labs' }).click();
+    await expect(page.getByText('Daily DevOps Labs (Days 1–10)')).toBeVisible();
 
-    // Switch back to Roadmap
-    await page.locator('.nav-btn', { hasText: 'Roadmap' }).click();
+    // Switch back to v2 Roadmap
+    await page.locator('.nav-tab', { hasText: 'v2 Roadmap' }).click();
 
     // 5. Settings Modal
     await page.locator('.nav-btn', { hasText: 'Settings' }).click();
-    await expect(page.getByText('Settings & API Keys')).toBeVisible();
+    await expect(page.locator('div').filter({ hasText: /^⚙️ Settings & Profile$/ })).toBeVisible();
     
     // Close settings
-    await page.getByRole('button', { name: 'Save & Close' }).click();
-    await expect(page.getByText('Settings & API Keys')).toBeHidden();
+    await page.getByRole('button', { name: 'Cancel' }).click();
+    await expect(page.locator('div').filter({ hasText: /^⚙️ Settings & Profile$/ })).toBeHidden();
   });
 
 });

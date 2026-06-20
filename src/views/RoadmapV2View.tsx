@@ -30,7 +30,11 @@ interface Props {
 
 export const RoadmapV2View: React.FC<Props> = ({ appState }) => {
   const userKey = `devops90_v2_tasks_${(appState.currentUser || 'guest').toLowerCase()}`;
+  const artifactsKey = `devops90_v2_artifacts_${(appState.currentUser || 'guest').toLowerCase()}`;
   const [v2state, setV2State] = useState<Record<string, boolean>>(() => loadV2State(userKey));
+  const [v2Artifacts, setV2Artifacts] = useState<Record<string, string>>(() => {
+    try { return JSON.parse(localStorage.getItem(artifactsKey) || '{}'); } catch { return {}; }
+  });
   const [openPhases, setOpenPhases] = useState<Record<number, boolean>>({ 0: true });
   const [openDays, setOpenDays] = useState<Record<string, boolean>>({});
   const [search, setSearch] = useState('');
@@ -39,7 +43,50 @@ export const RoadmapV2View: React.FC<Props> = ({ appState }) => {
   // Sync state if currentUser changes
   React.useEffect(() => {
     setV2State(loadV2State(userKey));
-  }, [userKey]);
+    try {
+      setV2Artifacts(JSON.parse(localStorage.getItem(artifactsKey) || '{}'));
+    } catch {
+      setV2Artifacts({});
+    }
+  }, [userKey, artifactsKey]);
+
+  function checkAndTriggerConfetti(pi: number, state: Record<string, boolean>, artifacts: Record<string, string>) {
+    const totalDays = PHASES_V2[pi].data.length;
+    const doneDays = PHASES_V2[pi].data.filter((_, di) => isDayComplete(pi, di, state, artifacts)).length;
+    if (doneDays === totalDays && totalDays > 0) {
+      confetti({ particleCount: 120, spread: 70, origin: { y: 0.6 } });
+    }
+  }
+
+  function updateArtifact(pi: number, di: number, url: string) {
+    const key = `${pi}_${di}`;
+    const next = { ...v2Artifacts, [key]: url };
+    setV2Artifacts(next);
+    try {
+      localStorage.setItem(artifactsKey, JSON.stringify(next));
+    } catch (e) {
+      console.error(e);
+    }
+    checkAndTriggerConfetti(pi, v2state, next);
+  }
+
+  function isValidArtifactLink(url: string): boolean {
+    const clean = url.trim();
+    if (!clean) return false;
+    return clean.startsWith('http://') || clean.startsWith('https://') || clean.includes('github.com') || clean.includes('git');
+  }
+
+  function isDayComplete(pi: number, di: number, state: Record<string, boolean>, artifacts: Record<string, string>) {
+    const day = PHASES_V2[pi].data[di];
+    const dayDoneCount = day.tasks.filter((_, ti) => !!state[v2key(pi, di, ti)]).length;
+    const tasksComplete = dayDoneCount === day.tasks.length;
+    const url = artifacts[`${pi}_${di}`] || '';
+    return tasksComplete && isValidArtifactLink(url);
+  }
+
+  function phaseDoneDays(pi: number, state: Record<string, boolean>, artifacts: Record<string, string>) {
+    return PHASES_V2[pi].data.filter((_, di) => isDayComplete(pi, di, state, artifacts)).length;
+  }
 
   // Handle auto-scroll and expand from Kanban redirects
   React.useEffect(() => {
@@ -64,9 +111,9 @@ export const RoadmapV2View: React.FC<Props> = ({ appState }) => {
     }
   }, []);
 
-  const totalDone = PHASES_V2.reduce((a, _, pi) => a + phaseDone(pi, v2state), 0);
-  const totalAll  = PHASES_V2.reduce((a, _, pi) => a + phaseTotal(pi), 0);
-  const overallPct = totalAll ? Math.round((totalDone / totalAll) * 100) : 0;
+  const totalDoneDays = PHASES_V2.reduce((a, _, pi) => a + phaseDoneDays(pi, v2state, v2Artifacts), 0);
+  const totalDaysCount = PHASES_V2.reduce((a, phase) => a + phase.data.length, 0);
+  const overallPct = totalDaysCount ? Math.round((totalDoneDays / totalDaysCount) * 100) : 0;
   const totalXP = Object.entries(v2state).filter(([, v]) => v).length * 15; // approx
 
   function toggle(pi: number, di: number, ti: number) {
@@ -74,12 +121,7 @@ export const RoadmapV2View: React.FC<Props> = ({ appState }) => {
     const next = { ...v2state, [key]: !v2state[key] };
     setV2State(next);
     saveV2State(userKey, next);
-    // Phase completion confetti
-    const done = PHASES_V2[pi].data.reduce((a, d, ddi) =>
-      a + d.tasks.filter((_, tti) => !!next[v2key(pi, ddi, tti)]).length, 0);
-    if (done === phaseTotal(pi)) {
-      confetti({ particleCount: 120, spread: 70, origin: { y: 0.6 } });
-    }
+    checkAndTriggerConfetti(pi, next, v2Artifacts);
   }
 
   function bulkMarkDayV2(pi: number, di: number, type: 'concept' | 'code' | 'all') {
@@ -92,13 +134,7 @@ export const RoadmapV2View: React.FC<Props> = ({ appState }) => {
     });
     setV2State(next);
     saveV2State(userKey, next);
-
-    // Phase completion confetti
-    const done = PHASES_V2[pi].data.reduce((a, d, ddi) =>
-      a + d.tasks.filter((_, tti) => !!next[v2key(pi, ddi, tti)]).length, 0);
-    if (done === phaseTotal(pi)) {
-      confetti({ particleCount: 120, spread: 70, origin: { y: 0.6 } });
-    }
+    checkAndTriggerConfetti(pi, next, v2Artifacts);
   }
 
   function togglePhase(pi: number) {
@@ -172,8 +208,8 @@ export const RoadmapV2View: React.FC<Props> = ({ appState }) => {
         {/* Stats */}
         <div style={{ display: 'flex', gap: 10 }}>
           {[
-            { label: 'Done', value: totalDone, color: 'var(--green)' },
-            { label: 'Left', value: totalAll - totalDone, color: 'var(--red)' },
+            { label: 'Done', value: totalDoneDays, color: 'var(--green)' },
+            { label: 'Left', value: totalDaysCount - totalDoneDays, color: 'var(--red)' },
             { label: 'Progress', value: overallPct + '%', color: 'var(--blue)' },
             { label: 'XP', value: '~' + totalXP, color: 'var(--amber)' },
           ].map(s => (
@@ -324,11 +360,11 @@ export const RoadmapV2View: React.FC<Props> = ({ appState }) => {
 
       {/* PHASE CARDS */}
       {PHASES_V2.map((phase, pi) => {
-        const phDone  = phaseDone(pi, v2state);
-        const phTotal = phaseTotal(pi);
-        const phPct   = phTotal ? Math.round(phDone / phTotal * 100) : 0;
-        const complete = phDone === phTotal && phTotal > 0;
-        const inProg   = phDone > 0 && !complete;
+        const phDoneDays = phaseDoneDays(pi, v2state, v2Artifacts);
+        const phTotalDays = phase.data.length;
+        const phPct   = phTotalDays ? Math.round((phDoneDays / phTotalDays) * 100) : 0;
+        const complete = phDoneDays === phTotalDays && phTotalDays > 0;
+        const inProg   = phDoneDays > 0 && !complete;
         const isOpen   = !!openPhases[pi];
 
         // Search + filter at phase level
@@ -339,7 +375,7 @@ export const RoadmapV2View: React.FC<Props> = ({ appState }) => {
             d.tasks.some(t => t.t.toLowerCase().includes(sl))
           );
         if (!hasMatch) return null;
-        if (filter === 'done' && phDone === 0) return null;
+        if (filter === 'done' && phDoneDays === 0) return null;
         if (filter === 'todo' && complete) return null;
 
         // Phase mini ring
@@ -403,7 +439,7 @@ export const RoadmapV2View: React.FC<Props> = ({ appState }) => {
                   {phase.title}
                 </div>
                 <div style={{ fontSize: 11, color: 'var(--sub)', marginTop: 3 }}>
-                  {phDone}/{phTotal} tasks
+                  {phDoneDays}/{phTotalDays} days
                 </div>
               </div>
 
@@ -451,8 +487,10 @@ export const RoadmapV2View: React.FC<Props> = ({ appState }) => {
                   if (!dayMatch) return null;
 
                   const dayDoneCount = day.tasks.filter((_, ti) => !!v2state[v2key(pi, di, ti)]).length;
-                  const dayComplete  = dayDoneCount === day.tasks.length;
-                  if (filter === 'done' && dayDoneCount === 0) return null;
+                  const tasksComplete  = dayDoneCount === day.tasks.length;
+                  const dayComplete = isDayComplete(pi, di, v2state, v2Artifacts);
+                  const isMissingArtifact = tasksComplete && !dayComplete;
+                  if (filter === 'done' && !dayComplete) return null;
                   if (filter === 'todo' && dayComplete) return null;
 
                   const dayIsOpen = isDayOpen(pi, di);
@@ -485,6 +523,24 @@ export const RoadmapV2View: React.FC<Props> = ({ appState }) => {
                         }}>{day.day}</span>
                         <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', flex: 1 }}>
                           {day.label}
+                          {isMissingArtifact && (
+                            <span style={{
+                              marginLeft: 8,
+                              fontFamily: 'var(--mono)',
+                              fontSize: 9,
+                              fontWeight: 700,
+                              background: 'rgba(255,200,80,.12)',
+                              color: 'var(--amber)',
+                              border: '1px solid rgba(255,200,80,.25)',
+                              padding: '1px 6px',
+                              borderRadius: 4,
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: 3,
+                            }}>
+                              ⚠️ Missing Artifact
+                            </span>
+                          )}
                         </span>
                         <span style={{
                           fontFamily: 'var(--mono)',
@@ -599,8 +655,9 @@ export const RoadmapV2View: React.FC<Props> = ({ appState }) => {
                                   {/* Task text */}
                                   <span style={{
                                     flex: 1,
-                                    fontSize: 12,
-                                    lineHeight: 1.6,
+                                    fontFamily: 'var(--body)',
+                                    fontSize: 14,
+                                    lineHeight: 1.65,
                                     color: done ? 'var(--muted)' : 'var(--sub)',
                                     textDecoration: done ? 'line-through' : 'none',
                                     opacity: done ? .5 : 1,
@@ -708,6 +765,89 @@ export const RoadmapV2View: React.FC<Props> = ({ appState }) => {
                                 </div>
                               );
                             })()}
+
+                            {/* Verification Artifact Contract */}
+                            <div style={{
+                              marginTop: 12,
+                              borderRadius: 'var(--r8)',
+                              overflow: 'hidden',
+                              border: '1px solid var(--border)',
+                              background: 'var(--s2)',
+                              padding: '12px 14px',
+                            }}>
+                              <div style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 6,
+                                marginBottom: 8,
+                              }}>
+                                <span style={{ fontSize: 13 }}>🔗</span>
+                                <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text)', flex: 1, fontFamily: 'var(--mono)', letterSpacing: '0.5px', textTransform: 'uppercase' }}>
+                                  Verification Artifact Contract
+                                </span>
+                              </div>
+                              
+                              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                                <input
+                                  type="text"
+                                  value={v2Artifacts[`${pi}_${di}`] || ''}
+                                  onChange={e => updateArtifact(pi, di, e.target.value)}
+                                  placeholder="Paste GitHub commit, PR, or deployment URL..."
+                                  style={{
+                                    flex: 1,
+                                    background: 'var(--s1)',
+                                    border: '1px solid var(--border)',
+                                    borderRadius: 'var(--r6)',
+                                    padding: '7px 10px',
+                                    fontSize: 12,
+                                    color: 'var(--text)',
+                                    outline: 'none',
+                                    transition: 'border-color 0.2s',
+                                  }}
+                                  onClick={e => e.stopPropagation()}
+                                />
+                                {isValidArtifactLink(v2Artifacts[`${pi}_${di}`] || '') && (
+                                  <a
+                                    href={(v2Artifacts[`${pi}_${di}`] || '').trim()}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    onClick={e => e.stopPropagation()}
+                                    style={{
+                                      fontSize: 11,
+                                      fontWeight: 600,
+                                      color: 'var(--green)',
+                                      textDecoration: 'none',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      gap: 3,
+                                      padding: '7px 10px',
+                                      background: 'rgba(0,217,160,.08)',
+                                      borderRadius: 'var(--r6)',
+                                      border: '1px solid rgba(0,217,160,.2)',
+                                      flexShrink: 0,
+                                    }}
+                                  >
+                                    Visit ↗
+                                  </a>
+                                )}
+                              </div>
+
+                              <div style={{ marginTop: 8, fontSize: 10, fontFamily: 'var(--mono)' }}>
+                                {dayComplete ? (
+                                  <span style={{ color: 'var(--green)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                                    ✓ Verification link verified. Day complete!
+                                  </span>
+                                ) : isMissingArtifact ? (
+                                  <span style={{ color: 'var(--amber)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                                    ⚠️ Action Required: Tasks are checked, but a valid link is required to complete this day.
+                                  </span>
+                                ) : (
+                                  <span style={{ color: 'var(--muted)' }}>
+                                    Note: You must check all tasks AND submit a valid verification URL to mark this day complete.
+                                  </span>
+                                )}
+                              </div>
+                            </div>
                           </div>
                         </div>
                       </div>

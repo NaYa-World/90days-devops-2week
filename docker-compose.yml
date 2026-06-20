@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  # Production container serving built static bundle
+  devops-tracker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:80"
+    environment:
+      - NODE_ENV=production
+    restart: always
+
+  # Local development container mirroring the local directory
+  devops-tracker-dev:
+    image: node:20-alpine
+    working_dir: /app
+    volumes:
+      - .:/app
+      - /app/node_modules
+    ports:
+      - "5173:5173"
+    command: npm run dev -- --host 0.0.0.0
+    environment:
+      - VITE_PORT=5173
