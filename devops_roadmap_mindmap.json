@@ -1,0 +1,245 @@
+{
+  "id": "devops_root",
+  "title": "DevOps Learning Path",
+  "description": "Unified roadmap from software delivery fundamentals to elite production SRE and platform engineering readiness.",
+  "visual_hint": "DevOps infinity loop with glowing integration and feedback nodes",
+  "trainer_notes": "Objectives: Understand the DevOps lifecycle. Recommended Order: Foundations -> Git -> Automation -> CI/CD -> Containers -> IaC -> Orchestration -> Cloud -> Networking -> Security -> Observability -> Testing -> Culture. Est: 90 Days.",
+  "cto_notes": "Business Value: Shrink lead time to production, increase deployment frequency, reduce change failure rates, and boost customer satisfaction KPIs. Risk/Benefit: High initial training cost vs. massive long-term operations automation dividend.",
+  "engineer_notes": "Real-world Workflow: Local code change -> Git pull request -> CI pipeline (Lint/Build/Test) -> Artifact build -> GitOps Deployment -> Monitoring/Logs telemetry loop.",
+  "commands": [],
+  "learning_path": ["Basics", "Intermediate", "Advanced"],
+  "exercise": "Review the entire roadmap topology and map it to your personal career learning target.",
+  "children": [
+    {
+      "id": "foundations",
+      "title": "Foundations & OS",
+      "description": "Operating system internals, Linux kernel features, process management, and storage mechanics required to run production services.",
+      "visual_hint": "Tux the Linux Penguin icon, terminal prompt window",
+      "trainer_notes": "Objectives: Master Linux command line, understand processes, signals, and filesystems. Order: 1st node. Est: 7 days. Tips: Run command line drills, host a terminal simulator lab, and quiz on file descriptors.",
+      "cto_notes": "Business Value: Reduced infrastructure license costs (Open Source Linux) and stable foundation for running containerized workloads. Risk: High reliance on system administration knowledge. KPIs: Uptime, OS patching frequency, resource utilization.",
+      "engineer_notes": "Workflow: Checking system health, disk space, and process tree. Common Errors: 'Out of memory (OOM)' kills -> adjust swap or limits. Snippet: `ulimit -n 65536` for file descriptor limits.",
+      "commands": [
+        "top",
+        "htop",
+        "ps auxf",
+        "df -h",
+        "du -sh /*",
+        "systemctl status nginx",
+        "journalctl -u nginx -n 50 -f"
+      ],
+      "learning_path": ["Linux Basics", "Process Lifecycle", "Systemd Services", "User & Permissions", "Filesystems & LVM", "Kernel Namespaces/Cgroups"],
+      "exercise": "Deploy a custom systemd service that runs a lightweight Python web server on boot, and configure logrotate to manage its logs."
+    },
+    {
+      "id": "git",
+      "title": "Version Control (Git)",
+      "description": "Decentralized version control workflows, branching strategies, and repository collaboration models.",
+      "visual_hint": "Branching Git tree diagram showing merges and pull requests",
+      "trainer_notes": "Objectives: Learn version control commands, conflict resolution, and trunk-based development vs GitFlow. Est: 5 days. Tips: Practice merge conflict workshops, run simulated team pull requests.",
+      "cto_notes": "Business Value: Frictionless developer collaboration, auditable change log history for compliance, and automated trigger points for release pipelines. KPIs: PR lifecycle lead time, pull request approval rate.",
+      "engineer_notes": "Workflow: Feature branch branching from main, commit, rebase on main, push to origin, raise PR. Fix: If you commit to the wrong branch, run `git reset --soft HEAD~1`.",
+      "commands": [
+        "git clone <repo>",
+        "git checkout -b feature/auth",
+        "git rebase main",
+        "git cherry-pick <commit-sha>",
+        "git diff HEAD~1",
+        "git log --oneline --graph --all"
+      ],
+      "learning_path": ["Basic Commits", "Branching & Merging", "Rebasing & Interactive Rebase", "Git Hooks", "Trunk-based Development"],
+      "exercise": "Create two local directories, simulate a concurrent change on the same line of a text file, commit, and manually resolve the resulting merge conflict."
+    },
+    {
+      "id": "cicd",
+      "title": "Continuous Integration & Deployment (CI/CD)",
+      "description": "Automated pipelines that run linting, tests, build artifacts, and orchestrate deployments upon repository commits.",
+      "visual_hint": "Pipeline gears or automated assembly line showing Git trigger -> Build -> Test -> Deploy",
+      "trainer_notes": "Objectives: Understand triggers, environment variables, caching, and building deployment stages. Est: 10 days. Tips: Build a pipeline from scratch using GitHub Actions, configure matrix builds.",
+      "cto_notes": "Business Value: Instant developer feedback loop, zero-downtime automated deployments, and eliminated manual deployment errors. KPIs: Change Failure Rate, Deployment Frequency, Build Duration.",
+      "engineer_notes": "Workflow: Push triggers workflow -> Node/Go build -> run unit tests -> docker build -> ECR push -> ECS deploy. Common issue: Caching node_modules saves 50% build time.",
+      "commands": [
+        "act -j test",
+        "gh run list",
+        "gh run view <run-id>",
+        "jenkins-cli.jar -s http://localhost:8080 build build-app"
+      ],
+      "learning_path": ["Scripted CI", "GitHub Actions / GitLab CI", "Pipeline Security & Secrets", "Self-hosted Runners", "GitOps (ArgoCD / Flux)"],
+      "exercise": "Write a `.github/workflows/ci.yml` pipeline that triggers on pull requests, runs linting/formatting tests, builds a Docker image, and fails if the test coverage drops below 80%."
+    },
+    {
+      "id": "docker",
+      "title": "Containers (Docker)",
+      "description": "Application packaging, image layered filesystems, isolation mechanics, and local developer environment virtualization.",
+      "visual_hint": "Docker blue shipping container whale icon",
+      "trainer_notes": "Objectives: Learn namespaces/cgroups isolation, write Dockerfiles, manage layers, cache optimization. Est: 7 days. Tips: Compare standard builds with multi-stage builds side-by-side to show size difference.",
+      "cto_notes": "Business Value: Standardized execution environment eliminating the 'works on my machine' bug, fast container cold start, and higher compute density. KPIs: Image size (MB), vulnerability scans count, container boot time.",
+      "engineer_notes": "Workflow: Run app locally in container, build multi-stage production image, push to registry. Common issue: Image is too large (1GB+) -> use alpine/distroless bases and place static assets in early stages.",
+      "commands": [
+        "docker build -t devops-app:1.0 .",
+        "docker run -d -p 8080:80 --name app devops-app:1.0",
+        "docker exec -it app sh",
+        "docker system prune -a --volumes",
+        "docker images --format \"table {{.Repository}}\\t{{.Tag}}\\t{{.Size}}\""
+      ],
+      "learning_path": ["Run Container", "Write Dockerfile", "Layer Optimization", "Compose Environments", "Registry Management", "Multi-stage Builds"],
+      "exercise": "Containerize a Node.js API using a multi-stage Dockerfile that splits dev dependencies from production dependencies, reducing final image size below 100MB."
+    },
+    {
+      "id": "k8s",
+      "title": "Orchestration (Kubernetes)",
+      "description": "Clustered container execution, self-healing architecture, declarative desired-state scaling, and cloud-native application management.",
+      "visual_hint": "Kubernetes blue 7-sided wheel helm logo",
+      "trainer_notes": "Objectives: Understand control plane vs node, pods, services, ingress, configuration management, statefulsets. Est: 14 days. Tips: Use Minikube/Kind for hands-on, simulate pod deletions to show self-healing.",
+      "cto_notes": "Business Value: Auto-scaling infrastructure to match traffic demand, cost-efficient resource scheduling, and high availability across nodes. KPIs: Node scheduling latency, HPA scaling speed, Pod crash loop rates.",
+      "engineer_notes": "Workflow: Deploy YAML manifests -> expose via service -> define Ingress. Common issue: 'CrashLoopBackOff' -> run `kubectl logs` and `kubectl describe pod` to diagnose resource starvation or start script failures.",
+      "commands": [
+        "kubectl get pods -A",
+        "kubectl describe pod <pod-name>",
+        "kubectl logs -f <pod-name> -c <container-name>",
+        "kubectl apply -f deployment.yaml",
+        "kubectl exec -it <pod-name> -- nslookup kubernetes.default",
+        "kubectl top nodes"
+      ],
+      "learning_path": ["Pods & Deployments", "Services & Ingress", "ConfigMaps & Secrets", "Helm Charts", "Autoscaling & HPA", "StatefulSet & CRDs"],
+      "exercise": "Deploy a multi-tier guestbook app (React front-end, Redis back-end) in Kind, configure secrets for database connection strings, and scale pods dynamically using Horizontal Pod Autoscaler (HPA)."
+    },
+    {
+      "id": "iac",
+      "title": "Infrastructure as Code (IaC)",
+      "description": "Declarative provisioning and lifecycle management of cloud resources via version-controlled code files.",
+      "visual_hint": "Terraform logo or code blueprint representing cloud resources like VMs, databases, and networks",
+      "trainer_notes": "Objectives: Understand immutable infrastructure, Terraform state files, modules, providers, plans. Est: 10 days. Tips: Emphasize 'always run terraform plan' and state lock mechanics using AWS S3 + DynamoDB.",
+      "cto_notes": "Business Value: Repeatable environment provisioning, disaster recovery speed, cloud budget visibility, and automated infrastructure audit logs. KPIs: Time to provision new staging env, configuration drift counts.",
+      "engineer_notes": "Workflow: Write HCL configs -> terraform plan -> review changes -> terraform apply. Fix: State lock error -> inspect lock ID in DynamoDB or release manually if safe.",
+      "commands": [
+        "terraform init",
+        "terraform plan -out=tfplan",
+        "terraform apply tfplan",
+        "terraform state list",
+        "terraform import <addr> <id>",
+        "terraform output"
+      ],
+      "learning_path": ["Providers & Resources", "Variables & Outputs", "State Management & S3 Backends", "Terraform Modules", "Workspaces & Terragrunt", "Drift Detection"],
+      "exercise": "Create a reusable Terraform module to launch an AWS VPC with private and public subnets, an Internet Gateway, and a NAT Gateway, keeping the state locked in S3."
+    },
+    {
+      "id": "cloud",
+      "title": "Cloud Platforms (AWS/GCP/Azure)",
+      "description": "Elastic cloud resource delivery including virtual computing instances, managed databases, load balancing, and identity access control.",
+      "visual_hint": "Cloud drawing with logos of AWS, GCP, and Azure inside",
+      "trainer_notes": "Objectives: Understand IAM policies, security groups, public/private subnets, block storage, and serverless compute. Est: 10 days. Tips: Focus heavily on IAM least privilege rules, set up billing alerts immediately.",
+      "cto_notes": "Business Value: Zero hardware procurement lead time, pay-as-you-go elastic billing, and global market reach. Risk: Cloud sprawl and runaway costs. KPIs: Cloud spend budget compliance, AWS Security Hub scoring.",
+      "engineer_notes": "Workflow: Provision EC2, configure IAM Role, attach Security Group allowing port 443 only. Fix: Instance can't talk to internet -> verify Route Table associates public subnet with Internet Gateway.",
+      "commands": [
+        "aws sts get-caller-identity",
+        "aws ec2 describe-instances",
+        "aws s3 ls s3://devops-notes-backup",
+        "gcloud compute instances list",
+        "az vm list -o table"
+      ],
+      "learning_path": ["IAM Least Privilege", "Compute & Virtual Machines", "Virtual Networks (VPC/VNet)", "Object Storage (S3)", "Managed Databases (RDS)", "IAM Role Delegation"],
+      "exercise": "Configure an AWS S3 bucket to serve a static website securely, restricting access using S3 Bucket Policies and enabling CloudFront CDN with SSL."
+    },
+    {
+      "id": "observability",
+      "title": "Observability & Monitoring",
+      "description": "Telemetry collection, structured logging, transaction tracing, and dashboard visualization to maintain system reliability.",
+      "visual_hint": "Line graph dashboard showing metrics going up and down, magnifying glass examining log files",
+      "trainer_notes": "Objectives: Differentiate between Metrics (numbers), Logs (events), and Traces (journey). Master Prometheus Query Language (PromQL) and Grafana. Est: 8 days. Tips: Set up an alertmanager rule to trigger a webhook.",
+      "cto_notes": "Business Value: Pre-emptive failure detection, reduced Mean Time to Detect (MTTD), and business transaction intelligence. KPIs: MTTD, MTTR, user session error rate, query latency.",
+      "engineer_notes": "Workflow: Prometheus scrapes `/metrics` endpoint -> displays in Grafana dashboard -> Alertmanager notifications to Slack on high CPU. Fix: Missing metrics -> check scraper target endpoints.",
+      "commands": [
+        "promtool check config prometheus.yml",
+        "curl http://localhost:9090/metrics",
+        "tail -f /var/log/syslog",
+        "logcli query '{job=\"nginx\"}'"
+      ],
+      "learning_path": ["Logs Aggregation (ELK/Loki)", "Metrics Collection (Prometheus)", "Grafana Dashboards", "Alertmanager & PagerDuty", "Distributed Tracing (Jaeger)"],
+      "exercise": "Deploy Prometheus and Grafana in Docker Compose. Configure Node Exporter to export host metrics, scrape them in Prometheus, and build a Grafana dashboard visualizing CPU, Memory, and Disk IO."
+    },
+    {
+      "id": "security",
+      "title": "Security & Compliance (DevSecOps)",
+      "description": "Integrating security checks into code repositories, build systems, container runtime environments, and automated secret management.",
+      "visual_hint": "Shield with a keyhole, pipeline checkmark with safety lock",
+      "trainer_notes": "Objectives: Learn secret scanning, static analysis (SAST), software composition analysis (SCA), and runtime protection. Est: 7 days. Tips: Do a demo showing Gitguardian/Trivy catching a dummy secret key.",
+      "cto_notes": "Business Value: Avoid data leaks, secure user trust, ensure SOC2/HIPAA compliance, and prevent costly security breaches. KPIs: Unresolved vulnerabilities count, secret exposure count, time-to-patch CVEs.",
+      "engineer_notes": "Workflow: Commit check (Trivy scans Dockerfile) -> Build check (SonarQube reviews code) -> Deploy check (Vault inserts DB credentials at runtime). Fix: Secret leaked -> instantly revoke the key and roll credentials.",
+      "commands": [
+        "trivy image alpine:3.18",
+        "gitguardian scan --pre-commit",
+        "vault kv get secret/db-creds",
+        "snyk test --file=package.json"
+      ],
+      "learning_path": ["Secret Management (Vault)", "Vulnerability Scanning (Trivy/Snyk)", "Code Analysis (SonarQube)", "Network Policies (K8s)", "Compliance Controls (SOC2/HIPAA)"],
+      "exercise": "Write a script that runs a Trivy scan on your Docker build artifact before pushing to your registry, failing the pipeline if a 'High' or 'Critical' vulnerability is discovered."
+    },
+    {
+      "id": "networking",
+      "title": "Networking & Storage",
+      "description": "Network routing, DNS resolution, traffic load balancing, and persistent persistent volumes for stateful applications.",
+      "visual_hint": "Router network layout showing clients, DNS, load balancers, and target pods",
+      "trainer_notes": "Objectives: Master TCP/IP basics, DNS records (A, CNAME, TXT), HTTP/HTTPS protocols, SSL/TLS handshakes, load balancing, block vs object storage. Est: 7 days. Tips: Conduct DNS lookup and traceroute labs.",
+      "cto_notes": "Business Value: Fast content delivery speed, secured data-at-rest encryption compliance, and resilient network traffic failovers. KPIs: DNS lookup speed, SSL certificate renewal success rate, latency (ms).",
+      "engineer_notes": "Workflow: User visits website -> DNS points to ALB -> SSL terminated -> requests routed to Kubernetes Node Port. Fix: DNS propagation takes time -> use low TTL values for critical switchovers.",
+      "commands": [
+        "dig +trace devopsGK.com",
+        "curl -Iv https://httpbin.org/get",
+        "traceroute 8.8.8.8",
+        "netstat -tulnp",
+        "openssl x509 -in cert.pem -text -noout"
+      ],
+      "learning_path": ["IP CIDR Subnets", "DNS Mechanics", "Load Balancer Routing", "SSL/TLS & HTTPS", "Block/Object Storage Volumes", "Container Storage Interface (CSI)"],
+      "exercise": "Generate a Let's Encrypt SSL certificate using Certbot, configure Nginx to terminate SSL traffic, and proxy pass requests to an internal application container."
+    },
+    {
+      "id": "testing",
+      "title": "Testing & Release Management",
+      "description": "Zero-downtime deployment pipelines, safety testing in staging environments, and gradual progressive delivery of new application features.",
+      "visual_hint": "A/B split path, traffic controller directing code deployments to different user subsets",
+      "trainer_notes": "Objectives: Differentiate Blue-Green deployments (instant switch) from Canary releases (incremental traffic routing) and understand feature flags. Est: 5 days. Tips: Use Argo Rollouts in a demo.",
+      "cto_notes": "Business Value: Safe software releases with minimal customer blast radius if errors occur, instant rollback capability, and market feedback via user subset trials. KPIs: Deployment rollback count, change failure recovery speed.",
+      "engineer_notes": "Workflow: Deploy v2 version -> route 10% traffic using ALB/Ingress -> monitor error rates -> promote to 100% or rollback if logs show 500 errors. Fix: Route 100% traffic back to v1 instantly.",
+      "commands": [
+        "kubectl argo rollouts list runs",
+        "kubectl argo rollouts promote devops-app-rollout",
+        "kubectl argo rollouts abort devops-app-rollout"
+      ],
+      "learning_path": ["Integration Testing", "Feature Flags", "Blue-Green Deployments", "Canary Releases (Argo Rollouts)", "Automatic Rollbacks"],
+      "exercise": "Set up a Canary deployment using Argo Rollouts or a custom Nginx routing file where 10% of HTTP header requests for a specific user group are sent to the v2 backend version."
+    },
+    {
+      "id": "automation",
+      "title": "Automation & Scripting",
+      "description": "Scripting recurring operational tasks, parsing configurations, and scheduling pipeline workflows.",
+      "visual_hint": "BASH prompt code scroll, cron clock icon",
+      "trainer_notes": "Objectives: Master Bash script loops, inputs, variables, error handling, python script orchestration, and cron schedules. Est: 7 days. Tips: Review shell scripts for best practice linting (using Shellcheck).",
+      "cto_notes": "Business Value: Eliminated manual labor costs, fast configuration runs, and standardized server setup processes. KPIs: Task execution speed, cron failure rates, automation coverage.",
+      "engineer_notes": "Workflow: Cron triggers bash script -> runs database dump -> copies to S3 bucket. Fix: Always use absolute paths in cron jobs since cron doesn't load standard user environment variables.",
+      "commands": [
+        "chmod +x script.sh",
+        "crontab -e",
+        "shellcheck backup.sh",
+        "python3 -m venv venv",
+        "python3 -c \"import sys; print(sys.path)\""
+      ],
+      "learning_path": ["Bash Control Flow", "JSON/YAML Parsing (jq/yq)", "Python Scripting", "Cron Jobs Scheduling", "Ansible Playbooks Automation"],
+      "exercise": "Write a bash script that parses a log file using awk/sed, identifies IP addresses with more than 100 bad requests, and automatically appends them to a blocklist file."
+    },
+    {
+      "id": "culture",
+      "title": "Culture & Processes (SRE)",
+      "description": "DevOps organizational patterns, service level budgeting, blameless reviews, and collaborative team communication systems.",
+      "visual_hint": "Puzzle pieces fitting together, target board showing SLO/SLA lines",
+      "trainer_notes": "Objectives: Understand the CAMS model (Culture, Automation, Measurement, Sharing). Differentiate SLA, SLO, and SLI. Write blameless post-mortems. Est: 5 days. Tips: Host a simulated post-mortem review.",
+      "cto_notes": "Business Value: High-morale engineering culture, collaborative blameless environment, data-driven feature priority planning using Error Budgets. KPIs: Error Budget burn rate, user satisfaction (SLA compliance).",
+      "engineer_notes": "Workflow: Monitor system latency (SLI) -> maintain target below 200ms (SLO) -> if target is breached, pause deployment feature releases and focus on reliability tasks. Fix: Run post-mortem to prevent recurrences.",
+      "commands": [
+        "uptime",
+        "curl -s http://status.company.com/api/v1/health"
+      ],
+      "learning_path": ["CAMS Model", "SLIs/SLOs/SLAs Metrics", "Error Budgets Management", "Blameless Post-Mortems", "Incident Response Rotation"],
+      "exercise": "Write a blameless post-mortem for a simulated 1-hour database outage, describing the timeline, root cause (e.g. disk exhaustion), immediate mitigations, and preventive action items."
+    }
+  ]
+}
