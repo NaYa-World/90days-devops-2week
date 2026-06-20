@@ -1,91 +1,169 @@
 import { LocalNotifications } from '@capacitor/local-notifications';
 import { Capacitor } from '@capacitor/core';
+import { CHALLENGES } from '../data/challenges';
 
 export const NotificationService = {
 
-  async init() {
+  async init(enabled: boolean, morningTime: string, eveningTime: string) {
     if (!Capacitor.isNativePlatform()) return;
 
-    // Step 1: Create channel FIRST
-    await LocalNotifications.createChannel({
-      id: 'devops90-reminders',
-      name: 'Daily Reminders',
-      description: 'Twice-daily DevOps progress nudges',
-      importance: 5,
-      visibility: 1,
-      vibration: true,
-      lights: true,
-      lightColor: '#3B82F6',
-    });
-
-    // Step 2: Attach listener BEFORE requesting permission
-    LocalNotifications.addListener('localNotificationActionPerformed', (action) => {
-      console.log('devops90 [Tapped]:', action.notification);
-    });
-
-    // Step 3: Request permission
-    const perm = await LocalNotifications.checkPermissions();
-    if (perm.display !== 'granted') {
-      const req = await LocalNotifications.requestPermissions();
-      if (req.display !== 'granted') {
-        console.warn('devops90: Permission denied');
-        return;
-      }
+    try {
+      // Step 1: Create channels
+      await LocalNotifications.createChannel({
+        id: 'devops90-reminders',
+        name: 'Daily Reminders',
+        description: 'Twice-daily DevOps progress nudges and daily challenges',
+        importance: 5,
+        visibility: 1,
+        vibration: true,
+        lights: true,
+        lightColor: '#3B82F6',
+        sound: 'default'
+      });
+    } catch (err) {
+      console.error('devops90: Failed to create notification channel:', err);
     }
 
-    // Step 4: Cancel old, schedule fresh
-    await this.cancelAll();
-    await this.scheduleDailyReminders();
+    // Step 2: Check permissions and sync timings
+    await this.sync(enabled, morningTime, eveningTime);
   },
 
-  async scheduleDailyReminders() {
-    await LocalNotifications.schedule({
-      notifications: [
+  async sync(enabled: boolean, morningTime: string, eveningTime: string) {
+    if (!Capacitor.isNativePlatform()) return;
+
+    // Clear any previously scheduled notifications to avoid duplicates or overlaps
+    await this.cancelAll();
+
+    if (!enabled) {
+      console.log('devops90: Notifications are disabled by the user.');
+      return;
+    }
+
+    try {
+      // Ensure we have display permission
+      const perm = await LocalNotifications.checkPermissions();
+      if (perm.display !== 'granted') {
+        const req = await LocalNotifications.requestPermissions();
+        if (req.display !== 'granted') {
+          console.warn('devops90: Permission denied by user');
+          return;
+        }
+      }
+
+      // Parse morning time (e.g., "09:00")
+      const [mHourStr, mMinStr] = morningTime.split(':');
+      const mHour = parseInt(mHourStr || '9', 10);
+      const mMin = parseInt(mMinStr || '0', 10);
+
+      // Parse evening time (e.g., "20:00")
+      const [eHourStr, eMinStr] = eveningTime.split(':');
+      const eHour = parseInt(eHourStr || '20', 10);
+      const eMin = parseInt(eMinStr || '0', 10);
+
+      const notifications: any[] = [
+        // 1. Daily Morning Check-in
         {
           id: 1001,
           title: '🔧 DevOps Morning Check-in',
           body: "Your 90-day streak doesn't build itself. What's today's task?",
+          smallIcon: 'ic_stat_notify',
+          sound: 'default',
           schedule: {
-            on: { hour: 9, minute: 0 },
-            every: 'day',
-            allowWhileIdle: true
+            on: { hour: mHour, minute: mMin }
           },
           channelId: 'devops90-reminders',
         },
+        // 2. Daily Evening Progress Check
         {
           id: 1002,
           title: '📊 Evening Progress Check',
           body: 'Did you log today? Day skipped = streak broken.',
+          smallIcon: 'ic_stat_notify',
+          sound: 'default',
           schedule: {
-            on: { hour: 20, minute: 0 },
-            every: 'day',
-            allowWhileIdle: true
+            on: { hour: eHour, minute: eMin }
           },
           channelId: 'devops90-reminders',
-        },
-      ],
-    });
+        }
+      ];
 
-    console.log('devops90: Reminders scheduled ✅');
-  },
+      // 3. Weekly Challenge Notifications
+      const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+      CHALLENGES.forEach(ch => {
+        const dayName = daysOfWeek[ch.weekday - 1] || 'Today';
+        
+        // Morning Challenge notification
+        notifications.push({
+          id: 9000 + ch.weekday,
+          title: `🏆 DevOps Daily Challenge (${dayName})`,
+          body: `Today's challenge: ${ch.question.substring(0, 90)}...`,
+          smallIcon: 'ic_stat_notify',
+          sound: 'default',
+          schedule: {
+            on: {
+              weekday: ch.weekday,
+              hour: mHour,
+              minute: mMin
+            }
+          },
+          channelId: 'devops90-reminders',
+        });
 
-  async cancelAll() {
-    const pending = await LocalNotifications.getPending();
-    if (pending.notifications.length > 0) {
-      await LocalNotifications.cancel({ notifications: pending.notifications });
+        // Evening Challenge reminder
+        notifications.push({
+          id: 9100 + ch.weekday,
+          title: `🏆 DevOps Daily Challenge (${dayName}) (Evening Reminder)`,
+          body: `Don't miss today's challenge: ${ch.question.substring(0, 90)}...`,
+          smallIcon: 'ic_stat_notify',
+          sound: 'default',
+          schedule: {
+            on: {
+              weekday: ch.weekday,
+              hour: eHour,
+              minute: eMin
+            }
+          },
+          channelId: 'devops90-reminders',
+        });
+      });
+
+      await LocalNotifications.schedule({ notifications });
+      console.log(`devops90: Scheduled daily reminders and challenges at ${morningTime} & ${eveningTime} ✅`);
+    } catch (err) {
+      console.error('devops90: Error scheduling notifications:', err);
     }
   },
 
-  // Temporary test — fire in 1 minute, then delete this method
+  async cancelAll() {
+    try {
+      const pending = await LocalNotifications.getPending();
+      if (pending.notifications.length > 0) {
+        await LocalNotifications.cancel({ notifications: pending.notifications });
+      }
+      console.log('devops90: Cleared all pending native notifications.');
+    } catch (err) {
+      console.error('devops90: Failed to cancel notifications:', err);
+    }
+  },
+
+  // Developer testing utility to verify notification trigger in 10 seconds
   async testFireNow() {
-    await LocalNotifications.schedule({
-      notifications: [{
-        id: 9999,
-        title: '✅ Notification Test',
-        body: 'Close the app — if you see this, it works.',
-        schedule: { at: new Date(Date.now() + 60_000), allowWhileIdle: true },
-        channelId: 'devops90-reminders',
-      }],
-    });
+    if (!Capacitor.isNativePlatform()) return;
+    try {
+      await LocalNotifications.schedule({
+        notifications: [{
+          id: 9999,
+          title: '✅ Notification Test',
+          body: 'Close the app — if you see this, native notifications are working correctly!',
+          smallIcon: 'ic_stat_notify',
+          sound: 'default',
+          schedule: { at: new Date(Date.now() + 10_000) },
+          channelId: 'devops90-reminders',
+        }],
+      });
+      console.log('devops90: Test notification scheduled in 10s.');
+    } catch (err) {
+      console.error('devops90: Test fire failed:', err);
+    }
   }
 };
