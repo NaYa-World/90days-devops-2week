@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { AIProvider } from './AIService';
 import { Capacitor } from '@capacitor/core';
-import { BackupService } from './BackupService';
+import { GitHubSyncService } from './GitHubSyncService';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -27,8 +27,6 @@ interface SettingsModalProps {
   setSyncWithSystemTheme: (sync: boolean) => void;
   theme: 'dark' | 'light';
   currentUser: string | null;
-  handleExportBackup: () => void;
-  handleImportBackupFile: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleTestNotification?: () => void;
 }
 
@@ -52,10 +50,26 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   setSyncWithSystemTheme,
   theme,
   currentUser,
-  handleExportBackup,
-  handleImportBackupFile,
   handleTestNotification
 }) => {
+  const [syncing, setSyncing] = useState(false);
+  const [syncMessage, setSyncMessage] = useState('');
+
+  const handleForceSync = async () => {
+    setSyncing(true);
+    setSyncMessage('Syncing with GitHub Gist...');
+    try {
+      await GitHubSyncService.autoSyncToGitHub();
+      setSyncMessage('✅ Sync successful!');
+      setTimeout(() => setSyncMessage(''), 3000);
+    } catch (err: any) {
+      setSyncMessage('❌ Sync failed: ' + (err.message || err));
+      setTimeout(() => setSyncMessage(''), 5000);
+    } finally {
+      setSyncing(false);
+    }
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -376,15 +390,53 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             padding: '12px',
             borderRadius: '8px',
             display: 'flex',
-            alignItems: 'center',
-            gap: '12px'
+            flexDirection: 'column',
+            gap: '10px'
           }}>
-            <div style={{ fontSize: '24px' }}>✅</div>
-            <div>
-              <div style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--green)' }}>Successfully Authenticated</div>
-              <div style={{ fontSize: '11px', color: 'var(--sub)', marginTop: '2px' }}>
-                Logged in as <strong>{currentUser}</strong>. Your progress is automatically syncing to your private GitHub Gist.
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <div style={{ fontSize: '24px' }}>✅</div>
+              <div>
+                <div style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--green)' }}>Successfully Authenticated</div>
+                <div style={{ fontSize: '11px', color: 'var(--sub)', marginTop: '2px' }}>
+                  Logged in as <strong>{currentUser}</strong>. Your progress is automatically syncing to your private GitHub Gist.
+                </div>
               </div>
+            </div>
+
+            <div style={{ borderTop: '1px solid rgba(0, 217, 160, 0.1)', paddingTop: '8px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <button
+                onClick={handleForceSync}
+                disabled={syncing}
+                style={{
+                  width: 'fit-content',
+                  padding: '6px 12px',
+                  background: syncing ? 'rgba(255,255,255,0.05)' : 'rgba(0, 217, 160, 0.1)',
+                  border: '1px solid rgba(0, 217, 160, 0.3)',
+                  color: 'var(--green)',
+                  fontFamily: 'var(--mono)',
+                  fontSize: '11px',
+                  borderRadius: '6px',
+                  cursor: syncing ? 'not-allowed' : 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  transition: 'all 0.2s ease',
+                  opacity: syncing ? 0.6 : 1
+                }}
+              >
+                {syncing ? '🔄 Syncing...' : '🔄 Force Sync Now'}
+              </button>
+
+              {syncMessage && (
+                <div style={{
+                  fontSize: '11px',
+                  color: syncMessage.includes('❌') ? '#ff5f5f' : 'var(--green)',
+                  fontFamily: 'var(--mono)',
+                  marginTop: '4px'
+                }}>
+                  {syncMessage}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -413,98 +465,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           </label>
           <div style={{ fontSize: '11px', color: 'var(--sub)', marginTop: '4px', lineHeight: '1.4' }}>
             Automatically match the application's appearance with your system's light/dark mode settings.
-          </div>
-        </div>
-
-        {/* Device Backup & Restore */}
-        <div style={{ marginTop: '18px', paddingTop: '16px', borderTop: '1px solid var(--border)' }}>
-          <div style={{ fontSize: '13px', fontWeight: 700, marginBottom: '8px', color: 'var(--text)' }}>
-            💾 Progress Backup & Restore
-          </div>
-          <div style={{ fontSize: '10.5px', color: 'var(--sub)', marginBottom: '12px', lineHeight: '1.5' }}>
-            Save your study progress, notes, and keys. On mobile, this writes files natively to your device sandbox.
-            You can also export/import custom JSON backup files.
-          </div>
-
-          <input
-            type="file"
-            id="import-backup-file"
-            style={{ display: 'none' }}
-            accept=".json"
-            onChange={handleImportBackupFile}
-          />
-
-          <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
-            {Capacitor.isNativePlatform() && (
-              <button
-                className="v4-btn-secondary"
-                onClick={async () => {
-                  await BackupService.autoBackup();
-                  alert('💾 Progress successfully backed up to native storage!');
-                }}
-                style={{ padding: '6px 12px', fontSize: '10px' }}
-              >
-                Auto-Backup Now
-              </button>
-            )}
-            <button
-              className="v4-btn-secondary"
-              onClick={handleExportBackup}
-              style={{
-                padding: '6px 12px',
-                fontSize: '10px',
-                background: 'rgba(0,217,160,.05)',
-                borderColor: 'rgba(0,217,160,.2)',
-                color: 'var(--green)'
-              }}
-            >
-              📤 Export File
-            </button>
-            <button
-              className="v4-btn-secondary"
-              onClick={() => document.getElementById('import-backup-file')?.click()}
-              style={{
-                padding: '6px 12px',
-                fontSize: '10px',
-                background: 'rgba(79,168,255,.05)',
-                borderColor: 'rgba(79,168,255,.2)',
-                color: '#4fa8ff'
-              }}
-            >
-              📥 Import File
-            </button>
-            {Capacitor.isNativePlatform() && (
-              <button
-                className="v4-btn-primary"
-                onClick={async () => {
-                  if (
-                    confirm(
-                      'Are you sure you want to restore? This will overwrite your current session with the device backup data.'
-                    )
-                  ) {
-                    const restored = await BackupService.forceRestore();
-                    if (restored) {
-                      alert('✅ Backup restored successfully! Reloading...');
-                      window.location.reload();
-                    } else {
-                      alert('❌ No backup found on this device to restore.');
-                    }
-                  }
-                }}
-                style={{
-                  padding: '7px 14px',
-                  background: 'rgba(255,168,0,.1)',
-                  border: '1px solid rgba(255,168,0,.3)',
-                  color: '#ffb03a',
-                  fontFamily: 'var(--mono)',
-                  fontSize: '10px',
-                  borderRadius: 'var(--r8)',
-                  cursor: 'pointer'
-                }}
-              >
-                Restore Native
-              </button>
-            )}
           </div>
         </div>
       </div>

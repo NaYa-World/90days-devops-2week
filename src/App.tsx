@@ -28,7 +28,6 @@ import { OTAService } from './components/OTAService';
 import { NotificationService } from './components/NotificationService';
 import { AppShortcuts } from '@capawesome/capacitor-app-shortcuts';
 import { Network } from '@capacitor/network';
-import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
 import { showToast } from './components/Toast';
 
 
@@ -450,85 +449,7 @@ export const App: React.FC = () => {
     logoutUser();
   };
 
-  const handleExportBackup = async () => {
-    try {
-      const data: Record<string, string> = {};
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key && key.startsWith('devops90')) {
-          data[key] = localStorage.getItem(key) || '';
-        }
-      }
-      const dataStr = JSON.stringify(data, null, 2);
-      
-      if (Capacitor.isNativePlatform()) {
-        const fileName = `devops90_backup_${Date.now()}.json`;
-        await Filesystem.writeFile({
-          path: fileName,
-          data: dataStr,
-          directory: Directory.Cache,
-          encoding: Encoding.UTF8
-        });
-        
-        const fileUri = await Filesystem.getUri({
-          path: fileName,
-          directory: Directory.Cache
-        });
-        
-        await Share.share({
-          title: 'DevOps90 Progress Backup',
-          text: 'Here is my DevOps90 progress backup file.',
-          url: fileUri.uri,
-          dialogTitle: 'Export Backup'
-        });
-      } else {
-        const blob = new Blob([dataStr], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `devops90_backup_${Date.now()}.json`;
-        a.click();
-        URL.revokeObjectURL(url);
-      }
-    } catch (err) {
-      alert('❌ Export failed: ' + err);
-    }
-  };
 
-  const handleImportBackupFile = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = async (evt) => {
-      try {
-        const text = evt.target?.result as string;
-        const data = JSON.parse(text);
-        if (data && typeof data === 'object') {
-          for (let i = localStorage.length - 1; i >= 0; i--) {
-            const key = localStorage.key(i);
-            if (key && key.startsWith('devops90')) {
-              localStorage.removeItem(key);
-            }
-          }
-          Object.keys(data).forEach(k => {
-            localStorage.setItem(k, data[k]);
-          });
-          
-          if (Capacitor.isNativePlatform()) {
-            await BackupService.autoBackup();
-          }
-          
-          alert('✅ Progress successfully imported! Reloading...');
-          window.location.reload();
-        } else {
-          alert('❌ Invalid backup file format.');
-        }
-      } catch (err) {
-        alert('❌ Failed to parse backup file: ' + err);
-      }
-    };
-    reader.readAsText(file);
-  };
 
 
 
@@ -789,8 +710,6 @@ export const App: React.FC = () => {
         setSyncWithSystemTheme={setSyncWithSystemTheme}
         theme={theme}
         currentUser={currentUser}
-        handleExportBackup={handleExportBackup}
-        handleImportBackupFile={handleImportBackupFile}
         handleTestNotification={async () => {
           if (Capacitor.isNativePlatform()) {
             await NotificationService.testFireNow();
