@@ -7,7 +7,7 @@ import { showToast } from '../components/Toast';
 import { BackupService } from '../components/BackupService';
 import { Capacitor } from '@capacitor/core';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
-import { autoSyncToGitHub } from '../components/GitHubSyncService';
+import { autoSyncToGitHub, GitHubSyncService } from '../components/GitHubSyncService';
 
 export interface AppNotification {
   id: number;
@@ -313,6 +313,14 @@ export function useAppState() {
     localStorage.removeItem('devops90_current_user');
     setCurrentUser(null);
     setState(getBlankState());
+  };
+
+  const registerUser = (username: string, token: string = '') => {
+    loginUser(username, token);
+  };
+
+  const getAccounts = () => {
+    return currentUser ? [currentUser] : [];
   };
 
   // Notifications methods

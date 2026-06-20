@@ -375,7 +375,7 @@ export const RoadmapV2View: React.FC<Props> = ({ appState }) => {
             d.tasks.some(t => t.t.toLowerCase().includes(sl))
           );
         if (!hasMatch) return null;
-        if (filter === 'done' && phDone === 0) return null;
+        if (filter === 'done' && phDoneDays === 0) return null;
         if (filter === 'todo' && complete) return null;
 
         // Phase mini ring
