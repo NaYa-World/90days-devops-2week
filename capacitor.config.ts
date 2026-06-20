@@ -18,28 +18,20 @@ const config: CapacitorConfig = {
       splashFullScreen: true,
       splashImmersive: true
     },
-    // ✅ ADD THIS BLOCK
     LocalNotifications: {
-      smallIcon: 'ic_launcher',
+      smallIcon: 'ic_stat_notify',
       iconColor: '#3B82F6',
+      sound: 'default',
       channels: [
         {
           id: 'devops90-reminders',
           name: 'Daily Reminders',
-          description: 'Twice-daily DevOps progress nudges',
+          description: 'Twice-daily DevOps progress nudges and daily challenges',
           importance: 5,
           visibility: 1,
           vibration: true,
           lights: true,
           lightColor: '#3B82F6',
-        },
-        {
-          id: 'study-reminders',
-          name: 'Study Reminders',
-          description: 'DevOps study reminders scheduled daily',
-          importance: 5,
-          visibility: 1,
-          vibration: true,
           sound: 'default'
         }
       ]
