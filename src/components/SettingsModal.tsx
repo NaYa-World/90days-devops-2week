@@ -59,7 +59,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
   const handleForceSync = async () => {
     setSyncing(true);
-    setSyncMessage('Syncing with GitHub Gist...');
+    setSyncMessage('Syncing with GitHub Repository...');
     try {
       await GitHubSyncService.autoSyncToGitHub();
       setSyncMessage('✅ Sync successful!');
@@ -515,7 +515,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 <div>
                   <div style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--green)' }}>Successfully Authenticated</div>
                   <div style={{ fontSize: '11px', color: 'var(--sub)', marginTop: '2px' }}>
-                    Logged in as <strong>{currentUser}</strong>. Your progress is automatically syncing to your private GitHub Gist.
+                    Logged in as <strong>{currentUser}</strong>. Your progress is automatically syncing to your private GitHub repository '90days-devops-my-notes'.
                   </div>
                 </div>
               </div>

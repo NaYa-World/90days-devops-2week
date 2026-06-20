@@ -1,13 +1,82 @@
 export const GitHubSyncService = {
-  GIST_FILENAME: 'devops90_backup.json',
+  REPO_NAME: '90days-devops-my-notes',
+  BACKUP_FILENAME: 'progress_backup.json',
   
   async getToken(): Promise<string | null> {
     return localStorage.getItem('devops90_github_token');
   },
 
+  async getUsername(token: string): Promise<string | null> {
+    try {
+      const cached = localStorage.getItem('devops90_github_username') || localStorage.getItem('devops90_current_user');
+      if (cached) return cached;
+      
+      const res = await fetch('https://api.github.com/user', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/vnd.github.v3+json'
+        }
+      });
+      if (res.ok) {
+        const user = await res.json();
+        if (user.login) {
+          localStorage.setItem('devops90_github_username', user.login);
+          return user.login;
+        }
+      }
+      return null;
+    } catch (e) {
+      return null;
+    }
+  },
+
+  async ensureRepository(token: string, username: string): Promise<boolean> {
+    try {
+      const check = await fetch(`https://api.github.com/repos/${username}/${this.REPO_NAME}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/vnd.github.v3+json'
+        }
+      });
+      if (check.ok) return true;
+      
+      if (check.status === 404) {
+        const create = await fetch('https://api.github.com/user/repos', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/vnd.github.v3+json',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            name: this.REPO_NAME,
+            description: 'My DevOps 90 Days Bootcamp progress backup',
+            private: true,
+            auto_init: true
+          })
+        });
+        if (create.ok) {
+          console.log(`devops90: Created new private repository: ${this.REPO_NAME}`);
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          return true;
+        }
+      }
+      return false;
+    } catch (e) {
+      console.error('devops90: Error ensuring repository exists', e);
+      return false;
+    }
+  },
+
   async autoSyncToGitHub(): Promise<void> {
     const token = await this.getToken();
     if (!token) return;
+
+    const username = await this.getUsername(token);
+    if (!username) return;
+
+    const ok = await this.ensureRepository(token, username);
+    if (!ok) return;
 
     try {
       const progressData: Record<string, string> = {};
@@ -20,87 +89,86 @@ export const GitHubSyncService = {
       }
 
       const content = JSON.stringify(progressData, null, 2);
-      
-      // 1. Find existing Gist
-      const existingGistId = await this.findBackupGist(token);
-      
-      if (existingGistId) {
-        // Update gist
-        await fetch(`https://api.github.com/gists/${existingGistId}`, {
-          method: 'PATCH',
+      const base64Content = btoa(unescape(encodeURIComponent(content)));
+      const filePath = this.BACKUP_FILENAME;
+
+      let sha: string | undefined;
+      try {
+        const checkRes = await fetch(
+          `https://api.github.com/repos/${username}/${this.REPO_NAME}/contents/${filePath}?ref=main`,
+          {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Accept': 'application/vnd.github.v3+json'
+            }
+          }
+        );
+        if (checkRes.ok) {
+          const existing = await checkRes.json();
+          sha = existing.sha;
+        }
+      } catch { /* file doesn't exist yet */ }
+
+      const body: Record<string, string> = {
+        message: 'Update DevOps 90 Days progress backup',
+        content: base64Content,
+        branch: 'main'
+      };
+      if (sha) body.sha = sha;
+
+      const res = await fetch(
+        `https://api.github.com/repos/${username}/${this.REPO_NAME}/contents/${filePath}`,
+        {
+          method: 'PUT',
           headers: {
             'Authorization': `Bearer ${token}`,
             'Accept': 'application/vnd.github.v3+json',
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({
-            files: {
-              [this.GIST_FILENAME]: { content }
-            }
-          })
-        });
-        console.log('devops90: Backup Gist updated.');
+          body: JSON.stringify(body)
+        }
+      );
+
+      if (res.ok) {
+        console.log('devops90: Backup successfully saved to repository.');
       } else {
-        // Create new gist
-        await fetch('https://api.github.com/gists', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Accept': 'application/vnd.github.v3+json',
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            description: 'DevOps 90 Days App Backup',
-            public: false,
-            files: {
-              [this.GIST_FILENAME]: { content }
-            }
-          })
-        });
-        console.log('devops90: New Backup Gist created.');
+        console.error('devops90: Failed to push progress backup', await res.text());
       }
     } catch (err) {
-      console.error('devops90: Gist sync failed', err);
-    }
-  },
-
-  async findBackupGist(token: string): Promise<string | null> {
-    try {
-      const res = await fetch('https://api.github.com/gists', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Accept': 'application/vnd.github.v3+json'
-        }
-      });
-      if (!res.ok) return null;
-      const gists = await res.json();
-      const backupGist = gists.find((g: any) => Object.keys(g.files).includes(this.GIST_FILENAME));
-      return backupGist ? backupGist.id : null;
-    } catch (e) {
-      return null;
+      console.error('devops90: Repo sync failed', err);
     }
   },
 
   async restoreFromGitHub(token: string): Promise<boolean> {
     try {
-      const gistId = await this.findBackupGist(token);
-      if (!gistId) return false;
+      const username = await this.getUsername(token);
+      if (!username) return false;
 
-      const res = await fetch(`https://api.github.com/gists/${gistId}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Accept': 'application/vnd.github.v3+json'
+      const ok = await this.ensureRepository(token, username);
+      if (!ok) return false;
+
+      const filePath = this.BACKUP_FILENAME;
+      const res = await fetch(
+        `https://api.github.com/repos/${username}/${this.REPO_NAME}/contents/${filePath}?ref=main`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/vnd.github.v3+json'
+          }
         }
-      });
-      if (!res.ok) return false;
-      
-      const gist = await res.json();
-      const file = gist.files[this.GIST_FILENAME];
+      );
+
+      if (!res.ok) {
+        console.log('devops90: No backup file found in repository.');
+        return false;
+      }
+
+      const file = await res.json();
       if (!file || !file.content) return false;
 
-      const data = JSON.parse(file.content);
-      
-      // Clean existing state
+      const decodedContent = decodeURIComponent(escape(atob(file.content.replace(/\s/g, ''))));
+      const data = JSON.parse(decodedContent);
+
       for (let i = localStorage.length - 1; i >= 0; i--) {
         const key = localStorage.key(i);
         if (key && key.startsWith('devops90') && key !== 'devops90_github_token') {
@@ -108,12 +176,11 @@ export const GitHubSyncService = {
         }
       }
 
-      // Restore new state
       Object.keys(data).forEach(key => {
         localStorage.setItem(key, data[key]);
       });
 
-      console.log('devops90: Successfully restored state from Gist.');
+      console.log('devops90: Successfully restored state from repository.');
       return true;
     } catch (e) {
       console.error('devops90: Restore failed', e);
