@@ -655,8 +655,9 @@ export const RoadmapV2View: React.FC<Props> = ({ appState }) => {
                                   {/* Task text */}
                                   <span style={{
                                     flex: 1,
-                                    fontSize: 12,
-                                    lineHeight: 1.6,
+                                    fontFamily: 'var(--body)',
+                                    fontSize: 14,
+                                    lineHeight: 1.65,
                                     color: done ? 'var(--muted)' : 'var(--sub)',
                                     textDecoration: done ? 'line-through' : 'none',
                                     opacity: done ? .5 : 1,
