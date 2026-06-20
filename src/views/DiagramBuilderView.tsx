@@ -2,7 +2,7 @@ import React from 'react';
 
 export const DiagramBuilderView: React.FC<any> = () => {
   return (
-    <div style={{ width: '100%', height: 'calc(100vh - 58px)', background: '#07090f', position: 'relative' }}>
+    <div style={{ width: '100%', height: 'calc(100vh - var(--nav-h) - var(--offline-h, 0px))', background: '#07090f', position: 'relative' }}>
       <iframe
         src="/mindmap/app.html"
         style={{

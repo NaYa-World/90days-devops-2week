@@ -508,12 +508,12 @@ export const App: React.FC = () => {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)' }}>
+    <div style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)', '--offline-h': isOffline ? 'calc(33px + env(safe-area-inset-top, 0px))' : '0px' } as React.CSSProperties}>
       <div className={`offline-banner ${isOffline ? 'visible' : ''}`}>
         🔌 Offline Mode. AI-powered features require internet and are temporarily disabled.
       </div>
       {/* Navigation Top Bar */}
-      <nav id="nav" style={{ top: isOffline ? '33px' : '0' }}>
+      <nav id="nav">
         <button
           id="ham-btn"
           className={isDrawerOpen ? 'open' : ''}
