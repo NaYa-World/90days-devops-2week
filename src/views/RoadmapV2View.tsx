@@ -3,7 +3,6 @@ import { PHASES_V2 } from '../data/phases_v2';
 import type { UseAppStateReturnType } from '../hooks/useAppState';
 import confetti from 'canvas-confetti';
 
-const XP_MAP: Record<string, number> = { concept: 10, code: 25, quiz: 20, project: 50 };
 // Separate localStorage for v2 so v1 progress is never touched
 function loadV2State(key: string): Record<string, boolean> {
   try { return JSON.parse(localStorage.getItem(key) || '{}'); } catch { return {}; }
@@ -14,14 +13,6 @@ function saveV2State(key: string, s: Record<string, boolean>) {
 
 function v2key(pi: number, di: number, ti: number) { return `v2_${pi}_${di}_${ti}`; }
 
-function phaseDone(pi: number, state: Record<string, boolean>) {
-  const ph = PHASES_V2[pi];
-  return ph.data.reduce((a, d, di) =>
-    a + d.tasks.filter((_, ti) => !!state[v2key(pi, di, ti)]).length, 0);
-}
-function phaseTotal(pi: number) {
-  return PHASES_V2[pi].data.reduce((a, d) => a + d.tasks.length, 0);
-}
 
 interface Props {
   appState: UseAppStateReturnType;

@@ -167,7 +167,7 @@ const FLOWS_DATABASE: FlowData[] = [
   }
 ];
 
-export const DevOpsFlowsView: React.FC<DevOpsFlowsViewProps> = ({ appState, switchView }) => {
+export const DevOpsFlowsView: React.FC<DevOpsFlowsViewProps> = ({ switchView }) => {
   const [selectedFlowId, setSelectedFlowId] = useState<string>(FLOWS_DATABASE[0].id);
   const [selectedStepId, setSelectedStepId] = useState<string | null>(null);
 

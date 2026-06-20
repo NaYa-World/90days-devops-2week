@@ -5,7 +5,6 @@ import { SettingsModal } from './components/SettingsModal';
 import { NotificationDropdown } from './components/NotificationDropdown';
 import { NavigationDrawer } from './components/NavigationDrawer';
 import { DailyChallengeModal } from './components/DailyChallengeModal';
-import { CHALLENGES } from './data/challenges';
 import {
   AIProvider,
   getActiveProvider,
@@ -43,9 +42,7 @@ export const App: React.FC = () => {
     studyHours,
     currentUser,
     loginUser,
-    registerUser,
     logoutUser,
-    getAccounts,
     addNotification,
     clearNotifications,
     markNotificationsRead

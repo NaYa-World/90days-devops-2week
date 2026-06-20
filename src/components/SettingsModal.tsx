@@ -39,8 +39,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   setActiveProviderState,
   providerKeys,
   setProviderKeys,
-  githubSettings,
-  setGithubSettings,
   uiScale,
   setUiScale,
   notificationsEnabled,

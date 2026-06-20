@@ -805,7 +805,7 @@ export const day14: BootcampDay = {
       "explanation": "Option B is correct because it: leads with the automation outcome (git push triggers pipeline),\n          names the specific stages and tools in order, mentions the quality gate (shows you understand gates not just\n          runs), covers both artifact types (JAR and Docker image), and ends with a concrete demonstration of K8s\n          self-healing. Option A just lists tools — no outcomes, no depth. This is the difference between a candidate\n          who passes the interview and one who doesn't."
     }
   ],
-  "github": null,
+  "github": undefined,
   "pdfUrl": "/pdfs/day14.pdf",
   "images": []
 };

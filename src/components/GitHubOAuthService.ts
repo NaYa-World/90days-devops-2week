@@ -11,7 +11,7 @@ export const GitHubOAuthService = {
   // To get one: GitHub Settings -> Developer Settings -> OAuth Apps -> New OAuth App
   // Set Authorization callback URL to anything (e.g. http://localhost)
   // Check the "Enable Device Flow" checkbox in the app settings!
-  CLIENT_ID: 'YOUR_GITHUB_CLIENT_ID_HERE',
+  CLIENT_ID: 'Ov23liEmS0mPcDXsVsOd',
 
   async initiateDeviceFlow(): Promise<DeviceFlowResponse> {
     const res = await fetch('https://github.com/login/device/code', {
@@ -25,11 +25,11 @@ export const GitHubOAuthService = {
         scope: 'gist user'
       })
     });
-    
+
     if (!res.ok) {
       throw new Error('Failed to initiate device flow');
     }
-    
+
     return res.json();
   },
 
@@ -52,7 +52,7 @@ export const GitHubOAuthService = {
           });
 
           const data = await res.json();
-          
+
           if (data.access_token) {
             resolve(data.access_token);
             return;
@@ -70,12 +70,12 @@ export const GitHubOAuthService = {
           reject(e);
         }
       };
-      
+
       // Start polling
       setTimeout(poll, interval * 1000);
     });
   },
-  
+
   async getUserProfile(token: string) {
     const res = await fetch('https://api.github.com/user', {
       headers: {

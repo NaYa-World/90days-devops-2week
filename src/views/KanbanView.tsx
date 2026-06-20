@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { PHASES, Phase, DayData } from '../data/phases';
+import { PHASES } from '../data/phases';
 import { PHASES_V2 } from '../data/phases_v2';
 import { days as notesDays } from '../data/notes';
 import { UseAppStateReturnType } from '../hooks/useAppState';
@@ -63,7 +63,7 @@ export const KanbanView: React.FC<KanbanViewProps> = ({
     PHASES_V2.forEach((ph, pi) => {
       if (kbPhase !== 'all' && kbPhase !== String(pi)) return;
       ph.data.forEach((d, di) => {
-        const dDone = d.tasks.filter((_, ti) => !!v2state[v2key(pi, di, ti)]).length;
+        const dDone = d.tasks.filter((_: any, ti: any) => !!v2state[v2key(pi, di, ti)]).length;
         const dTotal = d.tasks.length;
         const status = dDone === 0 ? 'backlog' : dDone === dTotal ? 'done' : (dDone / dTotal >= 0.5 ? 'review' : 'inprogress');
         cols[status].push({ ph, pi, d, di, type: 'v2' });
@@ -188,7 +188,7 @@ export const KanbanView: React.FC<KanbanViewProps> = ({
                       labelStr = item.d.label;
                       accentColor = item.ph.color;
                     } else if (item.type === 'v2') {
-                      dDone = item.d.tasks.filter((_, ti) => !!v2state[v2key(item.pi!, item.di, ti)]).length;
+                      dDone = item.d.tasks.filter((_: any, ti: any) => !!v2state[v2key(item.pi!, item.di, ti)]).length;
                       dTotal = item.d.tasks.length;
                       pct = dTotal ? Math.round((dDone / dTotal) * 100) : 0;
                       dayNumStr = item.d.day;

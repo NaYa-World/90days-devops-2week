@@ -1,4 +1,4 @@
-import React, { Suspense } from 'react';
+import React from 'react';
 import { ErrorBoundary } from './ErrorBoundary';
 
 // Lazy load views for optimal code splitting & bundle size reduction

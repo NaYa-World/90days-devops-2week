@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { PHASES, Phase, DayData, Task } from '../data/phases';
+import React, { useState } from 'react';
+import { PHASES, DayData, Task } from '../data/phases';
 import { UseAppStateReturnType } from '../hooks/useAppState';
 import { AIService } from '../components/AIService';
 import { showToast } from '../components/Toast';
@@ -26,15 +26,12 @@ export const RoadmapView: React.FC<RoadmapViewProps> = ({
     cntTotal,
     dayDone,
     dayTotal,
-    dayPct,
-    dayStatus,
     getNote,
     setNote,
     hasNote,
     getConf,
     setConf,
     dayAvgConf,
-    typeCounts,
     studyHours,
     calcETA,
     getLevelInfo,
@@ -409,7 +406,7 @@ export const RoadmapView: React.FC<RoadmapViewProps> = ({
                 <div className="phase-body open">
                   <div className="phase-body-inner">
                     <div className="phase-inner">
-                      {filteredDays.map((d, di) => {
+                      {filteredDays.map((d, _di) => {
                         const originalDi = ph.data.indexOf(d);
                         const dDone = dayDone(pi, originalDi);
                         const dTotal = dayTotal(pi, originalDi);
