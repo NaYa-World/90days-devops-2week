@@ -46,7 +46,7 @@ export const App: React.FC = () => {
     markNotificationsRead
   } = appState;
 
-  const [currentView, setCurrentView] = useState<string>('roadmap');
+  const [currentView, setCurrentView] = useState<string>('roadmap-v4');
   const [focusDay, setFocusDay] = useState<string>('0_0');
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const [showAnim, setShowAnim] = useState<boolean>(true);
@@ -291,8 +291,8 @@ export const App: React.FC = () => {
         if (isDrawerOpen) { setIsDrawerOpen(false); return; }
 
         setCurrentView(prevView => {
-          if (prevView !== 'roadmap') {
-            return 'roadmap';
+          if (prevView !== 'roadmap-v4') {
+            return 'roadmap-v4';
           }
           const now = Date.now();
           if (now - lastBackPress < 2000) {
@@ -508,7 +508,7 @@ export const App: React.FC = () => {
           <span></span>
           <span></span>
         </button>
-        <div className="nav-brand" onClick={() => handleNavItemClick('roadmap')} style={{ cursor: 'pointer' }}>
+        <div className="nav-brand" onClick={() => handleNavItemClick('roadmap-v4')} style={{ cursor: 'pointer' }}>
           <span className="g">DEV</span>
           <span className="p">OPS</span>
           <span className="v">BY GK</span>
@@ -618,10 +618,10 @@ export const App: React.FC = () => {
       {/* Mobile Bottom Navigation Bar */}
       <div id="bottom-bar">
         <button
-          className={`btab ${currentView === 'roadmap' ? 'active' : ''}`}
-          onClick={() => handleNavItemClick('roadmap')}
+          className={`btab ${currentView === 'roadmap-v4' ? 'active' : ''}`}
+          onClick={() => handleNavItemClick('roadmap-v4')}
         >
-          <span className="bico">💥</span>Roadmap
+          <span className="bico">🔥</span>Roadmap
         </button>
         <button
           className={`btab ${currentView === 'kanban' ? 'active' : ''}`}
