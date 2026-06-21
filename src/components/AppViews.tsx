@@ -95,7 +95,7 @@ export const AppViews: React.FC<AppViewsProps> = ({
     case 'roadmap-v4':
       return (
         <React.Suspense fallback={<div style={{ padding: 40, color: 'var(--sub)', textAlign: 'center' }}>Loading V4 Roadmap...</div>}>
-          <RoadmapV4View appState={appState} switchView={setCurrentView} />
+          <RoadmapV4View appState={appState} />
         </React.Suspense>
       );
     case 'github-rewriter':

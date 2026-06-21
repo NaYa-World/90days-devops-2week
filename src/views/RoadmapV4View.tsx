@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { PHASES_V4, Phase, DayTask, ArtifactContract } from '../data/phases_v4';
+import { PHASES_V4 } from '../data/phases_v4';
 import type { UseAppStateReturnType } from '../hooks/useAppState';
 import confetti from 'canvas-confetti';
 
 interface RoadmapV4ViewProps {
   appState: UseAppStateReturnType;
-  switchView: (view: string) => void;
 }
 
 // LocalStorage helpers
@@ -30,7 +29,7 @@ function v4key(pi: number, di: number, ti: number) {
   return `v4_${pi}_${di}_${ti}`;
 }
 
-export const RoadmapV4View: React.FC<RoadmapV4ViewProps> = ({ appState, switchView }) => {
+export const RoadmapV4View: React.FC<RoadmapV4ViewProps> = ({ appState }) => {
   const currentUser = appState.currentUser || 'guest';
   const stateKey = `devops90_v4_tasks_${currentUser.toLowerCase()}`;
   const artifactsKey = `devops90_v4_artifacts_${currentUser.toLowerCase()}`;
