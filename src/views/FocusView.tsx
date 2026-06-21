@@ -20,12 +20,16 @@ export const FocusView: React.FC<FocusViewProps> = ({
   const currentUser = appState.currentUser || 'guest';
   const v4stateKey = `devops90_v4_tasks_${currentUser.toLowerCase()}`;
   const v4artifactsKey = `devops90_v4_artifacts_${currentUser.toLowerCase()}`;
+  const v4notesKey = `devops90_v4_notes_${currentUser.toLowerCase()}`;
 
   const [v4state, setV4State] = useState<Record<string, boolean>>(() => {
     try { return JSON.parse(localStorage.getItem(v4stateKey) || '{}'); } catch { return {}; }
   });
   const [v4artifacts, setV4Artifacts] = useState<Record<string, string>>(() => {
     try { return JSON.parse(localStorage.getItem(v4artifactsKey) || '{}'); } catch { return {}; }
+  });
+  const [v4notes, setV4Notes] = useState<Record<string, string>>(() => {
+    try { return JSON.parse(localStorage.getItem(v4notesKey) || '{}'); } catch { return {}; }
   });
 
   const [pi, setPi] = useState(0);
@@ -47,11 +51,13 @@ export const FocusView: React.FC<FocusViewProps> = ({
     try {
       setV4State(JSON.parse(localStorage.getItem(v4stateKey) || '{}'));
       setV4Artifacts(JSON.parse(localStorage.getItem(v4artifactsKey) || '{}'));
+      setV4Notes(JSON.parse(localStorage.getItem(v4notesKey) || '{}'));
     } catch {
       setV4State({});
       setV4Artifacts({});
+      setV4Notes({});
     }
-  }, [v4stateKey, v4artifactsKey]);
+  }, [v4stateKey, v4artifactsKey, v4notesKey]);
 
   const isValidUrl = (url: string): boolean => {
     try {
@@ -147,13 +153,13 @@ export const FocusView: React.FC<FocusViewProps> = ({
   };
 
   const v4NoteKey = (pi: number, di: number) => `v4_note_${pi}_${di}`;
-  const getV4Note = (pi: number, di: number) => {
-    return v4state[v4NoteKey(pi, di)] || '';
+  const getV4Note = (pi: number, di: number): string => {
+    return v4notes[v4NoteKey(pi, di)] || '';
   };
   const setV4Note = (pi: number, di: number, val: string) => {
-    const next = { ...v4state, [v4NoteKey(pi, di)]: val };
-    setV4State(next);
-    localStorage.setItem(v4stateKey, JSON.stringify(next));
+    const next = { ...v4notes, [v4NoteKey(pi, di)]: val };
+    setV4Notes(next);
+    localStorage.setItem(v4notesKey, JSON.stringify(next));
   };
 
   return (
