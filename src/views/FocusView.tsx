@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { PHASES } from '../data/phases';
+import { PHASES_V4 } from '../data/phases_v4';
 import { UseAppStateReturnType } from '../hooks/useAppState';
 import { AIService } from '../components/AIService';
 import { showToast } from '../components/Toast';
@@ -12,28 +12,29 @@ interface FocusViewProps {
   setFocusDay: (day: string) => void;
 }
 
-const XP_MAP = { concept: 10, code: 25, quiz: 20, project: 50 };
-
 export const FocusView: React.FC<FocusViewProps> = ({
   appState,
   focusDay,
   setFocusDay,
 }) => {
-  const {
-    state,
-    dayDone,
-    dayTotal,
-    dayPct,
-    getNote,
-    setNote,
-    getConf,
-    setConf,
-    toggleTask,
-    getSmartNext
-  } = appState;
+  const currentUser = appState.currentUser || 'guest';
+  const v4stateKey = `devops90_v4_tasks_${currentUser.toLowerCase()}`;
+  const v4artifactsKey = `devops90_v4_artifacts_${currentUser.toLowerCase()}`;
+  const v4notesKey = `devops90_v4_notes_${currentUser.toLowerCase()}`;
+
+  const [v4state, setV4State] = useState<Record<string, boolean>>(() => {
+    try { return JSON.parse(localStorage.getItem(v4stateKey) || '{}'); } catch { return {}; }
+  });
+  const [v4artifacts, setV4Artifacts] = useState<Record<string, string>>(() => {
+    try { return JSON.parse(localStorage.getItem(v4artifactsKey) || '{}'); } catch { return {}; }
+  });
+  const [v4notes, setV4Notes] = useState<Record<string, string>>(() => {
+    try { return JSON.parse(localStorage.getItem(v4notesKey) || '{}'); } catch { return {}; }
+  });
 
   const [pi, setPi] = useState(0);
   const [di, setDi] = useState(0);
+  const [starRevealed, setStarRevealed] = useState(false);
 
   // Sync state when focusDay prop changes
   useEffect(() => {
@@ -41,16 +42,44 @@ export const FocusView: React.FC<FocusViewProps> = ({
       const parts = focusDay.split('_');
       setPi(parseInt(parts[0]) || 0);
       setDi(parseInt(parts[1]) || 0);
+      setStarRevealed(false);
     }
   }, [focusDay]);
 
+  // Sync state if user changes
+  useEffect(() => {
+    try {
+      setV4State(JSON.parse(localStorage.getItem(v4stateKey) || '{}'));
+      setV4Artifacts(JSON.parse(localStorage.getItem(v4artifactsKey) || '{}'));
+      setV4Notes(JSON.parse(localStorage.getItem(v4notesKey) || '{}'));
+    } catch {
+      setV4State({});
+      setV4Artifacts({});
+      setV4Notes({});
+    }
+  }, [v4stateKey, v4artifactsKey, v4notesKey]);
+
+  const isValidUrl = (url: string): boolean => {
+    try {
+      const parsed = new URL(url.trim());
+      return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+    } catch {
+      return false;
+    }
+  };
+
+  const getDayNumber = (dayId: string): string => {
+    const match = dayId.match(/-d(\d+)$/);
+    return match ? `Day ${match[1]}` : dayId;
+  };
+
   const allDaysList: { pi: number; di: number; text: string }[] = [];
-  PHASES.forEach((ph, pIdx) => {
-    ph.data.forEach((d, dIdx) => {
+  PHASES_V4.forEach((ph, pIdx) => {
+    ph.dayTasks.forEach((d, dIdx) => {
       allDaysList.push({
         pi: pIdx,
         di: dIdx,
-        text: `${d.day} — ${d.label}`
+        text: `Day ${dIdx + 1 + pIdx * 14} (Phase ${pIdx + 1}) — ${d.title}`
       });
     });
   });
@@ -78,22 +107,60 @@ export const FocusView: React.FC<FocusViewProps> = ({
   };
 
   const handleFocusToday = () => {
-    const nextTask = getSmartNext();
-    if (nextTask) {
-      setFocusDay(`${nextTask.pi}_${nextTask.di}`);
+    // Find the first day in V4 that is not complete
+    for (let pIdx = 0; pIdx < PHASES_V4.length; pIdx++) {
+      const ph = PHASES_V4[pIdx];
+      for (let dIdx = 0; dIdx < ph.dayTasks.length; dIdx++) {
+        const day = ph.dayTasks[dIdx];
+        const doneCount = day.tasks.filter((_, ti) => !!v4state[`v4_${pIdx}_${dIdx}_${ti}`]).length;
+        const url = v4artifacts[`${pIdx}_${dIdx}`] || '';
+        const dayComplete = doneCount === day.tasks.length && isValidUrl(url);
+        if (!dayComplete) {
+          setFocusDay(`${pIdx}_${dIdx}`);
+          return;
+        }
+      }
     }
+    setFocusDay('0_0');
   };
 
-  const currentPhase = PHASES[pi];
-  const currentDay = currentPhase?.data[di];
+  const currentPhase = PHASES_V4[pi];
+  const currentDay = currentPhase?.dayTasks[di];
   
   if (!currentPhase || !currentDay) {
     return <div className="wrap">Select a valid day to start focusing.</div>;
   }
 
-  const dDone = dayDone(pi, di);
-  const dTotal = dayTotal(pi, di);
-  const pct = dayPct(pi, di);
+  const doneCount = currentDay.tasks.filter((_, ti) => !!v4state[`v4_${pi}_${di}_${ti}`]).length;
+  const totalCount = currentDay.tasks.length;
+  const pct = totalCount ? Math.round((doneCount / totalCount) * 100) : 0;
+
+  const toggleV4Task = (pi: number, di: number, ti: number) => {
+    if (Capacitor.isNativePlatform()) {
+      Haptics.impact({ style: ImpactStyle.Light }).catch(() => {});
+    }
+    const key = `v4_${pi}_${di}_${ti}`;
+    const next = { ...v4state, [key]: !v4state[key] };
+    setV4State(next);
+    localStorage.setItem(v4stateKey, JSON.stringify(next));
+  };
+
+  const updateV4ArtifactUrl = (pi: number, di: number, url: string) => {
+    const key = `${pi}_${di}`;
+    const next = { ...v4artifacts, [key]: url };
+    setV4Artifacts(next);
+    localStorage.setItem(v4artifactsKey, JSON.stringify(next));
+  };
+
+  const v4NoteKey = (pi: number, di: number) => `v4_note_${pi}_${di}`;
+  const getV4Note = (pi: number, di: number): string => {
+    return v4notes[v4NoteKey(pi, di)] || '';
+  };
+  const setV4Note = (pi: number, di: number, val: string) => {
+    const next = { ...v4notes, [v4NoteKey(pi, di)]: val };
+    setV4Notes(next);
+    localStorage.setItem(v4notesKey, JSON.stringify(next));
+  };
 
   return (
     <div className="wrap">
@@ -115,84 +182,222 @@ export const FocusView: React.FC<FocusViewProps> = ({
       <div id="focus-content">
         <div className="focus-card">
           <div className="focus-day-tag">
-            {currentDay.day} · {currentPhase.title.split(' — ')[1] || currentPhase.title}
+            {getDayNumber(currentDay.id)} · Phase {currentPhase.phase}
           </div>
-          <div className="focus-title">{currentDay.label}</div>
+          <div className="focus-title">{currentDay.title}</div>
           <div className="focus-meta">
-            {dDone}/{dTotal} tasks · {pct}% done
+            {doneCount}/{totalCount} tasks · {pct}% done
           </div>
           
           <div className="focus-pct-bar">
             <div className="focus-pct-fill" style={{ width: `${pct}%` }}></div>
           </div>
 
-          {currentDay.link && (
-            <a 
-              href={currentDay.link} 
-              target="_blank" 
-              rel="noopener noreferrer" 
-              className="focus-link"
-            >
-              🔗 View on 90DaysOfDevOps →
-            </a>
-          )}
+          {/* 1. Production Scenario */}
+          <div style={{ margin: '20px 0' }}>
+            <div style={{ fontSize: '11px', color: '#ef4444', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.5px', marginBottom: '6px' }}>
+              🔴 Target Production Scenario
+            </div>
+            <div style={{ fontSize: '13.5px', lineHeight: 1.6, color: '#c3c9d7' }}>
+              {currentDay.scenario}
+            </div>
+          </div>
 
-          {/* Tasks List */}
-          {currentDay.tasks.map((task, ti) => {
-            const tidStr = `p${pi}d${di}t${ti}`;
-            const done = !!state.completedTasks[tidStr];
-            const conf = getConf(pi, di, ti);
+          {/* 2. Tasks List */}
+          <div style={{ margin: '20px 0' }}>
+            <div style={{ fontSize: '11px', color: '#38bdf8', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.5px', marginBottom: '8px' }}>
+              📋 Execution Checklist
+            </div>
+            {currentDay.tasks.map((task, ti) => {
+              const done = !!v4state[`v4_${pi}_${di}_${ti}`];
 
-            return (
-              <div key={ti} className="task-row">
-                <div 
-                  className={`task-check ${done ? 'done' : ''}`}
-                  onClick={() => toggleTask(pi, di, ti)}
-                >
-                  {done && '✓'}
-                </div>
-                <div style={{ flex: 1 }}>
-                  <span className={`task-text ${done ? 'done' : ''}`}>{task.t}</span>
-                  <div className="conf-row">
-                    <span className="conf-label">conf:</span>
-                    {[1, 2, 3, 4, 5].map(v => (
-                      <span 
-                        key={v}
-                        className={`conf-star ${conf >= v ? 'on' : ''}`}
-                        onClick={() => setConf(pi, di, ti, conf === v ? 0 : v)}
-                      >
-                        ★
-                      </span>
-                    ))}
+              return (
+                <div key={ti} className="task-row" onClick={() => toggleV4Task(pi, di, ti)} style={{ cursor: 'pointer' }}>
+                  <div className={`task-check ${done ? 'done' : ''}`}>
+                    {done && '✓'}
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <span className={`task-text ${done ? 'done' : ''}`}>{task}</span>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', flexShrink: 0 }}>
+                    <span className="task-xp" style={{ opacity: done ? 1 : 0, color: '#38bdf8' }}>
+                      +15xp
+                    </span>
                   </div>
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '2px', flexShrink: 0 }}>
-                  <span className={`task-badge badge-${task.k}`}>{task.k}</span>
-                  <span className="task-xp" style={{ opacity: done ? 1 : 0 }}>
-                    +{XP_MAP[task.k as keyof typeof XP_MAP]}xp
-                  </span>
+              );
+            })}
+          </div>
+
+          {/* 3. Practical Commands Terminal */}
+          {currentDay.commands && currentDay.commands.length > 0 && (
+            <div style={{ margin: '20px 0' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                <div style={{ fontSize: '11px', color: '#ffc850', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.5px' }}>
+                  💻 Monospace Command Sequence
+                </div>
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(currentDay.commands!.join('\n'))
+                      .then(() => showToast('✓ Commands copied', 'rgba(255,200,80,.1)'))
+                      .catch(e => console.error(e));
+                  }}
+                  className="focus-btn"
+                  style={{ fontSize: '10px', padding: '2px 8px', height: 'auto', minHeight: 'auto' }}
+                >
+                  Copy
+                </button>
+              </div>
+              <div style={{
+                background: '#07090f',
+                border: '1px solid rgba(255,255,255,0.08)',
+                borderRadius: '8px',
+                padding: '12px 16px',
+                fontFamily: 'monospace',
+                fontSize: '12px',
+                lineHeight: 1.6,
+                color: '#00d9a0',
+                whiteSpace: 'pre-wrap',
+              }}>
+                {currentDay.commands.map((cmd, cIdx) => (
+                  <div key={cIdx} style={{ marginBottom: cIdx === currentDay.commands!.length - 1 ? 0 : '4px' }}>
+                    <span style={{ color: '#8f9bb3', marginRight: '8px' }}>$</span>
+                    {cmd}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* 4. Real-world Gotchas */}
+          <div style={{
+            background: 'rgba(239,155,80,0.03)',
+            border: '1px solid rgba(239,155,80,0.15)',
+            borderRadius: '8px',
+            padding: '12px 14px',
+            margin: '20px 0',
+          }}>
+            <div style={{ fontSize: '11px', color: '#ef9b50', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.5px', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span>⚠️</span>
+              <span>Real Production Gotcha</span>
+            </div>
+            <div style={{ fontSize: '12.5px', lineHeight: 1.6, color: '#c3c9d7' }}>
+              {currentDay.gotcha}
+            </div>
+          </div>
+
+          {/* 5. Interview Reveal Box */}
+          <div style={{ margin: '20px 0', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '8px', overflow: 'hidden' }}>
+            <div
+              onClick={() => setStarRevealed(!starRevealed)}
+              style={{
+                padding: '10px 14px',
+                background: 'rgba(255,255,255,0.02)',
+                cursor: 'pointer',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+              }}
+            >
+              <span style={{ fontSize: '11px', color: '#c084fc', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.5px' }}>
+                🎤 STAR Interview Preparation Question
+              </span>
+              <span style={{ fontSize: '11px', color: '#c084fc', textDecoration: 'underline' }}>
+                {starRevealed ? 'Hide Answer' : 'Reveal Answer'}
+              </span>
+            </div>
+            {starRevealed && (
+              <div style={{ padding: '14px', background: 'rgba(0,0,0,0.15)', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                <div style={{ fontSize: '12px', fontStyle: 'italic', color: '#8f9bb3', marginBottom: '8px' }}>
+                  &quot;Answer the question in your own words, then verify with the senior expert template below:&quot;
+                </div>
+                <div style={{ fontSize: '13px', lineHeight: 1.6, color: '#c3c9d7' }}>
+                  {currentDay.interviewAnswer}
                 </div>
               </div>
-            );
-          })}
+            )}
+          </div>
+
+          {/* 6. Artifact Verification Contract */}
+          <div style={{
+            background: 'rgba(255,255,255,0.01)',
+            border: '1px solid rgba(255,255,255,0.06)',
+            borderRadius: '8px',
+            padding: '14px',
+            margin: '20px 0',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
+              <span style={{ fontSize: '13px' }}>🔗</span>
+              <span style={{ fontSize: '11px', fontWeight: 700, color: '#fff', fontFamily: 'monospace', textTransform: 'uppercase' }}>
+                Verifiable Artifact Contract
+              </span>
+            </div>
+            <p style={{ margin: '0 0 10px 0', fontSize: '12.5px', color: '#8f9bb3' }}>
+              {currentDay.artifactContract.instruction}
+            </p>
+            
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <input
+                type="text"
+                placeholder={`Format: ${currentDay.artifactContract.exampleFormat}`}
+                value={v4artifacts[`${pi}_${di}`] || ''}
+                onChange={e => updateV4ArtifactUrl(pi, di, e.target.value)}
+                style={{
+                  flex: 1,
+                  background: '#07090f',
+                  border: '1px solid rgba(255,255,255,0.08)',
+                  borderRadius: '6px',
+                  padding: '8px 12px',
+                  fontSize: '12px',
+                  color: '#fff',
+                  outline: 'none',
+                }}
+              />
+              {isValidUrl(v4artifacts[`${pi}_${di}`] || '') ? (
+                <span style={{
+                  fontSize: '11px',
+                  fontWeight: 700,
+                  color: 'var(--green, #00d9a0)',
+                  background: 'rgba(0,217,160,0.08)',
+                  padding: '4px 8px',
+                  borderRadius: '4px',
+                  border: '1px solid rgba(0,217,160,0.2)',
+                }}>
+                  ✓ Verified Link
+                </span>
+              ) : (
+                <span style={{
+                  fontSize: '11px',
+                  fontWeight: 700,
+                  color: '#ef4444',
+                  background: 'rgba(239,68,68,0.08)',
+                  padding: '4px 8px',
+                  borderRadius: '4px',
+                  border: '1px solid rgba(239,68,68,0.2)',
+                }}>
+                  Url Required
+                </span>
+              )}
+            </div>
+          </div>
 
           {/* Notes Widget */}
           <NotesWidget 
             pi={pi}
             di={di}
-            getNote={getNote}
-            setNote={setNote}
+            getNote={getV4Note}
+            setNote={setV4Note}
           />
 
           {/* AI Brief Widget */}
           <AIBriefWidget 
             pi={pi}
             di={di}
-            day={currentDay.day}
-            label={currentDay.label}
+            day={getDayNumber(currentDay.id)}
+            label={currentDay.title}
             phaseTitle={currentPhase.title}
             tasks={currentDay.tasks}
-            note={getNote(pi, di)}
+            note={getV4Note(pi, di)}
           />
         </div>
       </div>
@@ -279,7 +484,7 @@ const AIBriefWidget: React.FC<AIBriefWidgetProps> = ({
     setLoadingBrief(true);
     setBrief('');
     try {
-      const tasksText = tasks.map(t => `- [${t.k}] ${t.t}`).join('\n');
+      const tasksText = tasks.map(t => typeof t === 'string' ? `- ${t}` : `- [${t.k}] ${t.t}`).join('\n');
       const text = await AIService.generateDailyBrief(day, label, phaseTitle, tasksText, note);
       setBrief(text);
     } catch (e: any) {
@@ -294,7 +499,7 @@ const AIBriefWidget: React.FC<AIBriefWidgetProps> = ({
     setQuiz(null);
     setSelectedOpt(null);
     try {
-      const tasksText = tasks.map(t => t.t).join(', ');
+      const tasksText = tasks.map(t => typeof t === 'string' ? t : t.t).join(', ');
       const q = await AIService.generateQuiz(label, tasksText);
       setQuiz(q);
     } catch (e: any) {
@@ -421,4 +626,5 @@ const AIBriefWidget: React.FC<AIBriefWidgetProps> = ({
     </div>
   );
 };
+
 export default FocusView;

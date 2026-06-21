@@ -20,13 +20,13 @@ test.describe('DevOps90 Core Workflows', () => {
       await page.getByPlaceholder('e.g. karthik').fill('e2etestuser');
       await page.getByRole('button', { name: 'Create Profile →' }).click();
     } catch (e) {
-      console.log('Login modal not found:', e.message);
+      console.log('Login modal not found:', (e as Error).message);
     }
 
     await page.screenshot({ path: 'test-results/after-login.png' });
 
-    // Verify login success by checking for v2 Roadmap tab
-    await expect(page.locator('.nav-tab', { hasText: 'v2 Roadmap' })).toBeVisible({ timeout: 15000 });
+    // Verify login success by checking for DevOps Roadmap tab
+    await expect(page.locator('.nav-tab', { hasText: 'DevOps Roadmap' })).toBeVisible({ timeout: 15000 });
 
     // 3. Roadmap Interaction
     // Phase 1 (Weeks 1-2) is already expanded by default, but let's make sure the header is visible.
@@ -60,8 +60,8 @@ test.describe('DevOps90 Core Workflows', () => {
     await page.locator('.ham-item', { hasText: 'Labs' }).click();
     await expect(page.getByText('Daily DevOps Labs (Days 1–10)')).toBeVisible();
 
-    // Switch back to v2 Roadmap
-    await page.locator('.nav-tab', { hasText: 'v2 Roadmap' }).click();
+    // Switch back to DevOps Roadmap
+    await page.locator('.nav-tab', { hasText: 'DevOps Roadmap' }).click();
 
     // 5. Settings Modal
     await page.locator('.nav-btn', { hasText: 'Settings' }).click();

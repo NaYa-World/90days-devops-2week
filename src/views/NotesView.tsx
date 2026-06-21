@@ -3,7 +3,6 @@ import { showToast } from '../components/Toast';
 import { autoSyncToGitHub } from '../components/GitHubSyncService';
 import { UseAppStateReturnType } from '../hooks/useAppState';
 import days from '../data/notes';
-import { SecurityService } from '../components/SecurityService';
 import { Capacitor } from '@capacitor/core';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
 import { KeepAwake } from '@capacitor-community/keep-awake';

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { PROJECTS, Project, generateREADME } from '../data/projects';
-import { PHASES } from '../data/phases';
+import { PHASES_V4 } from '../data/phases_v4';
 import { UseAppStateReturnType } from '../hooks/useAppState';
 import { showToast } from '../components/Toast';
 import confetti from 'canvas-confetti';
@@ -12,8 +12,6 @@ interface ProjectsViewProps {
 
 export const ProjectsView: React.FC<ProjectsViewProps> = ({ appState, switchView }) => {
   const {
-    dayTotal,
-    dayDone,
     isProjectCompleted,
     toggleProjectCompleted,
     addBuildLog,
@@ -22,11 +20,57 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({ appState, switchView
   const [activeSpecProject, setActiveSpecProject] = useState<Project | null>(null);
   const [activeTipsProject, setActiveTipsProject] = useState<Project | null>(null);
 
-  // Compute phase progress percentages
-  const phasePct = PHASES.map((ph, pi) => {
-    const tot = ph.data.reduce((a, _d, di) => a + dayTotal(pi, di), 0);
-    const don = ph.data.reduce((a, _d, di) => a + dayDone(pi, di), 0);
-    return tot ? Math.round((don / tot) * 100) : 0;
+  // Mapping of project indices to V4 Phase indices
+  const projectToV4PhaseMap: Record<number, number> = {
+    0: 0, // p1 maps to V4 Phase 1 (index 0)
+    1: 9, // p2 maps to V4 Phase 10 (index 9)
+    2: 5, // p3 maps to V4 Phase 6 (index 5)
+    3: 3, // p4 maps to V4 Phase 4 (index 3)
+    4: 8, // p5 maps to V4 Phase 9 (index 8)
+    5: 5, // p6 maps to V4 Phase 6 (index 5)
+    6: 7, // p7 maps to V4 Phase 8 (index 7)
+    7: 5, // p8 maps to V4 Phase 6 (index 5)
+    8: 6, // p9 maps to V4 Phase 7 (index 6)
+  };
+
+  const v4stateKey = `devops90_v4_tasks_${(appState.currentUser || 'guest').toLowerCase()}`;
+  const v4artifactsKey = `devops90_v4_artifacts_${(appState.currentUser || 'guest').toLowerCase()}`;
+  
+  const [v4state] = useState<Record<string, boolean>>(() => {
+    try { return JSON.parse(localStorage.getItem(v4stateKey) || '{}'); } catch { return {}; }
+  });
+  const [v4artifacts] = useState<Record<string, string>>(() => {
+    try { return JSON.parse(localStorage.getItem(v4artifactsKey) || '{}'); } catch { return {}; }
+  });
+
+  const isValidUrl = (url: string): boolean => {
+    try {
+      const parsed = new URL(url.trim());
+      return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+    } catch {
+      return false;
+    }
+  };
+
+  const getV4PhasePercent = (pIdx: number): number => {
+    const phase = PHASES_V4[pIdx];
+    if (!phase) return 0;
+    const totalDays = phase.dayTasks.length;
+    if (!totalDays) return 0;
+    
+    const completedDays = phase.dayTasks.filter((day, di) => {
+      const doneCount = day.tasks.filter((_, ti) => !!v4state[`v4_${pIdx}_${di}_${ti}`]).length;
+      const url = v4artifacts[`${pIdx}_${di}`] || '';
+      return doneCount === day.tasks.length && isValidUrl(url);
+    }).length;
+
+    return Math.round((completedDays / totalDays) * 100);
+  };
+
+  // Compute phase progress percentages using V4 data
+  const phasePct = [0, 1, 2, 3, 4, 5, 6, 7, 8].map(idx => {
+    const v4PhaseIdx = projectToV4PhaseMap[idx];
+    return getV4PhasePercent(v4PhaseIdx);
   });
 
   const handleMarkProject = (projId: string, isNowDone: boolean) => {
@@ -93,7 +137,7 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({ appState, switchView
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', marginBottom: '12px' }}>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontFamily: 'var(--mono)', fontSize: '10px', color: done ? 'var(--green)' : 'var(--sub)', marginBottom: '4px' }}>
-                    {proj.phase} · {unlocked ? 'UNLOCKED' : 'LOCKED — complete 30% of phase'}
+                    {(PHASES_V4[projectToV4PhaseMap[proj.phaseIdx]]?.title || proj.phase)} · {unlocked ? 'UNLOCKED' : 'LOCKED — complete 30% of phase'}
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginBottom: '4px' }}>
                     <div style={{ fontSize: '16px', fontWeight: 800, fontFamily: 'var(--mono)', color: 'var(--text)' }}>
@@ -168,7 +212,7 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({ appState, switchView
                   </>
                 ) : (
                   <div style={{ fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--muted)' }}>
-                    🔒 Complete 30% of "{proj.phase.split(' — ')[1] || proj.phase}" to unlock this project
+                    🔒 Complete 30% of "{(PHASES_V4[projectToV4PhaseMap[proj.phaseIdx]]?.title || proj.phase)}" to unlock this project
                   </div>
                 )}
               </div>

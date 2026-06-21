@@ -4,6 +4,7 @@ import { ErrorBoundary } from './ErrorBoundary';
 // Lazy load views for optimal code splitting & bundle size reduction
 const RoadmapView = React.lazy(() => import('../views/RoadmapView').then(m => ({ default: m.RoadmapView })));
 const RoadmapV3View = React.lazy(() => import('../views/RoadmapV3View').then(m => ({ default: m.RoadmapV3View })));
+const RoadmapV4View = React.lazy(() => import('../views/RoadmapV4View').then(m => ({ default: m.RoadmapV4View })));
 const KanbanView = React.lazy(() => import('../views/KanbanView').then(m => ({ default: m.KanbanView })));
 const FocusView = React.lazy(() => import('../views/FocusView').then(m => ({ default: m.FocusView })));
 const JobsView = React.lazy(() => import('../views/JobsView').then(m => ({ default: m.JobsView })));
@@ -91,6 +92,12 @@ export const AppViews: React.FC<AppViewsProps> = ({
           <RoadmapV3View appState={appState} switchView={setCurrentView} />
         </React.Suspense>
       );
+    case 'roadmap-v4':
+      return (
+        <React.Suspense fallback={<div style={{ padding: 40, color: 'var(--sub)', textAlign: 'center' }}>Loading V4 Roadmap...</div>}>
+          <RoadmapV4View appState={appState} />
+        </React.Suspense>
+      );
     case 'github-rewriter':
       return (
         <ErrorBoundary name="GitHub Rewriter">
@@ -148,7 +155,6 @@ export const AppViews: React.FC<AppViewsProps> = ({
         <RoadmapView
           appState={appState}
           switchView={setCurrentView}
-          setFocusDay={setFocusDay}
         />
       );
   }
