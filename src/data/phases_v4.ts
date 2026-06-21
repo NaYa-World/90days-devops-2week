@@ -2302,4 +2302,4 @@ export const PHASES_V4: Phase[] = [
   phase10,
 ];
 
-export default phasesV3Complete;
+export default PHASES_V4;
