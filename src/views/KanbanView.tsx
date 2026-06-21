@@ -19,10 +19,7 @@ interface KanbanItem {
   type: 'v4' | 'v1' | 'notes';
 }
 
-function loadV1State(key: string): Record<string, boolean> {
-  try { return JSON.parse(localStorage.getItem(key) || '{}'); } catch { return {}; }
-}
-function v1key(pi: number, di: number, ti: number) { return `v1_${pi}_${di}_${ti}`; }
+
 
 function loadNotesState(username: string | null): Record<string, boolean> {
   const user = username ? username.toLowerCase() : 'guest';
@@ -57,8 +54,7 @@ export const KanbanView: React.FC<KanbanViewProps> = ({
     }
   };
 
-  const userKey = `devops90_v1_tasks_${(currentUser || 'guest').toLowerCase()}`;
-  const v1state = loadV1State(userKey);
+
 
   const notesState = loadNotesState(currentUser);
 
@@ -209,7 +205,7 @@ export const KanbanView: React.FC<KanbanViewProps> = ({
                     let pctStr = '';
 
                     if (item.type === 'v4') {
-                      const doneCount = item.d.tasks.filter((_, ti) => !!v4state[`v4_${item.pi}_${item.di}_${ti}`]).length;
+                      const doneCount = (item.d.tasks as string[]).filter((_: string, ti: number) => !!v4state[`v4_${item.pi}_${item.di}_${ti}`]).length;
                       const totalCount = item.d.tasks.length;
                       const hasUrl = isValidUrl(v4artifacts[`${item.pi}_${item.di}`] || '');
                       pct = totalCount ? Math.round((doneCount / totalCount) * 100) : 0;
