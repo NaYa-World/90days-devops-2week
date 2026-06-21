@@ -59,16 +59,6 @@ export const KanbanView: React.FC<KanbanViewProps> = ({
         cols[status].push({ ph, pi, d, di, type: 'v1' });
       });
     });
-  } else if (boardType === 'v2') {
-    PHASES_V2.forEach((ph, pi) => {
-      if (kbPhase !== 'all' && kbPhase !== String(pi)) return;
-      ph.data.forEach((d, di) => {
-        const dDone = d.tasks.filter((_: any, ti: any) => !!v1state[v1key(pi, di, ti)]).length;
-        const dTotal = d.tasks.length;
-        const status = dDone === 0 ? 'backlog' : dDone === dTotal ? 'done' : (dDone / dTotal >= 0.5 ? 'review' : 'inprogress');
-        cols[status].push({ ph, pi, d, di, type: 'v2' });
-      });
-    });
   } else if (boardType === 'notes') {
     notesDays.forEach((d, idx) => {
       const isDone = !!notesState[`day_${d.day}`];
@@ -81,9 +71,6 @@ export const KanbanView: React.FC<KanbanViewProps> = ({
     if (item.type === 'v1') {
       setFocusDay(`${item.pi}_${item.di}`);
       switchView('focus');
-    } else if (item.type === 'v2') {
-      localStorage.setItem('devops90_v1_active_day', `${item.pi}_${item.di}`);
-      switchView('roadmap-v2');
     } else if (item.type === 'notes') {
       localStorage.setItem('devops90_active_notes_day', String(item.di));
       switchView('notes');
@@ -182,13 +169,6 @@ export const KanbanView: React.FC<KanbanViewProps> = ({
                     if (item.type === 'v1') {
                       dDone = dayDone(item.pi!, item.di);
                       dTotal = dayTotal(item.pi!, item.di);
-                      pct = dTotal ? Math.round((dDone / dTotal) * 100) : 0;
-                      dayNumStr = item.d.day;
-                      labelStr = item.d.label;
-                      accentColor = item.ph.color;
-                    } else if (item.type === 'v2') {
-                      dDone = item.d.tasks.filter((_: any, ti: any) => !!v1state[v1key(item.pi!, item.di, ti)]).length;
-                      dTotal = item.d.tasks.length;
                       pct = dTotal ? Math.round((dDone / dTotal) * 100) : 0;
                       dayNumStr = item.d.day;
                       labelStr = item.d.label;

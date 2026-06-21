@@ -148,7 +148,6 @@ export const AppViews: React.FC<AppViewsProps> = ({
         <RoadmapView
           appState={appState}
           switchView={setCurrentView}
-          setFocusDay={setFocusDay}
         />
       );
   }
