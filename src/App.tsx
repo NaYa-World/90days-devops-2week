@@ -7,7 +7,6 @@ import { NavigationDrawer } from './components/NavigationDrawer';
 import { DailyChallengeModal } from './components/DailyChallengeModal';
 import {
   AIProvider,
-  getActiveProvider,
   setActiveProvider,
   clearAllKeys
 } from './components/AIService';
