@@ -24,6 +24,7 @@ interface SettingsModalProps {
   theme: 'dark' | 'light';
   currentUser: string | null;
   handleTestNotification?: () => void;
+  triggerSync?: () => Promise<boolean>;
 }
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({
@@ -46,17 +47,24 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   setSyncWithSystemTheme,
   theme,
   currentUser,
-  handleTestNotification
+  handleTestNotification,
+  triggerSync
 }) => {
   const [syncing, setSyncing] = useState(false);
   const [syncMessage, setSyncMessage] = useState('');
 
   const handleForceSync = async () => {
     setSyncing(true);
-    setSyncMessage('Syncing with GitHub Repository...');
+    setSyncMessage('Syncing data...');
     try {
-      await GitHubSyncService.autoSyncToGitHub();
-      setSyncMessage('✅ Sync successful!');
+      const success = triggerSync 
+        ? await triggerSync() 
+        : await GitHubSyncService.autoSyncToGitHub();
+      if (success) {
+        setSyncMessage('✅ Sync successful!');
+      } else {
+        setSyncMessage('❌ Sync failed!');
+      }
       setTimeout(() => setSyncMessage(''), 3000);
     } catch (err: any) {
       setSyncMessage('❌ Sync failed: ' + (err.message || err));
