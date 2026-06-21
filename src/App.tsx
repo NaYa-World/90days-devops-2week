@@ -523,13 +523,6 @@ export const App: React.FC = () => {
             💥 DevOps Roadmap
           </button>
           <button
-            className={`nav-tab ${currentView === 'roadmap-v3' ? 'active' : ''}`}
-            onClick={() => handleNavItemClick('roadmap-v3')}
-            style={{ background: currentView === 'roadmap-v3' ? 'rgba(168,85,247,.15)' : undefined, color: currentView === 'roadmap-v3' ? 'var(--purple)' : undefined }}
-          >
-            🚀 v3 Roadmap
-          </button>
-          <button
             className={`nav-tab ${currentView === 'roadmap-v4' ? 'active' : ''}`}
             onClick={() => handleNavItemClick('roadmap-v4')}
             style={{ background: currentView === 'roadmap-v4' ? 'rgba(239,68,68,.15)' : undefined, color: currentView === 'roadmap-v4' ? '#ef4444' : undefined }}
