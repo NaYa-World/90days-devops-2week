@@ -87,11 +87,11 @@ export const NavigationDrawer: React.FC<NavigationDrawerProps> = ({
           {openHamSections.study && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginTop: '4px' }}>
               <button
-                className={`ham-item ${currentView === 'roadmap-v2' ? 'active' : ''}`}
-                onClick={() => handleNavItemClick('roadmap-v2')}
-                style={{ color: currentView === 'roadmap-v2' ? 'var(--green)' : undefined }}
+                className={`ham-item ${currentView === 'roadmap' ? 'active' : ''}`}
+                onClick={() => handleNavItemClick('roadmap')}
+                style={{ color: currentView === 'roadmap' ? 'var(--green)' : undefined }}
               >
-                <span className="ham-ico">💥</span>v2 Roadmap
+                <span className="ham-ico">💥</span>DevOps Roadmap
               </button>
               <button
                 className={`ham-item ${currentView === 'roadmap-v3' ? 'active' : ''}`}

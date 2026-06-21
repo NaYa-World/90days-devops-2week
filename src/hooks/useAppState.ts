@@ -1,7 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { PHASES } from '../data/phases';
-import { PROJECTS } from '../data/projects';
-import { QBANK } from '../data/qbank';
 import { LABS } from '../data/labs';
 import { showToast } from '../components/Toast';
 import { BackupService } from '../components/BackupService';

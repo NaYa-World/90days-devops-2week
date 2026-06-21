@@ -5,7 +5,6 @@ import { SettingsModal } from './components/SettingsModal';
 import { NotificationDropdown } from './components/NotificationDropdown';
 import { NavigationDrawer } from './components/NavigationDrawer';
 import { DailyChallengeModal } from './components/DailyChallengeModal';
-import { CHALLENGES } from './data/challenges';
 import {
   AIProvider,
   getActiveProvider,
@@ -29,7 +28,6 @@ import { OTAService } from './components/OTAService';
 import { NotificationService } from './components/NotificationService';
 import { AppShortcuts } from '@capawesome/capacitor-app-shortcuts';
 import { Network } from '@capacitor/network';
-import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
 import { showToast } from './components/Toast';
 
 
@@ -43,15 +41,13 @@ export const App: React.FC = () => {
     studyHours,
     currentUser,
     loginUser,
-    registerUser,
     logoutUser,
-    getAccounts,
     addNotification,
     clearNotifications,
     markNotificationsRead
   } = appState;
 
-  const [currentView, setCurrentView] = useState<string>('roadmap-v2');
+  const [currentView, setCurrentView] = useState<string>('roadmap');
   const [focusDay, setFocusDay] = useState<string>('0_0');
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const [showAnim, setShowAnim] = useState<boolean>(true);
@@ -83,7 +79,6 @@ export const App: React.FC = () => {
     gemini: '',
     grok: ''
   });
-  const [githubSettings, setGithubSettings] = useState({ pat: '', username: '', repo: '', branch: 'main' });
 
   const [openHamSections, setOpenHamSections] = useState<Record<string, boolean>>({
     study: true,
@@ -405,26 +400,16 @@ export const App: React.FC = () => {
   };
 
   const handleOpenSettings = async () => {
-    const active = getActiveProvider();
-    setActiveProviderState(active);
-
     const claudeKey = await SecurityService.getSecureCredential('devops90_anthropic_api_key');
     const chatgptKey = await SecurityService.getSecureCredential('devops90_openai_api_key');
     const geminiKey = await SecurityService.getSecureCredential('devops90_gemini_api_key');
     const grokKey = await SecurityService.getSecureCredential('devops90_grok_api_key');
-    const githubPat = await SecurityService.getSecureCredential('devops90_github_pat');
 
     setProviderKeys({
       claude: claudeKey,
       chatgpt: chatgptKey,
       gemini: geminiKey,
       grok: grokKey
-    });
-    setGithubSettings({
-      pat: githubPat,
-      username: localStorage.getItem('devops90_github_username') || '',
-      repo: localStorage.getItem('devops90_github_repo') || '',
-      branch: localStorage.getItem('devops90_github_branch') || 'main'
     });
     setIsSettingsOpen(true);
   };
@@ -436,11 +421,6 @@ export const App: React.FC = () => {
     await SecurityService.saveSecureCredential('devops90_gemini_api_key', providerKeys.gemini);
     await SecurityService.saveSecureCredential('devops90_grok_api_key', providerKeys.grok);
     
-    // Save GitHub settings
-    await SecurityService.saveSecureCredential('devops90_github_pat', githubSettings.pat.trim());
-    localStorage.setItem('devops90_github_username', githubSettings.username.trim());
-    localStorage.setItem('devops90_github_repo', githubSettings.repo.trim());
-    localStorage.setItem('devops90_github_branch', githubSettings.branch.trim() || 'main');
     setIsSettingsOpen(false);
 
     if (Capacitor.isNativePlatform()) {
@@ -453,85 +433,7 @@ export const App: React.FC = () => {
     logoutUser();
   };
 
-  const handleExportBackup = async () => {
-    try {
-      const data: Record<string, string> = {};
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key && key.startsWith('devops90')) {
-          data[key] = localStorage.getItem(key) || '';
-        }
-      }
-      const dataStr = JSON.stringify(data, null, 2);
-      
-      if (Capacitor.isNativePlatform()) {
-        const fileName = `devops90_backup_${Date.now()}.json`;
-        await Filesystem.writeFile({
-          path: fileName,
-          data: dataStr,
-          directory: Directory.Cache,
-          encoding: Encoding.UTF8
-        });
-        
-        const fileUri = await Filesystem.getUri({
-          path: fileName,
-          directory: Directory.Cache
-        });
-        
-        await Share.share({
-          title: 'DevOps90 Progress Backup',
-          text: 'Here is my DevOps90 progress backup file.',
-          url: fileUri.uri,
-          dialogTitle: 'Export Backup'
-        });
-      } else {
-        const blob = new Blob([dataStr], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `devops90_backup_${Date.now()}.json`;
-        a.click();
-        URL.revokeObjectURL(url);
-      }
-    } catch (err) {
-      alert('❌ Export failed: ' + err);
-    }
-  };
 
-  const handleImportBackupFile = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = async (evt) => {
-      try {
-        const text = evt.target?.result as string;
-        const data = JSON.parse(text);
-        if (data && typeof data === 'object') {
-          for (let i = localStorage.length - 1; i >= 0; i--) {
-            const key = localStorage.key(i);
-            if (key && key.startsWith('devops90')) {
-              localStorage.removeItem(key);
-            }
-          }
-          Object.keys(data).forEach(k => {
-            localStorage.setItem(k, data[k]);
-          });
-          
-          if (Capacitor.isNativePlatform()) {
-            await BackupService.autoBackup();
-          }
-          
-          alert('✅ Progress successfully imported! Reloading...');
-          window.location.reload();
-        } else {
-          alert('❌ Invalid backup file format.');
-        }
-      } catch (err) {
-        alert('❌ Failed to parse backup file: ' + err);
-      }
-    };
-    reader.readAsText(file);
-  };
 
 
 
@@ -553,7 +455,7 @@ export const App: React.FC = () => {
       if (Capacitor.isNativePlatform()) {
         Haptics.impact({ style: ImpactStyle.Medium }).catch(() => {});
         await Share.share({
-          title: 'My 90 Days DevOps Journey 🚀',
+          title: 'My 90 Days DevOps Notes 🚀',
           text: `I'm learning DevOps! Current study stats: ${studyHours} hours of focus sessions. Join me in the 90 Days DevOps Challenge!`,
           url: 'https://github.com/NaYaGK/sitecore-ww',
           dialogTitle: 'Share your DevOps Progress',
@@ -561,7 +463,7 @@ export const App: React.FC = () => {
       } else {
         if (navigator.share) {
           await navigator.share({
-            title: 'My 90 Days DevOps Journey 🚀',
+            title: 'My 90 Days DevOps Notes 🚀',
             text: `I'm learning DevOps! Current study stats: ${studyHours} hours of focus sessions. Join me in the 90 Days DevOps Challenge!`,
             url: 'https://github.com/NaYaGK/sitecore-ww',
           });
@@ -590,12 +492,12 @@ export const App: React.FC = () => {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)' }}>
+    <div style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)', '--offline-h': isOffline ? 'calc(33px + env(safe-area-inset-top, 0px))' : '0px' } as React.CSSProperties}>
       <div className={`offline-banner ${isOffline ? 'visible' : ''}`}>
         🔌 Offline Mode. AI-powered features require internet and are temporarily disabled.
       </div>
       {/* Navigation Top Bar */}
-      <nav id="nav" style={{ top: isOffline ? '33px' : '0' }}>
+      <nav id="nav">
         <button
           id="ham-btn"
           className={isDrawerOpen ? 'open' : ''}
@@ -607,18 +509,18 @@ export const App: React.FC = () => {
           <span></span>
           <span></span>
         </button>
-        <div className="nav-brand" onClick={() => handleNavItemClick('roadmap-v2')} style={{ cursor: 'pointer' }}>
+        <div className="nav-brand" onClick={() => handleNavItemClick('roadmap')} style={{ cursor: 'pointer' }}>
           <span className="g">DEV</span>
           <span className="p">OPS</span>
           <span className="v">BY GK</span>
         </div>
         <div className="nav-tabs">
           <button
-            className={`nav-tab ${currentView === 'roadmap-v2' ? 'active' : ''}`}
-            onClick={() => handleNavItemClick('roadmap-v2')}
-            style={{ background: currentView === 'roadmap-v2' ? 'rgba(0,217,160,.15)' : undefined, color: currentView === 'roadmap-v2' ? 'var(--green)' : undefined }}
+            className={`nav-tab ${currentView === 'roadmap' ? 'active' : ''}`}
+            onClick={() => handleNavItemClick('roadmap')}
+            style={{ background: currentView === 'roadmap' ? 'rgba(0,217,160,.15)' : undefined, color: currentView === 'roadmap' ? 'var(--green)' : undefined }}
           >
-            💥 v2 Roadmap
+            💥 DevOps Roadmap
           </button>
           <button
             className={`nav-tab ${currentView === 'roadmap-v3' ? 'active' : ''}`}
@@ -626,12 +528,6 @@ export const App: React.FC = () => {
             style={{ background: currentView === 'roadmap-v3' ? 'rgba(168,85,247,.15)' : undefined, color: currentView === 'roadmap-v3' ? 'var(--purple)' : undefined }}
           >
             🚀 v3 Roadmap
-          </button>
-          <button
-            className={`nav-tab ${currentView === 'roadmap' ? 'active' : ''}`}
-            onClick={() => handleNavItemClick('roadmap')}
-          >
-            ☑ v4 Reference
           </button>
           <button
             className={`nav-tab ${currentView === 'kanban' ? 'active' : ''}`}
@@ -723,10 +619,10 @@ export const App: React.FC = () => {
       {/* Mobile Bottom Navigation Bar */}
       <div id="bottom-bar">
         <button
-          className={`btab ${currentView === 'roadmap-v2' ? 'active' : ''}`}
-          onClick={() => handleNavItemClick('roadmap-v2')}
+          className={`btab ${currentView === 'roadmap' ? 'active' : ''}`}
+          onClick={() => handleNavItemClick('roadmap')}
         >
-          <span className="bico">💥</span>V2 Map
+          <span className="bico">💥</span>Roadmap
         </button>
         <button
           className={`btab ${currentView === 'kanban' ? 'active' : ''}`}
@@ -777,8 +673,6 @@ export const App: React.FC = () => {
         setActiveProviderState={setActiveProviderState}
         providerKeys={providerKeys}
         setProviderKeys={setProviderKeys}
-        githubSettings={githubSettings}
-        setGithubSettings={setGithubSettings}
         uiScale={uiScale}
         setUiScale={setUiScale}
         notificationsEnabled={notificationsEnabled}
@@ -792,8 +686,6 @@ export const App: React.FC = () => {
         setSyncWithSystemTheme={setSyncWithSystemTheme}
         theme={theme}
         currentUser={currentUser}
-        handleExportBackup={handleExportBackup}
-        handleImportBackupFile={handleImportBackupFile}
         handleTestNotification={async () => {
           if (Capacitor.isNativePlatform()) {
             await NotificationService.testFireNow();

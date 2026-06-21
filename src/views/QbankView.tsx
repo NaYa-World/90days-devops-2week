@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { QBANK, Question } from '../data/qbank';
+import { QBANK } from '../data/qbank';
 import { UseAppStateReturnType } from '../hooks/useAppState';
 
 interface QbankViewProps {

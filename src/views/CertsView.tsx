@@ -1,5 +1,5 @@
 import React from 'react';
-import { CERT_MAP, Cert } from '../data/labs';
+import { CERT_MAP } from '../data/labs';
 import { PHASES } from '../data/phases';
 import { UseAppStateReturnType } from '../hooks/useAppState';
 

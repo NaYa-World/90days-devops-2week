@@ -447,7 +447,6 @@ Provide a brief, helpful hint (2-3 sentences max). Don't give the exact answer �
     }
   };
 
-  const completedCount = Object.values(completedScenarios).filter(Boolean).length;
 
   // ─── Main Sandbox Selection Landing Page ───
   if (sandboxSection === null) {
@@ -997,7 +996,7 @@ interface ExerciseCardProps {
   formatTime: (secs: number) => string;
 }
 
-const ExerciseCard: React.FC<ExerciseCardProps> = ({ ex, idx, isDone, formatTime }) => {
+const ExerciseCard: React.FC<ExerciseCardProps> = ({ ex, idx, isDone }) => {
   const [showHint, setShowHint] = useState(false);
 
   return (

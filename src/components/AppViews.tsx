@@ -1,9 +1,8 @@
-import React, { Suspense } from 'react';
+import React from 'react';
 import { ErrorBoundary } from './ErrorBoundary';
 
 // Lazy load views for optimal code splitting & bundle size reduction
 const RoadmapView = React.lazy(() => import('../views/RoadmapView').then(m => ({ default: m.RoadmapView })));
-const RoadmapV2View = React.lazy(() => import('../views/RoadmapV2View').then(m => ({ default: m.RoadmapV2View })));
 const RoadmapV3View = React.lazy(() => import('../views/RoadmapV3View').then(m => ({ default: m.RoadmapV3View })));
 const KanbanView = React.lazy(() => import('../views/KanbanView').then(m => ({ default: m.KanbanView })));
 const FocusView = React.lazy(() => import('../views/FocusView').then(m => ({ default: m.FocusView })));
@@ -48,16 +47,8 @@ export const AppViews: React.FC<AppViewsProps> = ({
   switch (currentView) {
     case 'roadmap':
       return (
-        <RoadmapView
-          appState={appState}
-          switchView={setCurrentView}
-          setFocusDay={setFocusDay}
-        />
-      );
-    case 'roadmap-v2':
-      return (
-        <React.Suspense fallback={<div style={{ padding: 40, color: 'var(--sub)', textAlign: 'center' }}>Loading original v2 roadmap...</div>}>
-          <RoadmapV2View appState={appState} switchView={setCurrentView} />
+        <React.Suspense fallback={<div style={{ padding: 40, color: 'var(--sub)', textAlign: 'center' }}>Loading DevOps roadmap...</div>}>
+          <RoadmapView appState={appState} switchView={setCurrentView} />
         </React.Suspense>
       );
     case 'kanban':

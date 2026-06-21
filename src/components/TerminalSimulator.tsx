@@ -19,7 +19,6 @@ interface TerminalLine {
 }
 
 export const TerminalSimulator: React.FC<TerminalSimulatorProps> = ({
-  dk,
   lab,
   isLabDone,
   markLabDone,

@@ -23,6 +23,29 @@ npm run build
 
 ---
 
+## 📱 Platform Guides (Web vs. APK)
+
+This application is built as a cross-platform progressive app, running seamlessly in standard web browsers and as a native mobile application (packaged via Capacitor).
+
+### 🌐 1. Using the Website (Web Browser)
+* **Accessing the Site**: Open your local instance at `http://localhost:5173` or access your deployed production URL (e.g., Vercel).
+* **AI Provider Keys**: Click the **⚙️ Settings & Profile** gear icon in the top-right menu to enter API keys for Claude, ChatGPT, Gemini, or Grok. Keys are stored locally in your browser session for maximum privacy.
+* **GitHub Backup**: Sign in with GitHub on the Apprentice Portal. This automatically provisions a private repository named `90days-devops-my-notes` on your profile. Your task completions (`progress_backup.json`) and study notes will sync automatically.
+* **Offline Support**: The site is a Progressive Web App (PWA). If your internet drops, you can keep checking off tasks and reading, and your changes will sync to GitHub once connectivity is restored.
+
+### 🤖 2. Using the APK (Native Android/iOS Mobile App)
+* **Installation**: Install the compiled `.apk` package on your Android device (or run/debug on your simulator/phone using Capacitor).
+* **Native Features**:
+  - **Notch & Safe Area Support**: Headers and sidebars automatically detect phone notches and safe zones using CSS `env(safe-area-inset-top)` to prevent overlapping text.
+  - **Haptic Responses**: Native physical vibrations trigger on navigation tabs, task checkmarks, and button clicks for a tactile learning experience.
+  - **Local Push Notifications**: Enable "Study Reminders" in the settings modal to schedule custom morning and evening push alerts directly on your device. Use the **🧪 Test Notification** button to confirm setup (delivers an alert in 10 seconds).
+* **Frictionless Sync (Device Flow)**: To sync notes and progress without typing out long passwords or Personal Access Tokens (PATs) on mobile virtual keyboards, the APK uses **GitHub Device Flow**:
+  1. Click **Continue with GitHub** on the login screen.
+  2. Open the displayed URL on any browser or computer.
+  3. Enter the short user-code shown on your phone screen to securely authorize your device.
+
+---
+
 ## 🔑 AI Features Setup & Security
 
 Most AI features (mock interviews, resume ATS scanning, LinkedIn posts, code review) utilize Claude. This application supports two secure methods to load keys:
