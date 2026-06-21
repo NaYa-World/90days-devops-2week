@@ -12,8 +12,6 @@ interface ProjectsViewProps {
 
 export const ProjectsView: React.FC<ProjectsViewProps> = ({ appState, switchView }) => {
   const {
-    dayTotal,
-    dayDone,
     isProjectCompleted,
     toggleProjectCompleted,
     addBuildLog,
