@@ -31,6 +31,7 @@ import { showToast } from './components/Toast';
 
 
 import { AppViews } from './components/AppViews';
+import { ErrorBoundary } from './components/ErrorBoundary';
 
 export const App: React.FC = () => {
   const appState = useAppState();
@@ -638,16 +639,18 @@ export const App: React.FC = () => {
 
       <main style={{ paddingBottom: '80px' }}>
         <Suspense fallback={<div className="wrap" style={{ display: 'flex', justifyContent: 'center', padding: '60px 0' }}><div className="ai-spinner"></div></div>}>
-          <AppViews
-            currentView={currentView}
-            setCurrentView={setCurrentView}
-            appState={appState}
-            focusDay={focusDay}
-            setFocusDay={setFocusDay}
-            sandboxSection={sandboxSection}
-            setSandboxSection={setSandboxSection}
-            theme={theme}
-          />
+          <ErrorBoundary name="Main App Routing">
+            <AppViews
+              currentView={currentView}
+              setCurrentView={setCurrentView}
+              appState={appState}
+              focusDay={focusDay}
+              setFocusDay={setFocusDay}
+              sandboxSection={sandboxSection}
+              setSandboxSection={setSandboxSection}
+              theme={theme}
+            />
+          </ErrorBoundary>
         </Suspense>
       </main>
 
