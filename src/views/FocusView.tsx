@@ -6,6 +6,28 @@ import { showToast } from '../components/Toast';
 import { Capacitor } from '@capacitor/core';
 import { Haptics, ImpactStyle, NotificationType } from '@capacitor/haptics';
 
+
+const getSTARQuestion = (day: { id: string; title: string }): string => {
+  const questionMap: Record<string, string> = {
+    'p1-d1': 'How do you secure SSH private keys for an EC2 instance, and how do you configure your local machine for convenient connection access?',
+    'p1-d2': 'Explain the difference between SIGTERM and SIGKILL. Under what circumstances would you use each in a production environment?',
+    'p1-d3': 'How do you diagnose and resolve a disk space exhaustion issue where df shows 100% usage but deleted log files are still occupying space?',
+    'p1-d4': 'What is the difference between binding an application to 0.0.0.0 vs 127.0.0.1, and how does it impact external accessibility?',
+    'p1-d5': 'Explain the difference between Restart=always and Restart=on-failure in a systemd service unit file, and when would you use each?',
+    'p1-d6': 'What are the essential steps to harden an SSH daemon on a production Linux server to prevent unauthorized access?',
+    'p1-d7': 'How do you configure log rotation for an application, and why is the postrotate directive critical in the configuration?',
+    'p1-d8': 'What are the benefits of using set -euo pipefail at the beginning of a bash script, and what issues does each flag prevent?',
+    'p1-d9': 'How do you handle a security finding regarding world-writable directories and files with excessive permissions in production?',
+    'p1-d10': 'How do you handle and rotate an AWS Access Key or secret that was accidentally committed to a public Git repository?',
+    'p1-d11': 'How do you diagnose an application crash caused by the Linux Out-Of-Memory (OOM) killer, and how do you prevent it?',
+    'p1-d12': 'What is your systematic troubleshooting process to diagnose latency or connection failures for a microservice?',
+    'p1-d13': 'What is the difference between RPO and RTO, and how do you calculate and verify them for an EC2-based disaster recovery setup?',
+    'p1-d14': 'Summarize your experience with Linux and EC2 infrastructure management. What key skills have you built?',
+  };
+
+  return questionMap[day.id] || `In a production DevOps scenario, how do you handle configuration, troubleshooting, or deployment tasks related to "${day.title}"?`;
+};
+
 interface FocusViewProps {
   appState: UseAppStateReturnType;
   focusDay: string;
@@ -289,6 +311,21 @@ export const FocusView: React.FC<FocusViewProps> = ({
           {/* 5. Interview Reveal Box */}
           <div style={{ margin: '20px 0', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '8px', overflow: 'hidden' }}>
             <div
+              style={{
+                padding: '12px 14px',
+                background: 'rgba(255,255,255,0.01)',
+                borderBottom: '1px solid rgba(255,255,255,0.05)'
+              }}
+            >
+              <div style={{ fontSize: '11px', color: '#c084fc', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.5px', marginBottom: '6px' }}>
+                🎤 STAR Interview Preparation Question
+              </div>
+              <div style={{ fontSize: '13.5px', lineHeight: 1.5, color: '#fff', fontWeight: 500 }}>
+                {getSTARQuestion(currentDay)}
+              </div>
+            </div>
+            
+            <div
               onClick={() => setStarRevealed(!starRevealed)}
               style={{
                 padding: '10px 14px',
@@ -299,19 +336,19 @@ export const FocusView: React.FC<FocusViewProps> = ({
                 alignItems: 'center',
               }}
             >
-              <span style={{ fontSize: '11px', color: '#c084fc', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.5px' }}>
-                🎤 STAR Interview Preparation Question
+              <span style={{ fontSize: '11px', color: 'var(--sub)' }}>
+                {starRevealed ? 'Hide Answer Template' : 'Reveal Answer Template'}
               </span>
               <span style={{ fontSize: '11px', color: '#c084fc', textDecoration: 'underline' }}>
-                {starRevealed ? 'Hide Answer' : 'Reveal Answer'}
+                {starRevealed ? 'Hide' : 'Reveal'}
               </span>
             </div>
             {starRevealed && (
               <div style={{ padding: '14px', background: 'rgba(0,0,0,0.15)', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-                <div style={{ fontSize: '12px', fontStyle: 'italic', color: '#8f9bb3', marginBottom: '8px' }}>
+                <div style={{ fontSize: '11px', fontStyle: 'italic', color: '#8f9bb3', marginBottom: '8px' }}>
                   &quot;Answer the question in your own words, then verify with the senior expert template below:&quot;
                 </div>
-                <div style={{ fontSize: '13px', lineHeight: 1.6, color: '#c3c9d7' }}>
+                <div style={{ fontSize: '13px', lineHeight: 1.6, color: '#00d9a0', fontFamily: 'var(--mono)', padding: '10px', background: 'rgba(0,0,0,0.2)', borderRadius: '6px', border: '1px solid rgba(0,217,160,0.1)' }}>
                   {currentDay.interviewAnswer}
                 </div>
               </div>
