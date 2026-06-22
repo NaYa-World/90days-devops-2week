@@ -170,21 +170,97 @@ export const GitHubSyncService = {
       if (!file || !file.content) return false;
 
       const decodedContent = decodeURIComponent(escape(atob(file.content.replace(/\s/g, ''))));
-      const data = JSON.parse(decodedContent);
+      const remoteData = JSON.parse(decodedContent);
 
-      for (let i = localStorage.length - 1; i >= 0; i--) {
-        const key = localStorage.key(i);
-        if (key && key.startsWith('devops90') && key !== 'devops90_github_token') {
-          localStorage.removeItem(key);
-        }
-      }
+      const metaKey = `devops90_meta_timestamps_${username.toLowerCase()}`;
+      
+      const localMetaStr = localStorage.getItem(metaKey) || '{}';
+      let localMeta: Record<string, number> = {};
+      try { localMeta = JSON.parse(localMetaStr); } catch(e){}
 
-      Object.keys(data).forEach(key => {
-        localStorage.setItem(key, data[key]);
+      const remoteMetaStr = remoteData[metaKey] || '{}';
+      let remoteMeta: Record<string, number> = {};
+      try { remoteMeta = JSON.parse(remoteMetaStr); } catch(e){}
+
+      let requiresPush = false;
+      let stateChangedLocally = false;
+      const finalLocalStorage: Record<string, string> = {};
+
+      Object.keys(remoteData).forEach(storageKey => {
+         if (storageKey === metaKey || storageKey === 'devops90_github_token') return;
+
+         const remoteValStr = remoteData[storageKey];
+         const localValStr = localStorage.getItem(storageKey);
+
+         if (!localValStr) {
+             finalLocalStorage[storageKey] = remoteValStr;
+             stateChangedLocally = true;
+             return;
+         }
+
+         try {
+             const localObj = JSON.parse(localValStr);
+             const remoteObj = JSON.parse(remoteValStr);
+             
+             if (typeof localObj !== 'object' || localObj === null || typeof remoteObj !== 'object' || remoteObj === null) {
+                 finalLocalStorage[storageKey] = remoteValStr;
+                 stateChangedLocally = true;
+                 return;
+             }
+
+             const mergedObj = { ...localObj };
+             let mergedObjChanged = false;
+
+             Object.keys(remoteObj).forEach(prop => {
+                 const mKey = `${storageKey}::${prop}`;
+                 const rTime = remoteMeta[mKey] || 0;
+                 const lTime = localMeta[mKey] || 0;
+
+                 if (rTime > lTime) {
+                     mergedObj[prop] = remoteObj[prop];
+                     localMeta[mKey] = rTime; 
+                     mergedObjChanged = true;
+                     stateChangedLocally = true;
+                 } else if (lTime > rTime) {
+                     requiresPush = true;
+                 } else {
+                     if (mergedObj[prop] === undefined) {
+                         mergedObj[prop] = remoteObj[prop];
+                     }
+                 }
+             });
+
+             Object.keys(localObj).forEach(prop => {
+                 if (!(prop in remoteObj)) {
+                     requiresPush = true;
+                 }
+             });
+
+             if (mergedObjChanged) {
+                 finalLocalStorage[storageKey] = JSON.stringify(mergedObj);
+             } else {
+                 finalLocalStorage[storageKey] = localValStr;
+             }
+
+         } catch (e) {
+             finalLocalStorage[storageKey] = remoteValStr;
+             stateChangedLocally = true;
+         }
       });
 
-      console.log('devops90: Successfully restored state from repository.');
-      return true;
+      Object.keys(finalLocalStorage).forEach(storageKey => {
+         localStorage.setItem(storageKey, finalLocalStorage[storageKey]);
+      });
+      localStorage.setItem(metaKey, JSON.stringify(localMeta));
+
+      console.log('devops90: Successfully restored and merged state from repository.');
+
+      if (requiresPush) {
+          console.log('devops90: Local offline changes detected. Triggering auto-push.');
+          GitHubSyncService.autoSyncToGitHub().catch(()=>{});
+      }
+
+      return stateChangedLocally || Object.keys(remoteData).length > 0;
     } catch (e) {
       console.error('devops90: Restore failed', e);
       return false;

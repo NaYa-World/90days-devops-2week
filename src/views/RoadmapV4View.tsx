@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { PHASES_V4 } from '../data/phases_v4';
 import type { UseAppStateReturnType } from '../hooks/useAppState';
+import type { UseAppStateReturnType } from '../hooks/useAppState';
 import confetti from 'canvas-confetti';
+import { SyncMeta } from '../utils/SyncMeta';
 
 
 const getSTARQuestion = (day: { id: string; title: string }): string => {
@@ -140,6 +142,7 @@ export const RoadmapV4View: React.FC<RoadmapV4ViewProps> = ({ appState }) => {
     const next = { ...v4state, [key]: !v4state[key] };
     setV4State(next);
     saveV4State(stateKey, next);
+    SyncMeta.recordChange(currentUser, stateKey, key);
     appState.triggerSync().catch(() => {});
 
     // Confetti trigger on day completion
@@ -157,6 +160,7 @@ export const RoadmapV4View: React.FC<RoadmapV4ViewProps> = ({ appState }) => {
     setV4Artifacts(next);
     try {
       localStorage.setItem(artifactsKey, JSON.stringify(next));
+      SyncMeta.recordChange(currentUser, artifactsKey, key);
       appState.triggerSync().catch(() => {});
     } catch (e) {
       console.error(e);
@@ -171,11 +175,15 @@ export const RoadmapV4View: React.FC<RoadmapV4ViewProps> = ({ appState }) => {
   const bulkMarkTasks = (pi: number, di: number) => {
     const day = PHASES_V4[pi].dayTasks[di];
     const next = { ...v4state };
+    const changedKeys: string[] = [];
     day.tasks.forEach((_, ti) => {
-      next[v4key(pi, di, ti)] = true;
+      const k = v4key(pi, di, ti);
+      next[k] = true;
+      changedKeys.push(k);
     });
     setV4State(next);
     saveV4State(stateKey, next);
+    SyncMeta.recordChanges(currentUser, stateKey, changedKeys);
     appState.triggerSync().catch(() => {});
 
     const artifactUrl = v4Artifacts[`${pi}_${di}`] || '';
@@ -191,6 +199,8 @@ export const RoadmapV4View: React.FC<RoadmapV4ViewProps> = ({ appState }) => {
       saveV4State(stateKey, {});
       try {
         localStorage.setItem(artifactsKey, '{}');
+        SyncMeta.recordAll(currentUser, stateKey, v4state); // marking all previously known keys as changed (deleted)
+        SyncMeta.recordAll(currentUser, artifactsKey, v4Artifacts);
         appState.triggerSync().catch(() => {});
       } catch (e) {
         console.error(e);

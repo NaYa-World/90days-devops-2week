@@ -6,6 +6,7 @@ import { BackupService } from '../components/BackupService';
 import { Capacitor } from '@capacitor/core';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
 import { GitHubSyncService } from '../components/GitHubSyncService';
+import { SyncMeta } from '../utils/SyncMeta';
 
 export interface AppNotification {
   id: number;
@@ -270,9 +271,69 @@ export function useAppState() {
     setState(prev => {
       const next = updater(prev);
       saveStateToStorage(next, currentUser);
+      
+      if (currentUser) {
+         const diffKeys: string[] = [];
+         
+         const checkRecord = (recordName: keyof AppState) => {
+           const nxt = next[recordName] as Record<string, unknown>;
+           const prv = prev[recordName] as Record<string, unknown>;
+           for (const k in nxt) {
+             if (nxt[k] !== prv[k]) diffKeys.push(k);
+           }
+         };
+         
+         checkRecord('completedTasks');
+         checkRecord('notes');
+         checkRecord('confidences');
+         checkRecord('labdone');
+         checkRecord('projdone');
+         checkRecord('phaseOpen');
+         checkRecord('dayOpen');
+         
+         if (next.pomoSessions !== prev.pomoSessions) diffKeys.push('_pomoSessions');
+         if (next.history !== prev.history) diffKeys.push('_history');
+         if (next.lastDay !== prev.lastDay) diffKeys.push('_lastDay');
+         if (next.streak !== prev.streak) diffKeys.push('_streak');
+         if (next.streakFreezeUsedOn !== prev.streakFreezeUsedOn) diffKeys.push('_streakFreezeUsedOn');
+         if (next.freezeUsedWeek !== prev.freezeUsedWeek) diffKeys.push('_freezeUsedWeek');
+         if (next.jobs !== prev.jobs) diffKeys.push('_jobs');
+         if (next.ghUser !== prev.ghUser) diffKeys.push('_ghUser');
+         if (next.qdone !== prev.qdone) diffKeys.push('_qdone');
+         if (next.savedJDs !== prev.savedJDs) diffKeys.push('_savedJDs');
+         if (next.buildLogs !== prev.buildLogs) diffKeys.push('_buildLogs');
+         if (next.mockHistory !== prev.mockHistory) diffKeys.push('_mockHistory');
+         if (next.weekGoal !== prev.weekGoal) diffKeys.push('_weekGoal');
+         if (next.notifications !== prev.notifications) diffKeys.push('_notifications');
+
+         if (diffKeys.length > 0) {
+           SyncMeta.recordChanges(currentUser, `${LOCAL_STORAGE_KEY_PREFIX}${currentUser.toLowerCase()}`, diffKeys);
+         }
+      }
+
       return next;
     });
     triggerSync().catch(() => {});
+  };
+
+  const restoreSync = async (): Promise<boolean> => {
+    if (!currentUser) return false;
+    const token = localStorage.getItem('devops90_github_token');
+    if (!token) return false;
+
+    try {
+      const restored = await GitHubSyncService.restoreFromGitHub(token);
+      if (restored) {
+        const key = `${LOCAL_STORAGE_KEY_PREFIX}${currentUser.toLowerCase()}`;
+        const stored = localStorage.getItem(key);
+        const loadedState = stored ? parseState(stored) : getBlankState();
+        setState(loadedState);
+        return true;
+      }
+    } catch (e) {
+      console.error('devops90: restoreSync error', e);
+    }
+    return false;
   };
 
   // User auth methods
@@ -1109,7 +1170,8 @@ export function useAppState() {
     clearNotifications,
     markNotificationsRead,
     isSyncUpToDate,
-    triggerSync
+    triggerSync,
+    restoreSync
   };
 }
 export type UseAppStateReturnType = ReturnType<typeof useAppState>;
