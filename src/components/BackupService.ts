@@ -139,7 +139,10 @@ export const BackupService = {
           for (let i = localStorage.length - 1; i >= 0; i--) {
             const key = localStorage.key(i);
             if (key && key.startsWith('devops90')) {
-              localStorage.removeItem(key);
+              // Preserve LWW timestamps and GitHub auth tokens during force restore
+              if (!key.includes('meta_timestamps') && !key.includes('github_token') && !key.includes('github_username')) {
+                localStorage.removeItem(key);
+              }
             }
           }
           Object.keys(data).forEach(key => {

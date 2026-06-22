@@ -198,21 +198,37 @@ export const GitHubSyncService = {
              return;
          }
 
-         try {
-             const localObj = JSON.parse(localValStr);
-             const remoteObj = JSON.parse(remoteValStr);
-             
-             if (typeof localObj !== 'object' || localObj === null || typeof remoteObj !== 'object' || remoteObj === null) {
+         let localObj: any;
+         let remoteObj: any;
+         let isPrimitive = false;
+
+         try { localObj = JSON.parse(localValStr); } catch { localObj = localValStr; isPrimitive = true; }
+         try { remoteObj = JSON.parse(remoteValStr); } catch { remoteObj = remoteValStr; isPrimitive = true; }
+         
+         if (isPrimitive || typeof localObj !== 'object' || localObj === null || typeof remoteObj !== 'object' || remoteObj === null) {
+             if (localValStr !== remoteValStr) {
                  finalLocalStorage[storageKey] = remoteValStr;
                  stateChangedLocally = true;
-                 return;
+             } else {
+                 finalLocalStorage[storageKey] = localValStr;
              }
+             return;
+         }
 
+         try {
              const mergedObj = { ...localObj };
              let mergedObjChanged = false;
 
+             // Map standard keys to meta keys (handles useAppState.ts underscores)
+             const getMetaKeyName = (prop: string) => {
+                 const underscored = ['history', 'jobs', 'pomoSessions', 'lastDay', 'streak', 'streakFreezeUsedOn', 'freezeUsedWeek'];
+                 if (underscored.includes(prop)) return `_${prop}`;
+                 return prop;
+             };
+
              Object.keys(remoteObj).forEach(prop => {
-                 const mKey = `${storageKey}::${prop}`;
+                 const metaProp = getMetaKeyName(prop);
+                 const mKey = `${storageKey}::${metaProp}`;
                  const rTime = remoteMeta[mKey] || 0;
                  const lTime = localMeta[mKey] || 0;
 
@@ -224,8 +240,8 @@ export const GitHubSyncService = {
                  } else if (lTime > rTime) {
                      requiresPush = true;
                  } else {
-                     if (mergedObj[prop] === undefined) {
-                         mergedObj[prop] = remoteObj[prop];
+                     if (JSON.stringify(mergedObj[prop]) !== JSON.stringify(remoteObj[prop])) {
+                         requiresPush = true; // Conflict with no clear winner, fallback to pushing local
                      }
                  }
              });
