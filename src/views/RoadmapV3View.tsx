@@ -83,7 +83,7 @@ export const RoadmapV3View: React.FC<Props> = ({ appState }) => {
 
   React.useEffect(() => {
     setV3State(loadV3State(userKey));
-  }, [userKey]);
+  }, [userKey, appState.state]);
 
   const totalDone = WEEKS.reduce((a, _, wi) => a + weekDone(wi, v3state), 0);
   const totalAll  = WEEKS.reduce((a, _, wi) => a + weekTotal(wi), 0);
@@ -95,6 +95,7 @@ export const RoadmapV3View: React.FC<Props> = ({ appState }) => {
     const next = { ...v3state, [key]: !v3state[key] };
     setV3State(next);
     saveV3State(userKey, next);
+    appState.triggerSync().catch(() => {});
     
     const done = WEEKS[wi].data.reduce((acc, day, ddi) =>
       acc + day.tasks.filter((_, tti) => !!next[v3key(wi, ddi, tti)]).length, 0);
@@ -113,6 +114,7 @@ export const RoadmapV3View: React.FC<Props> = ({ appState }) => {
     });
     setV3State(next);
     saveV3State(userKey, next);
+    appState.triggerSync().catch(() => {});
 
     const done = WEEKS[wi].data.reduce((acc, day, ddi) =>
       acc + day.tasks.filter((_, tti) => !!next[v3key(wi, ddi, tti)]).length, 0);

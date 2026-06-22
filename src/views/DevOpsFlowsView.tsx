@@ -167,7 +167,7 @@ const FLOWS_DATABASE: FlowData[] = [
   }
 ];
 
-export const DevOpsFlowsView: React.FC<DevOpsFlowsViewProps> = ({ switchView }) => {
+export const DevOpsFlowsView: React.FC<DevOpsFlowsViewProps> = ({ appState, switchView }) => {
   const [selectedFlowId, setSelectedFlowId] = useState<string>(FLOWS_DATABASE[0].id);
   const [selectedStepId, setSelectedStepId] = useState<string | null>(null);
 
@@ -242,6 +242,7 @@ export const DevOpsFlowsView: React.FC<DevOpsFlowsViewProps> = ({ switchView }) 
     const updatedDiagrams = [...diagramsList, newDiag];
     localStorage.setItem('devops90_saved_diagrams', JSON.stringify(updatedDiagrams));
     localStorage.setItem('devops90_active_diagram_id', newDiagId);
+    appState.triggerSync().catch(() => {});
 
     showToast(`🛠️ Exported to Diagram Builder: ${newDiag.name}`);
     switchView('diagram');

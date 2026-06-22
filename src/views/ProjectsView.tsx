@@ -36,12 +36,12 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({ appState, switchView
   const v4stateKey = `devops90_v4_tasks_${(appState.currentUser || 'guest').toLowerCase()}`;
   const v4artifactsKey = `devops90_v4_artifacts_${(appState.currentUser || 'guest').toLowerCase()}`;
   
-  const [v4state] = useState<Record<string, boolean>>(() => {
+  const v4state = React.useMemo<Record<string, boolean>>(() => {
     try { return JSON.parse(localStorage.getItem(v4stateKey) || '{}'); } catch { return {}; }
-  });
-  const [v4artifacts] = useState<Record<string, string>>(() => {
+  }, [v4stateKey, appState.state]);
+  const v4artifacts = React.useMemo<Record<string, string>>(() => {
     try { return JSON.parse(localStorage.getItem(v4artifactsKey) || '{}'); } catch { return {}; }
-  });
+  }, [v4artifactsKey, appState.state]);
 
   const isValidUrl = (url: string): boolean => {
     try {

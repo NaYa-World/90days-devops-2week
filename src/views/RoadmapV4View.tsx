@@ -71,7 +71,7 @@ export const RoadmapV4View: React.FC<RoadmapV4ViewProps> = ({ appState }) => {
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<'all' | 'todo' | 'done'>('all');
 
-  // Sync state if currentUser changes
+  // Sync state if currentUser changes or restore completes
   useEffect(() => {
     setV4State(loadV4State(stateKey));
     try {
@@ -79,7 +79,7 @@ export const RoadmapV4View: React.FC<RoadmapV4ViewProps> = ({ appState }) => {
     } catch {
       setV4Artifacts({});
     }
-  }, [stateKey, artifactsKey]);
+  }, [stateKey, artifactsKey, appState.state]);
 
   // URL validation helper
   const isValidUrl = (url: string): boolean => {
@@ -140,6 +140,7 @@ export const RoadmapV4View: React.FC<RoadmapV4ViewProps> = ({ appState }) => {
     const next = { ...v4state, [key]: !v4state[key] };
     setV4State(next);
     saveV4State(stateKey, next);
+    appState.triggerSync().catch(() => {});
 
     // Confetti trigger on day completion
     if (isDayTasksComplete(pi, di, next)) {
@@ -156,6 +157,7 @@ export const RoadmapV4View: React.FC<RoadmapV4ViewProps> = ({ appState }) => {
     setV4Artifacts(next);
     try {
       localStorage.setItem(artifactsKey, JSON.stringify(next));
+      appState.triggerSync().catch(() => {});
     } catch (e) {
       console.error(e);
     }
@@ -174,6 +176,7 @@ export const RoadmapV4View: React.FC<RoadmapV4ViewProps> = ({ appState }) => {
     });
     setV4State(next);
     saveV4State(stateKey, next);
+    appState.triggerSync().catch(() => {});
 
     const artifactUrl = v4Artifacts[`${pi}_${di}`] || '';
     if (isValidUrl(artifactUrl)) {
@@ -188,6 +191,7 @@ export const RoadmapV4View: React.FC<RoadmapV4ViewProps> = ({ appState }) => {
       saveV4State(stateKey, {});
       try {
         localStorage.setItem(artifactsKey, '{}');
+        appState.triggerSync().catch(() => {});
       } catch (e) {
         console.error(e);
       }

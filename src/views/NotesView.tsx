@@ -189,7 +189,7 @@ export const NotesView: React.FC<NotesViewProps> = ({ appState }) => {
 
   useEffect(() => {
     setNotesState(loadNotesState(currentUser));
-  }, [currentUser]);
+  }, [currentUser, appState.state]);
 
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
     schedule: false,

@@ -31,7 +31,7 @@ export const RoadmapView: React.FC<Props> = ({ appState }) => {
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<'all' | 'todo' | 'done'>('all');
 
-  // Sync state if currentUser changes
+  // Sync state if currentUser changes or restore completes
   React.useEffect(() => {
     setV1State(loadV1State(userKey));
     try {
@@ -39,7 +39,7 @@ export const RoadmapView: React.FC<Props> = ({ appState }) => {
     } catch {
       setV1Artifacts({});
     }
-  }, [userKey, artifactsKey]);
+  }, [userKey, artifactsKey, appState.state]);
 
   function checkAndTriggerConfetti(pi: number, state: Record<string, boolean>, artifacts: Record<string, string>) {
     const totalDays = PHASES[pi].data.length;
@@ -55,6 +55,7 @@ export const RoadmapView: React.FC<Props> = ({ appState }) => {
     setV1Artifacts(next);
     try {
       localStorage.setItem(artifactsKey, JSON.stringify(next));
+      appState.triggerSync().catch(() => {});
     } catch (e) {
       console.error(e);
     }
@@ -112,6 +113,7 @@ export const RoadmapView: React.FC<Props> = ({ appState }) => {
     const next = { ...v1state, [key]: !v1state[key] };
     setV1State(next);
     saveV1State(userKey, next);
+    appState.triggerSync().catch(() => {});
     checkAndTriggerConfetti(pi, next, v1Artifacts);
   }
 
@@ -125,6 +127,7 @@ export const RoadmapView: React.FC<Props> = ({ appState }) => {
     });
     setV1State(next);
     saveV1State(userKey, next);
+    appState.triggerSync().catch(() => {});
     checkAndTriggerConfetti(pi, next, v1Artifacts);
   }
 

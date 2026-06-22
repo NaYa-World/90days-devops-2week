@@ -201,6 +201,14 @@ export const DevOpsSandboxView: React.FC<Props> = ({
       return JSON.parse(localStorage.getItem('devops90_sandbox_done') || '{}');
     } catch { return {}; }
   });
+
+  useEffect(() => {
+    try {
+      setCompletedScenarios(JSON.parse(localStorage.getItem('devops90_sandbox_done') || '{}'));
+    } catch {
+      setCompletedScenarios({});
+    }
+  }, [appState.state]);
   const [aiCoachLoading, setAiCoachLoading] = useState(false);
   const [freeMode, setFreeMode] = useState(false);
   const [commandHistory, setCommandHistory] = useState<string[]>([]);
@@ -324,6 +332,7 @@ export const DevOpsSandboxView: React.FC<Props> = ({
         const updated = { ...completedScenarios, [activeScenario.id]: true };
         setCompletedScenarios(updated);
         localStorage.setItem('devops90_sandbox_done', JSON.stringify(updated));
+        appState.triggerSync().catch(() => {});
 
         import('canvas-confetti').then((conf) => {
           conf.default({ particleCount: 100, spread: 70, origin: { y: 0.6 } });

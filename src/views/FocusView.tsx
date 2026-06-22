@@ -68,7 +68,7 @@ export const FocusView: React.FC<FocusViewProps> = ({
     }
   }, [focusDay]);
 
-  // Sync state if user changes
+  // Sync state if user changes or restore completes
   useEffect(() => {
     try {
       setV4State(JSON.parse(localStorage.getItem(v4stateKey) || '{}'));
@@ -79,7 +79,7 @@ export const FocusView: React.FC<FocusViewProps> = ({
       setV4Artifacts({});
       setV4Notes({});
     }
-  }, [v4stateKey, v4artifactsKey, v4notesKey]);
+  }, [v4stateKey, v4artifactsKey, v4notesKey, appState.state]);
 
   const isValidUrl = (url: string): boolean => {
     try {
@@ -165,6 +165,7 @@ export const FocusView: React.FC<FocusViewProps> = ({
     const next = { ...v4state, [key]: !v4state[key] };
     setV4State(next);
     localStorage.setItem(v4stateKey, JSON.stringify(next));
+    appState.triggerSync().catch(() => {});
   };
 
   const updateV4ArtifactUrl = (pi: number, di: number, url: string) => {
@@ -172,6 +173,7 @@ export const FocusView: React.FC<FocusViewProps> = ({
     const next = { ...v4artifacts, [key]: url };
     setV4Artifacts(next);
     localStorage.setItem(v4artifactsKey, JSON.stringify(next));
+    appState.triggerSync().catch(() => {});
   };
 
   const v4NoteKey = (pi: number, di: number) => `v4_note_${pi}_${di}`;
@@ -182,6 +184,7 @@ export const FocusView: React.FC<FocusViewProps> = ({
     const next = { ...v4notes, [v4NoteKey(pi, di)]: val };
     setV4Notes(next);
     localStorage.setItem(v4notesKey, JSON.stringify(next));
+    appState.triggerSync().catch(() => {});
   };
 
   return (
