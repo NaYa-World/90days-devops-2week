@@ -3,7 +3,6 @@ import { ErrorBoundary } from './ErrorBoundary';
 
 // Lazy load views for optimal code splitting & bundle size reduction
 const RoadmapView = React.lazy(() => import('../views/RoadmapView').then(m => ({ default: m.RoadmapView })));
-const RoadmapV3View = React.lazy(() => import('../views/RoadmapV3View').then(m => ({ default: m.RoadmapV3View })));
 const RoadmapV4View = React.lazy(() => import('../views/RoadmapV4View').then(m => ({ default: m.RoadmapV4View })));
 const KanbanView = React.lazy(() => import('../views/KanbanView').then(m => ({ default: m.KanbanView })));
 const FocusView = React.lazy(() => import('../views/FocusView').then(m => ({ default: m.FocusView })));
@@ -86,12 +85,6 @@ export const AppViews: React.FC<AppViewsProps> = ({
       return <WeeklyView appState={appState} />;
     case 'projects':
       return <ProjectsView appState={appState} switchView={setCurrentView} />;
-    case 'roadmap-v3':
-      return (
-        <React.Suspense fallback={<div style={{ padding: 40, color: 'var(--sub)', textAlign: 'center' }}>Loading notes-driven roadmap...</div>}>
-          <RoadmapV3View appState={appState} switchView={setCurrentView} />
-        </React.Suspense>
-      );
     case 'roadmap-v4':
       return (
         <React.Suspense fallback={<div style={{ padding: 40, color: 'var(--sub)', textAlign: 'center' }}>Loading V4 Roadmap...</div>}>
