@@ -1,18 +1,28 @@
+let metaCache: Record<string, number> | null = null;
+let saveTimeout: any = null;
+
 export const SyncMeta = {
   getMetaKey(user: string): string {
     return `devops90_meta_timestamps_${user.toLowerCase()}`;
   },
 
   getMeta(user: string): Record<string, number> {
+    if (metaCache) return metaCache;
     try {
-      return JSON.parse(localStorage.getItem(this.getMetaKey(user)) || '{}');
+      metaCache = JSON.parse(localStorage.getItem(this.getMetaKey(user)) || '{}');
+      return metaCache!;
     } catch {
-      return {};
+      metaCache = {};
+      return metaCache;
     }
   },
 
   saveMeta(user: string, meta: Record<string, number>) {
-    localStorage.setItem(this.getMetaKey(user), JSON.stringify(meta));
+    metaCache = meta;
+    if (saveTimeout) clearTimeout(saveTimeout);
+    saveTimeout = setTimeout(() => {
+      localStorage.setItem(this.getMetaKey(user), JSON.stringify(metaCache));
+    }, 500);
   },
 
   recordChange(user: string, storageKey: string, propertyKey: string) {

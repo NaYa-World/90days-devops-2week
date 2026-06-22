@@ -269,7 +269,10 @@ export const App: React.FC = () => {
           // Auto-sync from GitHub when resuming the app
           if (currentUser) {
             console.log("devops90: App resumed, pulling latest from GitHub...");
-            appState.restoreSync().catch(() => {});
+            appState.restoreSync().catch((err) => {
+              console.error("devops90: Resume sync failed", err);
+              showToast('⚠️ Background sync failed. You may be viewing outdated offline data.');
+            });
           }
 
         } else {
