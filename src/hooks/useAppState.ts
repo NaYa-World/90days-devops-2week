@@ -241,10 +241,6 @@ export function useAppState() {
       const key = `${LOCAL_STORAGE_KEY_PREFIX}${user.toLowerCase()}`;
       localStorage.setItem(key, JSON.stringify(flat));
 
-      // Trigger background state backup on native devices
-      if (Capacitor.isNativePlatform()) {
-        BackupService.autoBackup().catch(() => {});
-      }
     } catch (_) {}
   };
 
@@ -313,7 +309,11 @@ export function useAppState() {
 
       return next;
     });
-    triggerSync().catch(() => {});
+
+    if ((window as any)._syncTimeout) clearTimeout((window as any)._syncTimeout);
+    (window as any)._syncTimeout = setTimeout(() => {
+      triggerSync().catch(() => {});
+    }, 2000);
   };
 
   const restoreSync = async (): Promise<boolean> => {

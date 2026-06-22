@@ -19,39 +19,45 @@ const getAllDevopsKeys = (): Record<string, string> => {
   return data;
 };
 
+let backupTimeout: any = null;
+
 export const BackupService = {
   /**
-   * Automatically serializes localStorage data prefixed with 'devops90'
-   * and saves it to Capacitor Preferences and a local device JSON file.
+   * Reads all devops90 keys from localStorage and backs them up
+   * into both Native Preferences and a JSON file in the Filesystem.
    */
   async autoBackup(): Promise<boolean> {
-    if (!Capacitor.isNativePlatform()) return true;
-    try {
-      const data = getAllDevopsKeys();
-      if (Object.keys(data).length === 0) return true;
+    if (!Capacitor.isNativePlatform()) return false;
+    
+    return new Promise((resolve) => {
+      if (backupTimeout) clearTimeout(backupTimeout);
+      backupTimeout = setTimeout(async () => {
+        try {
+          const data = getAllDevopsKeys();
+          if (Object.keys(data).length === 0) return resolve(true);
 
-      const dataStr = JSON.stringify(data);
+          const dataStr = JSON.stringify(data);
 
-      // 1. Save to Native Preferences
-      await Preferences.set({
-        key: BACKUP_PREF_KEY,
-        value: dataStr
-      });
-
-      // 2. Save to Native Filesystem (Private Sandbox Data directory)
-      await Filesystem.writeFile({
-        path: BACKUP_FILE_PATH,
-        data: dataStr,
-        directory: Directory.Data,
-        encoding: Encoding.UTF8,
-        recursive: true
-      });
-      console.log('devops90: State successfully backed up to native storage.');
-      return true;
-    } catch (e) {
-      console.error('devops90: State backup failed:', e);
-      return false;
-    }
+          // Save to Native Preferences & Filesystem in parallel to prevent bridge block
+          await Promise.all([
+            Preferences.set({ key: BACKUP_PREF_KEY, value: dataStr }),
+            Filesystem.writeFile({
+              path: BACKUP_FILE_PATH,
+              data: dataStr,
+              directory: Directory.Data,
+              encoding: Encoding.UTF8,
+              recursive: true
+            })
+          ]);
+          
+          console.log('devops90: State successfully backed up to native storage.');
+          resolve(true);
+        } catch (e) {
+          console.error('devops90: State backup failed:', e);
+          resolve(false);
+        }
+      }, 1500); // 1.5s Debounce to prevent micro-stutters
+    });
   },
 
   /**

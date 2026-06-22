@@ -1,3 +1,7 @@
+let isSyncing = false;
+let pendingSync = false;
+let retryTimeout: any = null;
+
 export const GitHubSyncService = {
   REPO_NAME: '90days-devops-my-notes',
   BACKUP_FILENAME: 'progress_backup.json',
@@ -69,76 +73,100 @@ export const GitHubSyncService = {
   },
 
   async autoSyncToGitHub(): Promise<boolean> {
-    const token = await this.getToken();
-    if (!token) return true;
+    if (isSyncing) {
+      pendingSync = true;
+      return false;
+    }
+    isSyncing = true;
 
-    const username = await this.getUsername(token);
-    if (!username) return false;
+    const executeSync = async (): Promise<boolean> => {
+      const token = await this.getToken();
+      if (!token) return true;
 
-    const ok = await this.ensureRepository(token, username);
-    if (!ok) return false;
+      const username = await this.getUsername(token);
+      if (!username) return false;
 
-    try {
-      const progressData: Record<string, string> = {};
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key && key.startsWith('devops90') && key !== 'devops90_github_token') {
-          const val = localStorage.getItem(key);
-          if (val !== null) progressData[key] = val;
-        }
-      }
+      const ok = await this.ensureRepository(token, username);
+      if (!ok) return false;
 
-      const content = JSON.stringify(progressData, null, 2);
-      const base64Content = btoa(unescape(encodeURIComponent(content)));
-      const filePath = this.BACKUP_FILENAME;
-
-      let sha: string | undefined;
       try {
-        const checkRes = await fetch(
-          `https://api.github.com/repos/${username}/${this.REPO_NAME}/contents/${filePath}?ref=main`,
+        const progressData: Record<string, string> = {};
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key && key.startsWith('devops90') && key !== 'devops90_github_token') {
+            const val = localStorage.getItem(key);
+            if (val !== null) progressData[key] = val;
+          }
+        }
+
+        const content = JSON.stringify(progressData, null, 2);
+        const base64Content = btoa(unescape(encodeURIComponent(content)));
+        const filePath = this.BACKUP_FILENAME;
+
+        let sha: string | undefined;
+        try {
+          const checkRes = await fetch(
+            `https://api.github.com/repos/${username}/${this.REPO_NAME}/contents/${filePath}?ref=main`,
+            {
+              headers: {
+                'Authorization': `Bearer ${token}`,
+                'Accept': 'application/vnd.github.v3+json'
+              }
+            }
+          );
+          if (checkRes.ok) {
+            const existing = await checkRes.json();
+            sha = existing.sha;
+          }
+        } catch { /* file doesn't exist yet */ }
+
+        const body: Record<string, string> = {
+          message: 'Update DevOps 90 Days progress backup',
+          content: base64Content,
+          branch: 'main'
+        };
+        if (sha) body.sha = sha;
+
+        const res = await fetch(
+          `https://api.github.com/repos/${username}/${this.REPO_NAME}/contents/${filePath}`,
           {
+            method: 'PUT',
             headers: {
               'Authorization': `Bearer ${token}`,
-              'Accept': 'application/vnd.github.v3+json'
-            }
+              'Accept': 'application/vnd.github.v3+json',
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(body)
           }
         );
-        if (checkRes.ok) {
-          const existing = await checkRes.json();
-          sha = existing.sha;
+
+        if (res.ok) {
+          console.log('devops90: Backup successfully saved to repository.');
+          return true;
+        } else {
+          console.error('devops90: Failed to push progress backup', await res.text());
+          pendingSync = true; // trigger active retry queue
+          return false;
         }
-      } catch { /* file doesn't exist yet */ }
-
-      const body: Record<string, string> = {
-        message: 'Update DevOps 90 Days progress backup',
-        content: base64Content,
-        branch: 'main'
-      };
-      if (sha) body.sha = sha;
-
-      const res = await fetch(
-        `https://api.github.com/repos/${username}/${this.REPO_NAME}/contents/${filePath}`,
-        {
-          method: 'PUT',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Accept': 'application/vnd.github.v3+json',
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(body)
-        }
-      );
-
-      if (res.ok) {
-        console.log('devops90: Backup successfully saved to repository.');
-        return true;
-      } else {
-        console.error('devops90: Failed to push progress backup', await res.text());
+      } catch (err) {
+        console.error('devops90: Repo sync failed', err);
+        pendingSync = true; // trigger active retry queue
         return false;
       }
-    } catch (err) {
-      console.error('devops90: Repo sync failed', err);
-      return false;
+    };
+
+    try {
+      return await executeSync();
+    } finally {
+      isSyncing = false;
+      if (pendingSync) {
+        pendingSync = false;
+        if (retryTimeout) clearTimeout(retryTimeout);
+        // Background active retry queue to flush missed state mutations
+        retryTimeout = setTimeout(() => {
+          GitHubSyncService.autoSyncToGitHub().catch(() => {});
+        }, 5000);
+      }
     }
   },
 
