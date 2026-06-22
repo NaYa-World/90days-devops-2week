@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { PHASES_V4 } from '../data/phases_v4';
 import type { UseAppStateReturnType } from '../hooks/useAppState';
-import type { UseAppStateReturnType } from '../hooks/useAppState';
 import confetti from 'canvas-confetti';
 import { SyncMeta } from '../utils/SyncMeta';
 
