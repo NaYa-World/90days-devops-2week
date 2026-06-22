@@ -228,25 +228,36 @@ export const App: React.FC = () => {
     (document.documentElement.style as any).zoom = uiScale.toString();
   }, [uiScale]);
 
-  // On native mobile devices, run auto-restore on startup
+  // On app startup, try to restore from GitHub automatically if logged in.
+  // Also on native mobile devices, run auto-restore for local preferences/filesystem.
   useEffect(() => {
+    if (currentUser) {
+      console.log("devops90: Attempting auto-restore from GitHub on startup...");
+      appState.restoreSync().then(restored => {
+        if (restored) {
+          console.log("devops90: Auto-restored backup from GitHub on startup.");
+        }
+      });
+    }
+
     if (Capacitor.isNativePlatform()) {
       BackupService.autoRestore().then(restored => {
         if (restored) {
-          console.log("devops90: Auto-restored backup on startup. Reloading app.");
+          console.log("devops90: Auto-restored local backup on startup. Reloading app.");
           window.location.reload();
         }
       }).catch(err => {
         console.error("devops90: Auto-restore on startup failed:", err);
       });
     }
-  }, []);
+  }, [currentUser]);
 
-  // Run native state backup when app goes to background, or check permissions when resuming
+  // Run native state backup when app goes to background, or check permissions and pull sync when resuming
   useEffect(() => {
     if (Capacitor.isNativePlatform()) {
-      const sub = CapacitorApp.addListener('appStateChange', (state) => {
-        if (state.isActive) {
+      const sub = CapacitorApp.addListener('appStateChange', (appStateObj) => {
+        if (appStateObj.isActive) {
+          // Check notification permissions
           LocalNotifications.checkPermissions().then(perm => {
             if (perm.display !== 'granted' && notificationsEnabled) {
               setNotificationsEnabled(false);
@@ -254,6 +265,13 @@ export const App: React.FC = () => {
               NotificationService.sync(false, morningTime, eveningTime);
             }
           }).catch(() => {});
+
+          // Auto-sync from GitHub when resuming the app
+          if (currentUser) {
+            console.log("devops90: App resumed, pulling latest from GitHub...");
+            appState.restoreSync().catch(() => {});
+          }
+
         } else {
           BackupService.autoBackup().catch(err => {
             console.error("devops90: App background backup failed:", err);
@@ -265,7 +283,7 @@ export const App: React.FC = () => {
       };
     }
     return undefined;
-  }, [notificationsEnabled, morningTime, eveningTime]);
+  }, [notificationsEnabled, morningTime, eveningTime, currentUser]);
 
   // Prevent background scrolling when settings or pomo modal is open
   useEffect(() => {
