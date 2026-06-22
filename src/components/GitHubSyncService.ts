@@ -1,3 +1,5 @@
+import { SecurityService } from './SecurityService';
+
 let isSyncing = false;
 let pendingSync = false;
 let retryTimeout: any = null;
@@ -7,7 +9,7 @@ export const GitHubSyncService = {
   BACKUP_FILENAME: 'progress_backup.json',
   
   async getToken(): Promise<string | null> {
-    return localStorage.getItem('devops90_github_token');
+    return await SecurityService.getSecureCredential('devops90_github_token');
   },
 
   async getUsername(token: string): Promise<string | null> {

@@ -4,6 +4,49 @@ import type { UseAppStateReturnType } from '../hooks/useAppState';
 import confetti from 'canvas-confetti';
 import { SyncMeta } from '../utils/SyncMeta';
 
+// Optimized React.memo component to prevent massive Virtual DOM re-renders
+const TaskRow = React.memo(({ task, isDone, onToggle }: { task: string, isDone: boolean, onToggle: () => void }) => (
+  <div
+    onClick={onToggle}
+    style={{
+      display: 'flex',
+      alignItems: 'flex-start',
+      gap: '10px',
+      cursor: 'pointer',
+      padding: '6px 8px',
+      borderRadius: '6px',
+      background: isDone ? 'rgba(255,255,255,0.01)' : 'rgba(255,255,255,0.02)',
+      transition: 'background 0.2s',
+    }}
+  >
+    <div style={{
+      width: '14px',
+      height: '14px',
+      border: isDone ? 'none' : '1px solid rgba(255,255,255,0.25)',
+      background: isDone ? '#38bdf8' : 'transparent',
+      borderRadius: '3px',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginTop: '3px',
+      flexShrink: 0,
+    }}>
+      {isDone && (
+        <svg width="8" height="6" viewBox="0 0 12 10" fill="none" stroke="#000" strokeWidth="3">
+          <polyline points="1.5 5 4.5 8 10.5 1.5" />
+        </svg>
+      )}
+    </div>
+    <span style={{
+      fontSize: '13px',
+      lineHeight: 1.5,
+      color: isDone ? '#8f9bb3' : '#c3c9d7',
+      textDecoration: isDone ? 'line-through' : 'none',
+    }}>
+      {task}
+    </span>
+  </div>
+), (prev, next) => prev.isDone === next.isDone && prev.task === next.task);
 
 const getSTARQuestion = (day: { id: string; title: string }): string => {
   const questionMap: Record<string, string> = {
@@ -582,48 +625,12 @@ export const RoadmapV4View: React.FC<RoadmapV4ViewProps> = ({ appState }) => {
                                 {day.tasks.map((task, ti) => {
                                   const isDone = !!v4state[v4key(pi, di, ti)];
                                   return (
-                                    <div
+                                    <TaskRow
                                       key={ti}
-                                      onClick={() => toggleTask(pi, di, ti)}
-                                      style={{
-                                        display: 'flex',
-                                        alignItems: 'flex-start',
-                                        gap: '10px',
-                                        cursor: 'pointer',
-                                        padding: '6px 8px',
-                                        borderRadius: '6px',
-                                        background: isDone ? 'rgba(255,255,255,0.01)' : 'rgba(255,255,255,0.02)',
-                                        transition: 'background 0.2s',
-                                      }}
-                                    >
-                                      {/* Task Checkbox */}
-                                      <div style={{
-                                        width: '14px',
-                                        height: '14px',
-                                        border: isDone ? 'none' : '1px solid rgba(255,255,255,0.25)',
-                                        background: isDone ? '#38bdf8' : 'transparent',
-                                        borderRadius: '3px',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        marginTop: '3px',
-                                        flexShrink: 0,
-                                      }}>
-                                        {isDone && (
-                                          <svg width="8" height="6" viewBox="0 0 12 10" fill="none" stroke="#000" strokeWidth="3">
-                                            <polyline points="1.5 5 4.5 8 10.5 1.5" />
-                                          </svg>
-                                        )}
-                                      </div>
-                                      <span style={{
-                                        fontSize: '13px',
-                                        lineHeight: 1.5,
-                                        color: isDone ? '#8f9bb3' : '#c3c9d7',
-                                        textDecoration: isDone ? 'line-through' : 'none',
-                                      }}>
-                                        {task}
-                                      </span>
-                                    </div>
+                                      task={task}
+                                      isDone={isDone}
+                                      onToggle={() => toggleTask(pi, di, ti)}
+                                    />
                                   );
                                 })}
                               </div>
