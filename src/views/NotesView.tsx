@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { showToast } from '../components/Toast';
 import { autoSyncToGitHub } from '../components/GitHubSyncService';
+import { SecurityService } from '../components/SecurityService';
 import { UseAppStateReturnType } from '../hooks/useAppState';
 import days from '../data/notes';
 import { Capacitor } from '@capacitor/core';
@@ -264,11 +265,12 @@ export const NotesView: React.FC<NotesViewProps> = ({ appState }) => {
   }, []);
 
   const day = days[activeDay];
+  if (!day) return <div style={{ padding: '20px', color: 'var(--text-secondary)' }}>Loading notes...</div>;
   const dayKeyStr = `day_${day.day}`;
   const isDayCompleted = !!notesState[dayKeyStr];
 
   const syncToGitHub = useCallback(async () => {
-    const oauthToken = localStorage.getItem('devops90_github_token') || '';
+    const oauthToken = await SecurityService.getSecureCredential('devops90_github_token') || '';
     const pat = oauthToken;
     const ghUsername = currentUser || '';
     const repo = '90days-devops-my-notes';

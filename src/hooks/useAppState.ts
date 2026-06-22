@@ -3,6 +3,7 @@ import { PHASES } from '../data/phases';
 import { LABS } from '../data/labs';
 import { showToast } from '../components/Toast';
 import { BackupService } from '../components/BackupService';
+import { SecurityService } from '../components/SecurityService';
 import { Capacitor } from '@capacitor/core';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
 import { GitHubSyncService } from '../components/GitHubSyncService';
@@ -318,7 +319,7 @@ export function useAppState() {
 
   const restoreSync = async (): Promise<boolean> => {
     if (!currentUser) return false;
-    const token = localStorage.getItem('devops90_github_token');
+    const token = await SecurityService.getSecureCredential('devops90_github_token');
     if (!token) return false;
 
     try {
@@ -337,12 +338,12 @@ export function useAppState() {
   };
 
   // User auth methods
-  const loginUser = (username: string, token: string): boolean => {
+  const loginUser = async (username: string, token: string): Promise<boolean> => {
     const trimmed = username.trim();
     if (!trimmed) return false;
     
-    // Store token and current user
-    localStorage.setItem('devops90_github_token', token);
+    // Securely store GitHub OAuth token
+    await SecurityService.saveSecureCredential('devops90_github_token', token);
     localStorage.setItem('devops90_current_user', trimmed);
     setCurrentUser(trimmed);
     
