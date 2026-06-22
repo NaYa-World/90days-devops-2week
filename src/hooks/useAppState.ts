@@ -5,7 +5,7 @@ import { showToast } from '../components/Toast';
 import { BackupService } from '../components/BackupService';
 import { Capacitor } from '@capacitor/core';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
-import { autoSyncToGitHub, GitHubSyncService } from '../components/GitHubSyncService';
+import { GitHubSyncService } from '../components/GitHubSyncService';
 
 export interface AppNotification {
   id: number;
