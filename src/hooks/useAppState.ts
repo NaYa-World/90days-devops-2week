@@ -247,13 +247,32 @@ export function useAppState() {
     } catch (_) {}
   };
 
+  const [isSyncUpToDate, setIsSyncUpToDate] = useState<boolean>(true);
+
+  const triggerSync = async (): Promise<boolean> => {
+    setIsSyncUpToDate(false);
+    try {
+      const results = await Promise.all([
+        BackupService.autoBackup(),
+        GitHubSyncService.autoSyncToGitHub()
+      ]);
+      const success = results.every(res => res !== false);
+      setIsSyncUpToDate(success);
+      return success;
+    } catch (e) {
+      console.error('devops90: Sync error', e);
+      setIsSyncUpToDate(false);
+      return false;
+    }
+  };
+
   const updateState = (updater: (prev: AppState) => AppState) => {
     setState(prev => {
       const next = updater(prev);
       saveStateToStorage(next, currentUser);
       return next;
     });
-    autoSyncToGitHub().catch(() => {});
+    triggerSync().catch(() => {});
   };
 
   // User auth methods
@@ -1088,7 +1107,9 @@ export function useAppState() {
     getAccounts,
     addNotification,
     clearNotifications,
-    markNotificationsRead
+    markNotificationsRead,
+    isSyncUpToDate,
+    triggerSync
   };
 }
 export type UseAppStateReturnType = ReturnType<typeof useAppState>;

@@ -16,8 +16,7 @@ export const GitHubOAuthService = {
   CLIENT_ID: 'Ov23liEmS0mPcDXsVsOd',
 
   async initiateDeviceFlow(): Promise<DeviceFlowResponse> {
-    const isLocalWeb = !Capacitor.isNativePlatform() && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
-    const baseUrl = isLocalWeb ? '/github-oauth' : 'https://github.com';
+    const baseUrl = !Capacitor.isNativePlatform() ? '/github-oauth' : 'https://github.com';
 
     const res = await fetch(`${baseUrl}/login/device/code`, {
       method: 'POST',
@@ -44,8 +43,7 @@ export const GitHubOAuthService = {
     return new Promise((resolve, reject) => {
       const poll = async () => {
         try {
-          const isLocalWeb = !Capacitor.isNativePlatform() && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
-          const baseUrl = isLocalWeb ? '/github-oauth' : 'https://github.com';
+          const baseUrl = !Capacitor.isNativePlatform() ? '/github-oauth' : 'https://github.com';
 
           const res = await fetch(`${baseUrl}/login/oauth/access_token`, {
             method: 'POST',

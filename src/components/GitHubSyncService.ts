@@ -68,15 +68,15 @@ export const GitHubSyncService = {
     }
   },
 
-  async autoSyncToGitHub(): Promise<void> {
+  async autoSyncToGitHub(): Promise<boolean> {
     const token = await this.getToken();
-    if (!token) return;
+    if (!token) return true;
 
     const username = await this.getUsername(token);
-    if (!username) return;
+    if (!username) return false;
 
     const ok = await this.ensureRepository(token, username);
-    if (!ok) return;
+    if (!ok) return false;
 
     try {
       const progressData: Record<string, string> = {};
@@ -131,11 +131,14 @@ export const GitHubSyncService = {
 
       if (res.ok) {
         console.log('devops90: Backup successfully saved to repository.');
+        return true;
       } else {
         console.error('devops90: Failed to push progress backup', await res.text());
+        return false;
       }
     } catch (err) {
       console.error('devops90: Repo sync failed', err);
+      return false;
     }
   },
 

@@ -508,10 +508,25 @@ export const App: React.FC = () => {
           <span></span>
           <span></span>
         </button>
-        <div className="nav-brand" onClick={() => handleNavItemClick('roadmap-v4')} style={{ cursor: 'pointer' }}>
-          <span className="g">DEV</span>
-          <span className="p">OPS</span>
-          <span className="v">BY GK</span>
+        <div className="nav-brand" onClick={() => handleNavItemClick('roadmap-v4')} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div>
+            <span className="g">DEV</span>
+            <span className="p">OPS</span>
+            <span className="v">BY GK</span>
+          </div>
+          <span
+            id="apk-sync-indicator"
+            style={{
+              width: '8px',
+              height: '8px',
+              borderRadius: '50%',
+              backgroundColor: appState.isSyncUpToDate ? '#00d9a0' : '#ef4444',
+              boxShadow: appState.isSyncUpToDate ? '0 0 8px #00d9a0' : '0 0 8px #ef4444',
+              display: 'inline-block',
+              transition: 'all 0.3s ease'
+            }}
+            title={appState.isSyncUpToDate ? 'Sync: Up to date' : 'Sync: Pending or Failed'}
+          />
         </div>
         <div className="nav-tabs">
           <button
@@ -691,6 +706,7 @@ export const App: React.FC = () => {
             showToast('Test notification scheduled in 10 seconds. Close the app to see it!');
           }
         }}
+        triggerSync={appState.triggerSync}
       />
 
       <DailyChallengeModal

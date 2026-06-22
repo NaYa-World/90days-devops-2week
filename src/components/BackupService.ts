@@ -24,11 +24,11 @@ export const BackupService = {
    * Automatically serializes localStorage data prefixed with 'devops90'
    * and saves it to Capacitor Preferences and a local device JSON file.
    */
-  async autoBackup() {
-    if (!Capacitor.isNativePlatform()) return;
+  async autoBackup(): Promise<boolean> {
+    if (!Capacitor.isNativePlatform()) return true;
     try {
       const data = getAllDevopsKeys();
-      if (Object.keys(data).length === 0) return;
+      if (Object.keys(data).length === 0) return true;
 
       const dataStr = JSON.stringify(data);
 
@@ -47,8 +47,10 @@ export const BackupService = {
         recursive: true
       });
       console.log('devops90: State successfully backed up to native storage.');
+      return true;
     } catch (e) {
       console.error('devops90: State backup failed:', e);
+      return false;
     }
   },
 

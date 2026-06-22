@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/github-oauth/:path*",
+      "destination": "https://github.com/:path*"
+    }
+  ]
+}
