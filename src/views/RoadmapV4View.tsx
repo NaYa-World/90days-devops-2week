@@ -186,7 +186,7 @@ export const RoadmapV4View: React.FC<RoadmapV4ViewProps> = ({ appState }) => {
     setV4State(next);
     saveV4State(stateKey, next);
     SyncMeta.recordChange(currentUser, stateKey, key);
-    appState.triggerSync().catch(() => { });
+    setTimeout(() => appState.triggerSync().catch(() => {}), 600);
 
     // Confetti trigger on day completion
     if (isDayTasksComplete(pi, di, next)) {
@@ -204,7 +204,7 @@ export const RoadmapV4View: React.FC<RoadmapV4ViewProps> = ({ appState }) => {
     try {
       localStorage.setItem(artifactsKey, JSON.stringify(next));
       SyncMeta.recordChange(currentUser, artifactsKey, key);
-      appState.triggerSync().catch(() => { });
+      setTimeout(() => appState.triggerSync().catch(() => {}), 600);
     } catch (e) {
       console.error(e);
     }
@@ -227,7 +227,7 @@ export const RoadmapV4View: React.FC<RoadmapV4ViewProps> = ({ appState }) => {
     setV4State(next);
     saveV4State(stateKey, next);
     SyncMeta.recordChanges(currentUser, stateKey, changedKeys);
-    appState.triggerSync().catch(() => { });
+    setTimeout(() => appState.triggerSync().catch(() => {}), 600);
 
     const artifactUrl = v4Artifacts[`${pi}_${di}`] || '';
     if (isValidUrl(artifactUrl)) {
@@ -244,7 +244,10 @@ export const RoadmapV4View: React.FC<RoadmapV4ViewProps> = ({ appState }) => {
         localStorage.setItem(artifactsKey, '{}');
         SyncMeta.recordAll(currentUser, stateKey, v4state); // marking all previously known keys as changed (deleted)
         SyncMeta.recordAll(currentUser, artifactsKey, v4Artifacts);
-        appState.triggerSync().catch(() => { });
+        // Delay sync to allow SyncMeta's 500ms debounced save to hit localStorage
+        setTimeout(() => {
+          appState.triggerSync().catch(() => { });
+        }, 600);
       } catch (e) {
         console.error(e);
       }
