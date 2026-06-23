@@ -52,6 +52,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 }) => {
   const [syncing, setSyncing] = useState(false);
   const [syncMessage, setSyncMessage] = useState('');
+  const [resetStep, setResetStep] = useState(0);
+  const [resetConfirm, setResetConfirm] = useState(false);
+  const [resetText, setResetText] = useState('');
+
+  const handleFinalReset = () => {
+    localStorage.clear();
+    window.location.reload();
+  };
 
   const handleForceSync = async () => {
     setSyncing(true);
@@ -388,28 +396,100 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               </div>
 
               <div style={{ borderTop: '1px solid rgba(0, 217, 160, 0.1)', paddingTop: '8px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <button
-                  onClick={handleForceSync}
-                  disabled={syncing}
-                  style={{
-                    width: 'fit-content',
-                    padding: '6px 12px',
-                    background: syncing ? 'rgba(255,255,255,0.05)' : 'rgba(0, 217, 160, 0.1)',
-                    border: '1px solid rgba(0, 217, 160, 0.3)',
-                    color: 'var(--green)',
-                    fontFamily: 'var(--mono)',
-                    fontSize: '11px',
-                    borderRadius: '6px',
-                    cursor: syncing ? 'not-allowed' : 'pointer',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    transition: 'all 0.2s ease',
-                    opacity: syncing ? 0.6 : 1
-                  }}
-                >
-                  {syncing ? '🔄 Syncing...' : '🔄 Force Sync Now'}
-                </button>
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                  <button
+                    onClick={handleForceSync}
+                    disabled={syncing || resetStep > 0}
+                    style={{
+                      width: 'fit-content',
+                      padding: '6px 12px',
+                      background: syncing ? 'rgba(255,255,255,0.05)' : 'rgba(0, 217, 160, 0.1)',
+                      border: '1px solid rgba(0, 217, 160, 0.3)',
+                      color: 'var(--green)',
+                      fontFamily: 'var(--mono)',
+                      fontSize: '11px',
+                      borderRadius: '6px',
+                      cursor: (syncing || resetStep > 0) ? 'not-allowed' : 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      transition: 'all 0.2s ease',
+                      opacity: (syncing || resetStep > 0) ? 0.6 : 1
+                    }}
+                  >
+                    {syncing ? '🔄 Syncing...' : '🔄 Force Sync Now'}
+                  </button>
+
+                  <button
+                    onClick={() => setResetStep(1)}
+                    disabled={syncing || resetStep > 0}
+                    style={{
+                      width: 'fit-content',
+                      padding: '6px 12px',
+                      background: 'rgba(255, 95, 95, 0.1)',
+                      border: '1px solid rgba(255, 95, 95, 0.3)',
+                      color: '#ff5f5f',
+                      fontFamily: 'var(--mono)',
+                      fontSize: '11px',
+                      borderRadius: '6px',
+                      cursor: (syncing || resetStep > 0) ? 'not-allowed' : 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      transition: 'all 0.2s ease',
+                      opacity: (syncing || resetStep > 0) ? 0.6 : 1
+                    }}
+                  >
+                    ⚠️ Reset Total Data
+                  </button>
+                </div>
+
+                {resetStep === 1 && (
+                  <div style={{ background: 'rgba(255, 95, 95, 0.05)', border: '1px solid rgba(255, 95, 95, 0.3)', padding: '10px', borderRadius: '6px', marginTop: '4px' }}>
+                    <div style={{ fontSize: '11px', color: '#ff5f5f', marginBottom: '8px' }}>
+                      Warning: Are you sure you want to reset all your data? This will clear all local progress.
+                    </div>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <button onClick={() => setResetStep(2)} style={{ background: '#ff5f5f', color: '#fff', border: 'none', padding: '4px 10px', borderRadius: '4px', fontSize: '10px', cursor: 'pointer', fontWeight: 'bold' }}>Proceed</button>
+                      <button onClick={() => setResetStep(0)} style={{ background: 'rgba(255,255,255,0.1)', color: '#fff', border: 'none', padding: '4px 10px', borderRadius: '4px', fontSize: '10px', cursor: 'pointer' }}>Cancel</button>
+                    </div>
+                  </div>
+                )}
+
+                {resetStep === 2 && (
+                  <div style={{ background: 'rgba(255, 95, 95, 0.1)', border: '1px solid #ff5f5f', padding: '10px', borderRadius: '6px', marginTop: '4px' }}>
+                    <div style={{ fontSize: '11px', color: '#ff5f5f', marginBottom: '8px', fontWeight: 'bold' }}>
+                      Final Warning: This action cannot be undone. All data will be permanently deleted.
+                    </div>
+                    <div style={{ marginBottom: '10px' }}>
+                      <input 
+                        type="text" 
+                        placeholder="Type 'delete' to confirm" 
+                        value={resetText}
+                        onChange={e => setResetText(e.target.value)}
+                        style={{
+                          background: 'rgba(0,0,0,0.2)',
+                          border: '1px solid rgba(255, 95, 95, 0.4)',
+                          color: '#fff',
+                          padding: '6px 10px',
+                          borderRadius: '4px',
+                          fontSize: '11px',
+                          outline: 'none',
+                          width: '100%',
+                          marginBottom: '8px'
+                        }}
+                      />
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: '#fff', cursor: 'pointer' }}>
+                        <input type="checkbox" checked={resetConfirm} onChange={e => setResetConfirm(e.target.checked)} />
+                        I confirm I want to reset total data
+                      </label>
+                    </div>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <button onClick={handleFinalReset} disabled={!resetConfirm || resetText !== 'delete'} style={{ background: '#ff5f5f', color: '#fff', border: 'none', padding: '4px 10px', borderRadius: '4px', fontSize: '10px', cursor: (resetConfirm && resetText === 'delete') ? 'pointer' : 'not-allowed', opacity: (resetConfirm && resetText === 'delete') ? 1 : 0.5, fontWeight: 'bold' }}>Reset Data Now</button>
+                      <button onClick={() => { setResetStep(0); setResetConfirm(false); setResetText(''); }} style={{ background: 'rgba(255,255,255,0.1)', color: '#fff', border: 'none', padding: '4px 10px', borderRadius: '4px', fontSize: '10px', cursor: 'pointer' }}>Cancel</button>
+                    </div>
+                  </div>
+                )}
 
                 {syncMessage && (
                   <div style={{
