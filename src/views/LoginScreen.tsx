@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { GitHubOAuthService, DeviceFlowResponse } from '../components/GitHubOAuthService';
 
 interface LoginScreenProps {
-  loginUser: (username: string, token: string) => boolean;
+  loginUser: (username: string, token: string) => Promise<boolean>;
 }
 
 export const LoginScreen: React.FC<LoginScreenProps> = ({ loginUser }) => {
@@ -44,7 +44,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ loginUser }) => {
       justifyContent: 'center',
       padding: '20px',
       color: '#e6edf3',
-      fontFamily: "'Outfit', sans-serif"
+      fontFamily: "var(--body)"
     }}>
       <div style={{
         width: '100%',

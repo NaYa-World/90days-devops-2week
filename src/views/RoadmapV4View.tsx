@@ -38,7 +38,8 @@ const TaskRow = React.memo(({ task, isDone, onToggle }: { task: string, isDone: 
       )}
     </div>
     <span style={{
-      fontSize: '13px',
+      fontFamily: "'Google Sans', Arial, sans-serif",
+      fontSize: '16px',
       lineHeight: 1.5,
       color: isDone ? '#8f9bb3' : '#c3c9d7',
       textDecoration: isDone ? 'line-through' : 'none',
@@ -185,7 +186,7 @@ export const RoadmapV4View: React.FC<RoadmapV4ViewProps> = ({ appState }) => {
     setV4State(next);
     saveV4State(stateKey, next);
     SyncMeta.recordChange(currentUser, stateKey, key);
-    appState.triggerSync().catch(() => {});
+    appState.triggerSync().catch(() => { });
 
     // Confetti trigger on day completion
     if (isDayTasksComplete(pi, di, next)) {
@@ -203,7 +204,7 @@ export const RoadmapV4View: React.FC<RoadmapV4ViewProps> = ({ appState }) => {
     try {
       localStorage.setItem(artifactsKey, JSON.stringify(next));
       SyncMeta.recordChange(currentUser, artifactsKey, key);
-      appState.triggerSync().catch(() => {});
+      appState.triggerSync().catch(() => { });
     } catch (e) {
       console.error(e);
     }
@@ -226,7 +227,7 @@ export const RoadmapV4View: React.FC<RoadmapV4ViewProps> = ({ appState }) => {
     setV4State(next);
     saveV4State(stateKey, next);
     SyncMeta.recordChanges(currentUser, stateKey, changedKeys);
-    appState.triggerSync().catch(() => {});
+    appState.triggerSync().catch(() => { });
 
     const artifactUrl = v4Artifacts[`${pi}_${di}`] || '';
     if (isValidUrl(artifactUrl)) {
@@ -243,7 +244,7 @@ export const RoadmapV4View: React.FC<RoadmapV4ViewProps> = ({ appState }) => {
         localStorage.setItem(artifactsKey, '{}');
         SyncMeta.recordAll(currentUser, stateKey, v4state); // marking all previously known keys as changed (deleted)
         SyncMeta.recordAll(currentUser, artifactsKey, v4Artifacts);
-        appState.triggerSync().catch(() => {});
+        appState.triggerSync().catch(() => { });
       } catch (e) {
         console.error(e);
       }
@@ -259,7 +260,7 @@ export const RoadmapV4View: React.FC<RoadmapV4ViewProps> = ({ appState }) => {
 
   return (
     <div style={{ padding: '24px', maxWidth: '1000px', margin: '0 auto', color: '#eeeef5', fontFamily: 'system-ui, sans-serif' }}>
-      
+
       {/* HEADER Progress Dashboard */}
       <div style={{
         background: 'linear-gradient(135deg, #131520 0%, #0c0e17 100%)',
@@ -303,7 +304,7 @@ export const RoadmapV4View: React.FC<RoadmapV4ViewProps> = ({ appState }) => {
             <div style={{ fontSize: '24px', fontWeight: 800, color: 'var(--green, #00d9a0)', marginTop: '4px' }}>{overallDayPercent}%</div>
             <div style={{ fontSize: '12px', color: '#8f9bb3', marginTop: '2px' }}>{completedDaysCount} / {totalDaysCount} Days complete</div>
           </div>
-          
+
           <div style={{ background: 'rgba(255,255,255,0.02)', padding: '14px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.03)' }}>
             <div style={{ fontSize: '11px', color: '#8f9bb3', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.5px' }}>Tasks Completed</div>
             <div style={{ fontSize: '24px', fontWeight: 800, color: '#38bdf8', marginTop: '4px' }}>{overallTaskPercent}%</div>
@@ -460,7 +461,7 @@ export const RoadmapV4View: React.FC<RoadmapV4ViewProps> = ({ appState }) => {
               {/* Phase Body */}
               {isOpen && (
                 <div style={{ padding: '0 0 16px 0' }}>
-                  
+
                   {/* Phase cost detail banner */}
                   <div style={{ padding: '10px 20px', background: 'rgba(255,255,255,0.02)', borderBottom: '1px solid rgba(255,255,255,0.03)', display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#8f9bb3' }}>
                     <span>Estimated Cloud Cost: <strong style={{ color: '#fff' }}>{phase.estimatedCost}</strong></span>
@@ -522,13 +523,13 @@ export const RoadmapV4View: React.FC<RoadmapV4ViewProps> = ({ appState }) => {
                             background: dayComplete
                               ? 'var(--green, #00d9a0)'
                               : isMissingArtifact
-                              ? 'rgba(255,200,80,0.12)'
-                              : 'rgba(255,255,255,0.04)',
+                                ? 'rgba(255,200,80,0.12)'
+                                : 'rgba(255,255,255,0.04)',
                             border: dayComplete
                               ? 'none'
                               : isMissingArtifact
-                              ? '1px solid rgba(255,200,80,0.4)'
-                              : '1px solid rgba(255,255,255,0.1)',
+                                ? '1px solid rgba(255,200,80,0.4)'
+                                : '1px solid rgba(255,255,255,0.1)',
                             flexShrink: 0,
                           }}>
                             {dayComplete ? (
@@ -581,7 +582,7 @@ export const RoadmapV4View: React.FC<RoadmapV4ViewProps> = ({ appState }) => {
                         {/* Day Collapsible Detail Container */}
                         {dayIsOpen && (
                           <div style={{ padding: '0 20px 20px 52px', borderTop: '1px solid rgba(255,255,255,0.02)', background: 'rgba(0,0,0,0.1)' }}>
-                            
+
                             {/* Instance Notes */}
                             {day.instanceNote && (
                               <div style={{ margin: '12px 0 8px 0', fontSize: '11px', color: '#8f9bb3', background: 'rgba(255,255,255,0.03)', padding: '6px 12px', borderRadius: '6px', display: 'inline-block' }}>
@@ -762,7 +763,7 @@ export const RoadmapV4View: React.FC<RoadmapV4ViewProps> = ({ appState }) => {
                               <p style={{ margin: '0 0 10px 0', fontSize: '12px', color: '#8f9bb3' }}>
                                 {day.artifactContract.instruction}
                               </p>
-                              
+
                               <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                                 <input
                                   type="text"
@@ -816,7 +817,7 @@ export const RoadmapV4View: React.FC<RoadmapV4ViewProps> = ({ appState }) => {
 
                   {/* Phase Summary Project & Drill Cards */}
                   <div style={{ padding: '20px 20px 0 20px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
-                    
+
                     {/* Weekly Project */}
                     <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)', borderRadius: '8px', padding: '16px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
@@ -831,7 +832,7 @@ export const RoadmapV4View: React.FC<RoadmapV4ViewProps> = ({ appState }) => {
                       <p style={{ margin: '0 0 12px 0', fontSize: '12px', lineHeight: 1.5, color: '#8f9bb3' }}>
                         {phase.weeklyProject.scenario}
                       </p>
-                      
+
                       <div style={{ fontSize: '11px', fontWeight: 700, color: '#fff', textTransform: 'uppercase', marginBottom: '6px' }}>Success Criteria:</div>
                       <ul style={{ margin: 0, paddingLeft: '16px', fontSize: '11px', lineHeight: 1.6, color: '#c3c9d7' }}>
                         {phase.weeklyProject.successCriteria.map((c, idx) => (
@@ -854,7 +855,7 @@ export const RoadmapV4View: React.FC<RoadmapV4ViewProps> = ({ appState }) => {
                       <p style={{ margin: '0 0 12px 0', fontSize: '12px', lineHeight: 1.5, color: '#8f9bb3' }}>
                         {phase.incidentDrill.scenario}
                       </p>
-                      
+
                       <div style={{ display: 'flex', gap: '16px', fontSize: '11px', color: '#c3c9d7', marginTop: '12px' }}>
                         <div>Time Limit: <strong style={{ color: '#fff' }}>{phase.incidentDrill.timeLimit}</strong></div>
                         <div>Post-Mortem: <strong style={{ color: '#fff' }}>{phase.incidentDrill.postMortemRequired ? 'Required' : 'Optional'}</strong></div>
