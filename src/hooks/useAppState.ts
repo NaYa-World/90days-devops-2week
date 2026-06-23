@@ -250,8 +250,9 @@ export function useAppState() {
   const triggerSync = async (): Promise<boolean> => {
     setIsSyncUpToDate(false);
     try {
+      const isNative = Capacitor.isNativePlatform();
       const results = await Promise.all([
-        BackupService.autoBackup(),
+        isNative ? BackupService.autoBackup() : Promise.resolve(true),
         GitHubSyncService.autoSyncToGitHub()
       ]);
       const success = results.every(res => res !== false);
