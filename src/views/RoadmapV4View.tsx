@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { PHASES_V4 } from '../data/phases_v4';
 import type { UseAppStateReturnType } from '../hooks/useAppState';
 import confetti from 'canvas-confetti';
@@ -199,28 +199,37 @@ export const RoadmapV4View: React.FC<RoadmapV4ViewProps> = ({ appState }) => {
     });
   };
 
-  const updateArtifactUrl = (pi: number, di: number, url: string) => {
-    const key = `${pi}_${di}`;
-    setV4Artifacts(prev => {
-      const next = { ...prev, [key]: url };
-      try {
-        localStorage.setItem(artifactsKey, JSON.stringify(next));
-        SyncMeta.recordChange(currentUser, artifactsKey, key);
-        setTimeout(() => appState.triggerSync().catch(() => {}), 600);
-      } catch (e) {
-        console.error(e);
-      }
-      return next;
-    });
+  // Debounce ref for artifact URL sync — prevents 28 sync calls for a 28-char URL
+  const artifactSyncTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-    // If day was tasks-complete and URL just became valid, throw confetti!
-    setV4State(currentState => {
-      if (isDayTasksComplete(pi, di, currentState) && isValidUrl(url)) {
-        confetti({ particleCount: 100, spread: 60, origin: { y: 0.6 } });
-      }
-      return currentState; // no state change, just reading latest state for confetti check
-    });
-  };
+  const updateArtifactUrl = useCallback((pi: number, di: number, url: string) => {
+    const key = `${pi}_${di}`;
+    // Immediately update local state for responsive UI
+    setV4Artifacts(prev => ({ ...prev, [key]: url }));
+
+    // Debounce the expensive persist + sync operations
+    if (artifactSyncTimerRef.current) clearTimeout(artifactSyncTimerRef.current);
+    artifactSyncTimerRef.current = setTimeout(() => {
+      setV4Artifacts(current => {
+        try {
+          localStorage.setItem(artifactsKey, JSON.stringify(current));
+          SyncMeta.recordChange(currentUser, artifactsKey, key);
+          setTimeout(() => appState.triggerSync().catch(() => {}), 600);
+        } catch (e) {
+          console.error(e);
+        }
+        return current; // no state change, just persisting
+      });
+
+      // Confetti check with latest task state
+      setV4State(currentState => {
+        if (isDayTasksComplete(pi, di, currentState) && isValidUrl(url)) {
+          confetti({ particleCount: 100, spread: 60, origin: { y: 0.6 } });
+        }
+        return currentState;
+      });
+    }, 500);
+  }, [artifactsKey, currentUser, appState]);
 
   const bulkMarkTasks = (pi: number, di: number) => {
     const day = PHASES_V4[pi].dayTasks[di];
@@ -246,20 +255,24 @@ export const RoadmapV4View: React.FC<RoadmapV4ViewProps> = ({ appState }) => {
 
   const handleResetProgress = () => {
     if (window.confirm('Are you sure you want to reset all V4 roadmap progress and artifact URLs? This cannot be undone.')) {
-      setV4State({});
-      setV4Artifacts({});
-      saveV4State(stateKey, {});
-      try {
-        localStorage.setItem(artifactsKey, '{}');
-        SyncMeta.recordAll(currentUser, stateKey, v4state); // marking all previously known keys as changed (deleted)
-        SyncMeta.recordAll(currentUser, artifactsKey, v4Artifacts);
-        // Delay sync to allow SyncMeta's 500ms debounced save to hit localStorage
-        setTimeout(() => {
-          appState.triggerSync().catch(() => { });
-        }, 600);
-      } catch (e) {
-        console.error(e);
-      }
+      // Capture current state BEFORE clearing, so SyncMeta records the correct old keys
+      setV4State(prevState => {
+        setV4Artifacts(prevArtifacts => {
+          try {
+            saveV4State(stateKey, {});
+            localStorage.setItem(artifactsKey, '{}');
+            SyncMeta.recordAll(currentUser, stateKey, prevState);
+            SyncMeta.recordAll(currentUser, artifactsKey, prevArtifacts);
+            setTimeout(() => {
+              appState.triggerSync().catch(() => {});
+            }, 600);
+          } catch (e) {
+            console.error(e);
+          }
+          return {};
+        });
+        return {};
+      });
       alert('Progress has been reset.');
     }
   };
@@ -285,7 +298,7 @@ export const RoadmapV4View: React.FC<RoadmapV4ViewProps> = ({ appState }) => {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '16px' }}>
           <div>
             <h1 style={{ margin: 0, fontSize: '24px', fontWeight: 800, letterSpacing: '-0.5px', color: '#fff' }}>
-              🔥 DevOps Zero to Job — 100 Days V3
+              🔥 DevOps Zero to Job — 100 Days V4
             </h1>
             <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: '#8f9bb3' }}>
               Verifiable artifact-driven curriculum with real-world incident simulations.
