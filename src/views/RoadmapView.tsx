@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback, useEffect } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import { PHASES } from '../data/phases';
 import type { UseAppStateReturnType } from '../hooks/useAppState';
 import confetti from 'canvas-confetti';
