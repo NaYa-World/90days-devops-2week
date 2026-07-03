@@ -56,9 +56,79 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const [resetConfirm, setResetConfirm] = useState(false);
   const [resetText, setResetText] = useState('');
 
-  const handleFinalReset = () => {
-    localStorage.clear();
-    window.location.reload();
+  const handleFinalReset = async () => {
+    if (!currentUser) return;
+    setSyncing(true);
+    setSyncMessage('Resetting all progress and syncing to cloud...');
+    try {
+      const userLower = currentUser.toLowerCase();
+      const userKey = `devops90_v4_${userLower}`;
+      const stateKey = `devops90_v4_tasks_${userLower}`;
+      const artifactsKey = `devops90_v4_artifacts_${userLower}`;
+      const metaKey = `devops90_meta_timestamps_${userLower}`;
+      
+      const blankAppState = {
+        _pomoSessions: 0,
+        _history: {},
+        _lastDay: '',
+        _streak: 0,
+        _streakFreezeUsedOn: '',
+        _freezeUsedWeek: '',
+        _jobs: [],
+        _ghUser: '',
+        _qdone: {},
+        _savedJDs: [],
+        _buildLogs: [],
+        _mockHistory: [],
+        _weekGoal: 35,
+        _notifications: [
+          { id: 1, text: "👋 Welcome to DevOps v4! Select a day to start learning.", date: new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }), read: false }
+        ]
+      };
+
+      // 1. Clear other user-specific or legacy progress keys from localStorage
+      const keysToRemove = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith('devops90_') && !key.startsWith('devops90_github_') && key !== 'devops90_current_user' && key !== 'devops90_theme' && key !== 'devops90_theme_sync' && key !== 'devops90_notifications_enabled' && key !== 'devops90_morning_time' && key !== 'devops90_evening_time' && key !== 'devops90_ui_scale') {
+          if (key !== userKey && key !== stateKey && key !== artifactsKey && key !== metaKey) {
+            keysToRemove.push(key);
+          }
+        }
+      }
+      keysToRemove.forEach(k => localStorage.removeItem(k));
+
+      // 2. Overwrite the main user data keys with empty/blank state
+      localStorage.setItem(userKey, JSON.stringify(blankAppState));
+      localStorage.setItem(stateKey, '{}');
+      localStorage.setItem(artifactsKey, '{}');
+
+      // 3. Update timestamps to now so local empty/reset state overrides the cloud backup
+      const now = Date.now();
+      const localMeta: Record<string, number> = {};
+      const props = ['_pomoSessions', '_history', '_lastDay', '_streak', '_streakFreezeUsedOn', '_freezeUsedWeek', '_jobs', '_ghUser', '_qdone', '_savedJDs', '_buildLogs', '_mockHistory', '_weekGoal', '_notifications'];
+      props.forEach(prop => {
+        localMeta[`${userKey}::_${prop}`] = now;
+      });
+      localMeta[`${stateKey}`] = now;
+      localMeta[`${artifactsKey}`] = now;
+      localStorage.setItem(metaKey, JSON.stringify(localMeta));
+
+      // 4. Force sync the reset state to GitHub Gist/Repository
+      await GitHubSyncService.autoSyncToGitHub();
+
+      setSyncMessage('✅ Reset complete!');
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+    } catch (err: any) {
+      setSyncMessage('❌ Reset sync failed: ' + (err.message || err));
+      setTimeout(() => {
+        window.location.reload();
+      }, 2000);
+    } finally {
+      setSyncing(false);
+    }
   };
 
   const handleForceSync = async () => {
