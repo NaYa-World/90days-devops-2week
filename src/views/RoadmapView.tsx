@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import { PHASES } from '../data/phases';
 import type { UseAppStateReturnType } from '../hooks/useAppState';
 import confetti from 'canvas-confetti';
@@ -49,18 +49,37 @@ export const RoadmapView: React.FC<Props> = ({ appState }) => {
     }
   }
 
-  function updateArtifact(pi: number, di: number, url: string) {
+  // Debounce ref for artifact URL sync
+  const artifactSyncTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const updateArtifact = useCallback((pi: number, di: number, url: string) => {
     const key = `${pi}_${di}`;
-    const next = { ...v1Artifacts, [key]: url };
-    setV1Artifacts(next);
-    try {
-      localStorage.setItem(artifactsKey, JSON.stringify(next));
-      appState.triggerSync().catch(() => {});
-    } catch (e) {
-      console.error(e);
-    }
-    checkAndTriggerConfetti(pi, v1state, next);
-  }
+    // Immediately update local state for responsive UI
+    setV1Artifacts(prev => ({ ...prev, [key]: url }));
+
+    // Debounce the expensive persist + sync operations
+    if (artifactSyncTimerRef.current) clearTimeout(artifactSyncTimerRef.current);
+    artifactSyncTimerRef.current = setTimeout(() => {
+      setV1Artifacts(current => {
+        try {
+          localStorage.setItem(artifactsKey, JSON.stringify(current));
+          appState.triggerSync().catch(() => {});
+        } catch (e) {
+          console.error(e);
+        }
+        return current;
+      });
+
+      // Confetti check with latest task state
+      setV1State(currentState => {
+        setV1Artifacts(currentArtifacts => {
+          checkAndTriggerConfetti(pi, currentState, currentArtifacts);
+          return currentArtifacts;
+        });
+        return currentState;
+      });
+    }, 500);
+  }, [artifactsKey, appState]);
 
   function isValidArtifactLink(url: string): boolean {
     const clean = url.trim();
@@ -110,25 +129,29 @@ export const RoadmapView: React.FC<Props> = ({ appState }) => {
 
   function toggle(pi: number, di: number, ti: number) {
     const key = v1key(pi, di, ti);
-    const next = { ...v1state, [key]: !v1state[key] };
-    setV1State(next);
-    saveV1State(userKey, next);
-    appState.triggerSync().catch(() => {});
-    checkAndTriggerConfetti(pi, next, v1Artifacts);
+    setV1State(prev => {
+      const next = { ...prev, [key]: !prev[key] };
+      saveV1State(userKey, next);
+      appState.triggerSync().catch(() => {});
+      checkAndTriggerConfetti(pi, next, v1Artifacts);
+      return next;
+    });
   }
 
   function bulkMarkDay(pi: number, di: number, type: 'concept' | 'code' | 'all') {
-    const next = { ...v1state };
-    const tasks = PHASES[pi]?.data[di]?.tasks || [];
-    tasks.forEach((task, ti) => {
-      if (type === 'all' || task.k === type) {
-        next[v1key(pi, di, ti)] = true;
-      }
+    setV1State(prev => {
+      const next = { ...prev };
+      const tasks = PHASES[pi]?.data[di]?.tasks || [];
+      tasks.forEach((task, ti) => {
+        if (type === 'all' || task.k === type) {
+          next[v1key(pi, di, ti)] = true;
+        }
+      });
+      saveV1State(userKey, next);
+      appState.triggerSync().catch(() => {});
+      checkAndTriggerConfetti(pi, next, v1Artifacts);
+      return next;
     });
-    setV1State(next);
-    saveV1State(userKey, next);
-    appState.triggerSync().catch(() => {});
-    checkAndTriggerConfetti(pi, next, v1Artifacts);
   }
 
   function togglePhase(pi: number) {
