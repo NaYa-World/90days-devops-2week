@@ -182,57 +182,66 @@ export const RoadmapV4View: React.FC<RoadmapV4ViewProps> = ({ appState }) => {
 
   const toggleTask = (pi: number, di: number, ti: number) => {
     const key = v4key(pi, di, ti);
-    const next = { ...v4state, [key]: !v4state[key] };
-    setV4State(next);
-    saveV4State(stateKey, next);
-    SyncMeta.recordChange(currentUser, stateKey, key);
-    setTimeout(() => appState.triggerSync().catch(() => {}), 600);
+    setV4State(prev => {
+      const next = { ...prev, [key]: !prev[key] };
+      saveV4State(stateKey, next);
+      SyncMeta.recordChange(currentUser, stateKey, key);
+      setTimeout(() => appState.triggerSync().catch(() => {}), 600);
 
-    // Confetti trigger on day completion
-    if (isDayTasksComplete(pi, di, next)) {
-      const artifactUrl = v4Artifacts[`${pi}_${di}`] || '';
-      if (isValidUrl(artifactUrl)) {
-        confetti({ particleCount: 120, spread: 70, origin: { y: 0.6 } });
+      // Confetti trigger on day completion
+      if (isDayTasksComplete(pi, di, next)) {
+        const artifactUrl = v4Artifacts[`${pi}_${di}`] || '';
+        if (isValidUrl(artifactUrl)) {
+          confetti({ particleCount: 120, spread: 70, origin: { y: 0.6 } });
+        }
       }
-    }
+      return next;
+    });
   };
 
   const updateArtifactUrl = (pi: number, di: number, url: string) => {
     const key = `${pi}_${di}`;
-    const next = { ...v4Artifacts, [key]: url };
-    setV4Artifacts(next);
-    try {
-      localStorage.setItem(artifactsKey, JSON.stringify(next));
-      SyncMeta.recordChange(currentUser, artifactsKey, key);
-      setTimeout(() => appState.triggerSync().catch(() => {}), 600);
-    } catch (e) {
-      console.error(e);
-    }
+    setV4Artifacts(prev => {
+      const next = { ...prev, [key]: url };
+      try {
+        localStorage.setItem(artifactsKey, JSON.stringify(next));
+        SyncMeta.recordChange(currentUser, artifactsKey, key);
+        setTimeout(() => appState.triggerSync().catch(() => {}), 600);
+      } catch (e) {
+        console.error(e);
+      }
+      return next;
+    });
 
     // If day was tasks-complete and URL just became valid, throw confetti!
-    if (isDayTasksComplete(pi, di, v4state) && isValidUrl(url)) {
-      confetti({ particleCount: 100, spread: 60, origin: { y: 0.6 } });
-    }
+    setV4State(currentState => {
+      if (isDayTasksComplete(pi, di, currentState) && isValidUrl(url)) {
+        confetti({ particleCount: 100, spread: 60, origin: { y: 0.6 } });
+      }
+      return currentState; // no state change, just reading latest state for confetti check
+    });
   };
 
   const bulkMarkTasks = (pi: number, di: number) => {
     const day = PHASES_V4[pi].dayTasks[di];
-    const next = { ...v4state };
-    const changedKeys: string[] = [];
-    day.tasks.forEach((_, ti) => {
-      const k = v4key(pi, di, ti);
-      next[k] = true;
-      changedKeys.push(k);
-    });
-    setV4State(next);
-    saveV4State(stateKey, next);
-    SyncMeta.recordChanges(currentUser, stateKey, changedKeys);
-    setTimeout(() => appState.triggerSync().catch(() => {}), 600);
+    setV4State(prev => {
+      const next = { ...prev };
+      const changedKeys: string[] = [];
+      day.tasks.forEach((_, ti) => {
+        const k = v4key(pi, di, ti);
+        next[k] = true;
+        changedKeys.push(k);
+      });
+      saveV4State(stateKey, next);
+      SyncMeta.recordChanges(currentUser, stateKey, changedKeys);
+      setTimeout(() => appState.triggerSync().catch(() => {}), 600);
 
-    const artifactUrl = v4Artifacts[`${pi}_${di}`] || '';
-    if (isValidUrl(artifactUrl)) {
-      confetti({ particleCount: 120, spread: 70, origin: { y: 0.6 } });
-    }
+      const artifactUrl = v4Artifacts[`${pi}_${di}`] || '';
+      if (isValidUrl(artifactUrl)) {
+        confetti({ particleCount: 120, spread: 70, origin: { y: 0.6 } });
+      }
+      return next;
+    });
   };
 
   const handleResetProgress = () => {
@@ -630,7 +639,7 @@ export const RoadmapV4View: React.FC<RoadmapV4ViewProps> = ({ appState }) => {
                                   const isDone = !!v4state[v4key(pi, di, ti)];
                                   return (
                                     <TaskRow
-                                      key={ti}
+                                      key={`${pi}_${di}_${ti}`}
                                       task={task}
                                       isDone={isDone}
                                       onToggle={() => toggleTask(pi, di, ti)}
