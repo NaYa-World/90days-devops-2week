@@ -59,37 +59,40 @@ async function callAI(prompt: string, maxTokens: number = 1000): Promise<string>
   const provider = getActiveProvider();
   const key = await getProviderKey(provider);
 
-  // 1. Try serverless backend proxy first
-  try {
-    const response = await fetch('/api/chat', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        provider,
-        prompt,
-        maxTokens,
-        clientKey: key || undefined
-      })
-    });
-
-    if (response.ok) {
-      const data = await response.json();
-      if (data.text !== undefined) {
-        return data.text;
-      }
-    } else {
-      console.warn(`Serverless proxy returned status ${response.status}. Falling back to direct client call.`);
-    }
-  } catch (err) {
-    console.warn('Serverless proxy connection failed. Falling back to direct client call.', err);
-  }
-
-  // 2. Direct client-side fallback if proxy is unavailable
+  // If user has a local API key, call the provider directly (no proxy needed)
+  // If no local key, try the serverless backend proxy (which uses server-side env vars)
   if (!key) {
-    throw new Error(`API key for ${provider.toUpperCase()} is not configured. Please open Settings to configure it.`);
+    try {
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          provider,
+          prompt,
+          maxTokens
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.text !== undefined) {
+          return data.text;
+        }
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `API key for ${provider.toUpperCase()} is not configured. Please open Settings to configure it.`);
+      }
+    } catch (err: any) {
+      if (err.message?.includes('not configured') || err.message?.includes('API key')) {
+        throw err;
+      }
+      throw new Error(`API key for ${provider.toUpperCase()} is not configured. Please open Settings to configure it.`);
+    }
   }
+
+  // Direct client-side call with user's own API key
 
   if (provider === 'claude') {
     const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -140,10 +143,12 @@ async function callAI(prompt: string, maxTokens: number = 1000): Promise<string>
   }
 
   if (provider === 'gemini') {
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`, {
+    // BUG-008 FIX: Use header instead of URL query parameter to prevent key leakage in logs
+    const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'x-goog-api-key': key
       },
       body: JSON.stringify({
         contents: [{
