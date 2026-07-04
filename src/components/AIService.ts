@@ -55,95 +55,14 @@ export async function saveApiKey(key: string) {
   await saveProviderKey('claude', key);
 }
 
-async function callAI(prompt: string, maxTokens: number = 1000): Promise<string> {
+export async function callAI(prompt: string, maxTokens: number = 1000): Promise<string> {
   const provider = getActiveProvider();
   const key = await getProviderKey(provider);
 
-  // If user has a local API key, call the provider directly (no proxy needed)
-  // If no local key, try the serverless backend proxy (which uses server-side env vars)
-  if (!key) {
-    try {
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          provider,
-          prompt,
-          maxTokens
-        })
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        if (data.text !== undefined) {
-          return data.text;
-        }
-      } else {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `API key for ${provider.toUpperCase()} is not configured. Please open Settings to configure it.`);
-      }
-    } catch (err: any) {
-      if (err.message?.includes('not configured') || err.message?.includes('API key')) {
-        throw err;
-      }
-      throw new Error(`API key for ${provider.toUpperCase()} is not configured. Please open Settings to configure it.`);
-    }
-  }
-
-  // Direct client-side call with user's own API key
-
-  if (provider === 'claude') {
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': key,
-        'anthropic-version': '2023-06-01',
-        'dangerously-allow-browser': 'true'
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
-        max_tokens: maxTokens,
-        messages: [{ role: 'user', content: prompt }]
-      })
-    });
-
-    if (!response.ok) {
-      const errorDetails = await response.text();
-      throw new Error(`Claude API call failed: ${response.status} - ${errorDetails}`);
-    }
-
-    const data = await response.json();
-    return data.content && data.content[0] ? data.content[0].text : '';
-  }
-
-  if (provider === 'chatgpt') {
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${key}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        max_tokens: maxTokens,
-        messages: [{ role: 'user', content: prompt }]
-      })
-    });
-
-    if (!response.ok) {
-      const errorDetails = await response.text();
-      throw new Error(`ChatGPT API call failed: ${response.status} - ${errorDetails}`);
-    }
-
-    const data = await response.json();
-    return data.choices && data.choices[0] && data.choices[0].message ? data.choices[0].message.content : '';
-  }
-
-  if (provider === 'gemini') {
-    // BUG-008 FIX: Use header instead of URL query parameter to prevent key leakage in logs
+  // Gemini is the only provider that natively supports browser-based CORS calls without strict SDK requirements.
+  // For Claude, ChatGPT, and Grok, we must route the request through our backend proxy to avoid CORS blocks,
+  // passing the user's API key (if they provided one) in a custom header.
+  if (provider === 'gemini' && key) {
     const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent', {
       method: 'POST',
       headers: {
@@ -151,9 +70,7 @@ async function callAI(prompt: string, maxTokens: number = 1000): Promise<string>
         'x-goog-api-key': key
       },
       body: JSON.stringify({
-        contents: [{
-          parts: [{ text: prompt }]
-        }]
+        contents: [{ parts: [{ text: prompt }] }]
       })
     });
 
@@ -163,33 +80,45 @@ async function callAI(prompt: string, maxTokens: number = 1000): Promise<string>
     }
 
     const data = await response.json();
-    return data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts && data.candidates[0].content.parts[0] ? data.candidates[0].content.parts[0].text : '';
+    return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
   }
 
-  if (provider === 'grok') {
-    const response = await fetch('https://api.x.ai/v1/chat/completions', {
+  // Proxy route for Claude, ChatGPT, Grok, or if Gemini key is not configured locally
+  try {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+    if (key) {
+      headers['x-user-api-key'] = key;
+    }
+
+    const response = await fetch('/api/chat', {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${key}`,
-        'Content-Type': 'application/json'
-      },
+      headers,
       body: JSON.stringify({
-        model: 'grok-beta',
-        max_tokens: maxTokens,
-        messages: [{ role: 'user', content: prompt }]
+        provider,
+        prompt,
+        maxTokens
       })
     });
 
-    if (!response.ok) {
-      const errorDetails = await response.text();
-      throw new Error(`Grok API call failed: ${response.status} - ${errorDetails}`);
+    if (response.ok) {
+      const data = await response.json();
+      if (data.text !== undefined) {
+        return data.text;
+      }
+    } else {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || `API key for ${provider.toUpperCase()} is not configured or invalid.`);
     }
-
-    const data = await response.json();
-    return data.choices && data.choices[0] && data.choices[0].message ? data.choices[0].message.content : '';
+  } catch (err: any) {
+    if (err.message?.includes('not configured') || err.message?.includes('API key')) {
+      throw err;
+    }
+    throw new Error(`API call failed for ${provider.toUpperCase()}. Check your API key in Settings.`);
   }
 
-  throw new Error(`Unknown AI provider: ${provider}`);
+  return '';
 }
 
 export const AIService = {
@@ -232,8 +161,9 @@ Return ONLY valid JSON in this exact format (no markdown, no backticks, no comme
 Where answer is the 0-based index of the correct option. Make the question realistic and the distractors plausible.`;
 
     const textResponse = await callAI(prompt, 600);
-    const cleanText = textResponse.replace(/```json|```/g, '').trim();
-    return JSON.parse(cleanText);
+    const match = textResponse.match(/\{[\s\S]*\}|\[[\s\S]*\]/);
+    if (!match) throw new Error("Failed to parse AI response as JSON");
+    return JSON.parse(match[0]);
   },
 
   async gradeMockInterviewAnswer(question: string, modelAnswer: string, userAnswer: string): Promise<{
@@ -255,8 +185,9 @@ Grade this answer out of 100. Return ONLY valid JSON (no markdown, no backticks,
 Score guide: 90+=excellent, 70-89=good, 50-69=partial, <50=needs work. Be strict — this is a real interview.`;
 
     const textResponse = await callAI(prompt, 600);
-    const cleanText = textResponse.replace(/```json|```/g, '').trim();
-    return JSON.parse(cleanText);
+    const match = textResponse.match(/\{[\s\S]*\}|\[[\s\S]*\]/);
+    if (!match) throw new Error("Failed to parse AI response as JSON");
+    return JSON.parse(match[0]);
   },
 
   async generateLinkedInPost(context: string, tone: 'technical' | 'story' | 'insight'): Promise<string> {

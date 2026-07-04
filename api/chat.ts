@@ -26,7 +26,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     res.setHeader('Access-Control-Allow-Methods', 'POST,OPTIONS');
     res.setHeader(
       'Access-Control-Allow-Headers',
-      'Content-Type, Accept'
+      'Content-Type, Accept, x-user-api-key'
     );
   }
 
@@ -51,16 +51,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ error: 'Missing provider or prompt' });
     }
 
-    // Only use server-side environment variables — never accept client-supplied keys
-    let key = '';
-    if (provider === 'claude') {
-      key = process.env.ANTHROPIC_API_KEY || '';
-    } else if (provider === 'chatgpt') {
-      key = process.env.OPENAI_API_KEY || '';
-    } else if (provider === 'gemini') {
-      key = process.env.GEMINI_API_KEY || '';
-    } else if (provider === 'grok') {
-      key = process.env.GROK_API_KEY || '';
+    // Accept client-supplied keys if provided (to bypass CORS blocks for browser clients)
+    // Otherwise fallback to server-side environment variables.
+    const userApiKey = req.headers['x-user-api-key'] as string | undefined;
+    let key = userApiKey || '';
+
+    if (!key) {
+      if (provider === 'claude') {
+        key = process.env.ANTHROPIC_API_KEY || '';
+      } else if (provider === 'chatgpt') {
+        key = process.env.OPENAI_API_KEY || '';
+      } else if (provider === 'gemini') {
+        key = process.env.GEMINI_API_KEY || '';
+      } else if (provider === 'grok') {
+        key = process.env.GROK_API_KEY || '';
+      }
     }
 
     if (!key) {
