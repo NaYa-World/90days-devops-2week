@@ -2,6 +2,8 @@ import React, { useState, useCallback } from 'react';
 import { PHASES_V4 } from '../data/phases_v4';
 import type { UseAppStateReturnType } from '../hooks/useAppState';
 import confetti from 'canvas-confetti';
+import { ArtifactVerificationService } from '../components/ArtifactVerificationService';
+import { ApiKeySetupModal } from '../components/ApiKeySetupModal';
 
 // Optimized React.memo component to prevent massive Virtual DOM re-renders
 const TaskRow = React.memo(({ task, isDone, onToggle }: { task: string, isDone: boolean, onToggle: () => void }) => (
@@ -87,6 +89,11 @@ export const RoadmapV4View: React.FC<RoadmapV4ViewProps> = ({ appState }) => {
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<'all' | 'todo' | 'done'>('all');
 
+  const [localArtifacts, setLocalArtifacts] = useState<Record<string, string>>({});
+  const [verificationStatus, setVerificationStatus] = useState<Record<string, { status: 'idle' | 'loading' | 'verified' | 'rejected', message?: string }>>({});
+  const [showApiKeyModal, setShowApiKeyModal] = useState(false);
+  const [pendingVerifyParams, setPendingVerifyParams] = useState<{pi: number, di: number, url: string, instruction: string, scenario: string} | null>(null);
+
   // URL validation helper
   const isValidUrl = (url: string): boolean => {
     try {
@@ -160,13 +167,41 @@ export const RoadmapV4View: React.FC<RoadmapV4ViewProps> = ({ appState }) => {
     }
   };
 
-  const updateArtifactUrl = useCallback((pi: number, di: number, url: string) => {
-    appState.saveV4Artifact(pi, di, url);
-    // Confetti check with latest task state
-    if (isDayTasksComplete(pi, di, v4state) && isValidUrl(url)) {
-      confetti({ particleCount: 100, spread: 60, origin: { y: 0.6 } });
+  const verifyArtifactAsync = async (pi: number, di: number, url: string, instruction: string, scenario: string) => {
+    const key = `${pi}_${di}`;
+    
+    if (!isValidUrl(url)) {
+      setVerificationStatus(prev => ({ ...prev, [key]: { status: 'rejected', message: 'Invalid GitHub URL format.' } }));
+      return;
     }
-  }, [appState, v4state, isDayTasksComplete]);
+
+    setVerificationStatus(prev => ({ ...prev, [key]: { status: 'loading' } }));
+
+    const result = await ArtifactVerificationService.verifyArtifact(url, instruction, scenario);
+
+    if (result.message === 'AI_KEY_REQUIRED') {
+      setVerificationStatus(prev => ({ ...prev, [key]: { status: 'idle' } }));
+      setPendingVerifyParams({ pi, di, url, instruction, scenario });
+      setShowApiKeyModal(true);
+      return;
+    }
+
+    if (result.isValid) {
+      setVerificationStatus(prev => ({ ...prev, [key]: { status: 'verified', message: result.message } }));
+      appState.saveV4Artifact(pi, di, url);
+      if (isDayTasksComplete(pi, di, v4state)) {
+        confetti({ particleCount: 100, spread: 60, origin: { y: 0.6 } });
+      }
+    } else {
+      setVerificationStatus(prev => ({ ...prev, [key]: { status: 'rejected', message: result.message } }));
+    }
+  };
+
+  const updateArtifactUrl = useCallback((pi: number, di: number, url: string) => {
+    // Only update local state, don't save yet until verified
+    setLocalArtifacts(prev => ({ ...prev, [`${pi}_${di}`]: url }));
+    setVerificationStatus(prev => ({ ...prev, [`${pi}_${di}`]: { status: 'idle' } }));
+  }, []);
 
   const bulkMarkTasks = (pi: number, di: number) => {
     const day = PHASES_V4[pi].dayTasks[di];
@@ -706,7 +741,7 @@ export const RoadmapV4View: React.FC<RoadmapV4ViewProps> = ({ appState }) => {
                                 <input
                                   type="text"
                                   placeholder={`Format: ${day.artifactContract.exampleFormat}`}
-                                  value={v4Artifacts[dayKey] || ''}
+                                  value={localArtifacts[dayKey] ?? v4Artifacts[dayKey] ?? ''}
                                   onChange={e => updateArtifactUrl(pi, di, e.target.value)}
                                   style={{
                                     flex: 1,
@@ -719,31 +754,42 @@ export const RoadmapV4View: React.FC<RoadmapV4ViewProps> = ({ appState }) => {
                                     outline: 'none',
                                   }}
                                 />
-                                {isValidUrl(v4Artifacts[dayKey] || '') ? (
-                                  <span style={{
+                                <button
+                                  onClick={() => verifyArtifactAsync(pi, di, localArtifacts[dayKey] ?? v4Artifacts[dayKey] ?? '', day.artifactContract.instruction, day.scenario)}
+                                  disabled={verificationStatus[dayKey]?.status === 'loading' || !(localArtifacts[dayKey] || v4Artifacts[dayKey])}
+                                  style={{
+                                    padding: '8px 12px',
+                                    borderRadius: '6px',
+                                    background: 'var(--p1, #6366f1)',
+                                    color: '#fff',
+                                    border: 'none',
                                     fontSize: '11px',
-                                    fontWeight: 700,
-                                    color: 'var(--green, #00d9a0)',
-                                    background: 'rgba(0,217,160,0.08)',
-                                    padding: '4px 8px',
-                                    borderRadius: '4px',
-                                    border: '1px solid rgba(0,217,160,0.2)',
-                                  }}>
-                                    ✓ Verified Link
-                                  </span>
-                                ) : (
+                                    fontWeight: 600,
+                                    cursor: (verificationStatus[dayKey]?.status === 'loading' || !(localArtifacts[dayKey] || v4Artifacts[dayKey])) ? 'not-allowed' : 'pointer',
+                                    opacity: (verificationStatus[dayKey]?.status === 'loading' || !(localArtifacts[dayKey] || v4Artifacts[dayKey])) ? 0.6 : 1
+                                  }}
+                                >
+                                  {verificationStatus[dayKey]?.status === 'loading' ? 'Verifying...' : 'Verify'}
+                                </button>
+                              </div>
+                              
+                              {/* Status Message */}
+                              <div style={{ marginTop: '8px', minHeight: '20px' }}>
+                                {verificationStatus[dayKey]?.status === 'verified' || (isValidUrl(v4Artifacts[dayKey] || '') && !verificationStatus[dayKey]) ? (
                                   <span style={{
-                                    fontSize: '11px',
-                                    fontWeight: 700,
-                                    color: '#ef4444',
-                                    background: 'rgba(239,68,68,0.08)',
-                                    padding: '4px 8px',
-                                    borderRadius: '4px',
-                                    border: '1px solid rgba(239,68,68,0.2)',
+                                    fontSize: '11px', fontWeight: 700, color: 'var(--green, #00d9a0)',
+                                    background: 'rgba(0,217,160,0.08)', padding: '4px 8px', borderRadius: '4px', border: '1px solid rgba(0,217,160,0.2)'
                                   }}>
-                                    GitHub Repo Link Required
+                                    ✓ Verified Link: {verificationStatus[dayKey]?.message || 'Approved'}
                                   </span>
-                                )}
+                                ) : verificationStatus[dayKey]?.status === 'rejected' ? (
+                                  <span style={{
+                                    fontSize: '11px', fontWeight: 700, color: '#ef4444',
+                                    background: 'rgba(239,68,68,0.08)', padding: '4px 8px', borderRadius: '4px', border: '1px solid rgba(239,68,68,0.2)'
+                                  }}>
+                                    ❌ {verificationStatus[dayKey]?.message}
+                                  </span>
+                                ) : null}
                               </div>
                             </div>
 
@@ -809,6 +855,17 @@ export const RoadmapV4View: React.FC<RoadmapV4ViewProps> = ({ appState }) => {
         })}
       </div>
 
+      <ApiKeySetupModal 
+        isOpen={showApiKeyModal} 
+        onClose={() => setShowApiKeyModal(false)}
+        onSuccess={() => {
+          setShowApiKeyModal(false);
+          if (pendingVerifyParams) {
+            verifyArtifactAsync(pendingVerifyParams.pi, pendingVerifyParams.di, pendingVerifyParams.url, pendingVerifyParams.instruction, pendingVerifyParams.scenario);
+            setPendingVerifyParams(null);
+          }
+        }}
+      />
     </div>
   );
 };
