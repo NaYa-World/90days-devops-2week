@@ -19,7 +19,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ loginUser }) => {
       setDeviceFlow(flowInfo);
       
       // Start polling for token
-      const token = await GitHubOAuthService.pollForAccessToken(flowInfo.device_code, flowInfo.interval);
+      const token = await GitHubOAuthService.pollForAccessToken(flowInfo.device_code, flowInfo.interval, flowInfo.expires_in);
       
       // We got the token! Fetch user profile
       const profile = await GitHubOAuthService.getUserProfile(token);
