@@ -29,9 +29,27 @@ export const GithubRewriterView: React.FC<GithubRewriterViewProps> = ({ appState
   }, [state.ghUser]);
 
   const handleAudit = () => {
-    if (username.trim()) {
-      updateGHUser(username.trim());
-      runAudit(username.trim());
+    let inputUser = username.trim();
+    if (inputUser) {
+      if (inputUser.includes('github.com/') || inputUser.startsWith('http')) {
+        showToast('Please enter your GitHub username, not the profile URL', 'rgba(255,95,95,.2)');
+        // Try to extract username if it's a standard URL
+        try {
+          const urlObj = new URL(inputUser.startsWith('http') ? inputUser : `https://${inputUser}`);
+          const pathParts = urlObj.pathname.split('/').filter(Boolean);
+          if (pathParts.length > 0) {
+            inputUser = pathParts[0];
+            setUsername(inputUser);
+            showToast(`Extracted username: ${inputUser}`, 'rgba(0,217,160,.12)');
+          } else {
+            return;
+          }
+        } catch {
+          return;
+        }
+      }
+      updateGHUser(inputUser);
+      runAudit(inputUser);
     }
   };
 

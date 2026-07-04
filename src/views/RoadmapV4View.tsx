@@ -91,7 +91,12 @@ export const RoadmapV4View: React.FC<RoadmapV4ViewProps> = ({ appState }) => {
   const isValidUrl = (url: string): boolean => {
     try {
       const parsed = new URL(url.trim());
-      return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+      const isHttp = parsed.protocol === 'http:' || parsed.protocol === 'https:';
+      const isGithub = parsed.hostname === 'github.com' || parsed.hostname === 'www.github.com';
+      const pathParts = parsed.pathname.split('/').filter(Boolean);
+      // Valid if it's github.com/user/repo...
+      const hasRepo = pathParts.length >= 2;
+      return isHttp && isGithub && hasRepo;
     } catch {
       return false;
     }
@@ -736,7 +741,7 @@ export const RoadmapV4View: React.FC<RoadmapV4ViewProps> = ({ appState }) => {
                                     borderRadius: '4px',
                                     border: '1px solid rgba(239,68,68,0.2)',
                                   }}>
-                                    Url Required
+                                    GitHub Repo Link Required
                                   </span>
                                 )}
                               </div>
