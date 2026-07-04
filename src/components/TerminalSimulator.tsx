@@ -139,7 +139,8 @@ Instructions:
             onExercisePassed();
           }, 300);
         }
-      });
+      }
+    });
     }, 50);
 
     setInpValue('');
