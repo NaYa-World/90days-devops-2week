@@ -63,7 +63,7 @@ export async function callAI(prompt: string, maxTokens: number = 1000): Promise<
   // For Claude, ChatGPT, and Grok, we must route the request through our backend proxy to avoid CORS blocks,
   // passing the user's API key (if they provided one) in a custom header.
   if (provider === 'gemini' && key) {
-    const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent', {
+    const response = await fetch('https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

@@ -125,16 +125,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     if (provider === 'gemini') {
       // BUG-008 FIX: Use x-goog-api-key header instead of URL query parameter
-      const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent', {
+      const response = await fetch('https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'x-goog-api-key': key
         },
         body: JSON.stringify({
-          contents: [{
-            parts: [{ text: prompt }]
-          }]
+          contents: [{ parts: [{ text: prompt }] }]
         })
       });
 
