@@ -1,8 +1,7 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import { PHASES_V4 } from '../data/phases_v4';
 import type { UseAppStateReturnType } from '../hooks/useAppState';
 import confetti from 'canvas-confetti';
-import { SyncMeta } from '../utils/SyncMeta';
 
 // Optimized React.memo component to prevent massive Virtual DOM re-renders
 const TaskRow = React.memo(({ task, isDone, onToggle }: { task: string, isDone: boolean, onToggle: () => void }) => (
@@ -74,57 +73,19 @@ interface RoadmapV4ViewProps {
   appState: UseAppStateReturnType;
 }
 
-// LocalStorage helpers
-function loadV4State(key: string): Record<string, boolean> {
-  try {
-    return JSON.parse(localStorage.getItem(key) || '{}');
-  } catch {
-    return {};
-  }
-}
-
-function saveV4State(key: string, state: Record<string, boolean>) {
-  try {
-    localStorage.setItem(key, JSON.stringify(state));
-  } catch (e) {
-    console.error('Failed to save V4 progress state', e);
-  }
-}
-
-// Generate storage keys
 function v4key(pi: number, di: number, ti: number) {
   return `v4_${pi}_${di}_${ti}`;
 }
 
 export const RoadmapV4View: React.FC<RoadmapV4ViewProps> = ({ appState }) => {
-  const currentUser = appState.currentUser || 'guest';
-  const stateKey = `devops90_v4_tasks_${currentUser.toLowerCase()}`;
-  const artifactsKey = `devops90_v4_artifacts_${currentUser.toLowerCase()}`;
-
-  const [v4state, setV4State] = useState<Record<string, boolean>>(() => loadV4State(stateKey));
-  const [v4Artifacts, setV4Artifacts] = useState<Record<string, string>>(() => {
-    try {
-      return JSON.parse(localStorage.getItem(artifactsKey) || '{}');
-    } catch {
-      return {};
-    }
-  });
+  const v4state = appState.state.v4Tasks || {};
+  const v4Artifacts = appState.state.v4Artifacts || {};
 
   const [openPhases, setOpenPhases] = useState<Record<number, boolean>>({ 0: true });
   const [openDays, setOpenDays] = useState<Record<string, boolean>>({});
   const [revealedAnswers, setRevealedAnswers] = useState<Record<string, boolean>>({});
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<'all' | 'todo' | 'done'>('all');
-
-  // Sync state if currentUser changes or restore completes
-  useEffect(() => {
-    setV4State(loadV4State(stateKey));
-    try {
-      setV4Artifacts(JSON.parse(localStorage.getItem(artifactsKey) || '{}'));
-    } catch {
-      setV4Artifacts({});
-    }
-  }, [stateKey, artifactsKey, appState.state]);
 
   // URL validation helper
   const isValidUrl = (url: string): boolean => {
@@ -181,98 +142,45 @@ export const RoadmapV4View: React.FC<RoadmapV4ViewProps> = ({ appState }) => {
   };
 
   const toggleTask = (pi: number, di: number, ti: number) => {
+    appState.toggleV4Task(pi, di, ti);
     const key = v4key(pi, di, ti);
-    setV4State(prev => {
-      const next = { ...prev, [key]: !prev[key] };
-      saveV4State(stateKey, next);
-      SyncMeta.recordChange(currentUser, stateKey, key);
-      setTimeout(() => appState.triggerSync().catch(() => {}), 600);
-
-      // Confetti trigger on day completion
-      if (isDayTasksComplete(pi, di, next)) {
-        const artifactUrl = v4Artifacts[`${pi}_${di}`] || '';
-        if (isValidUrl(artifactUrl)) {
-          confetti({ particleCount: 120, spread: 70, origin: { y: 0.6 } });
-        }
-      }
-      return next;
-    });
-  };
-
-  // Debounce ref for artifact URL sync — prevents 28 sync calls for a 28-char URL
-  const artifactSyncTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const updateArtifactUrl = useCallback((pi: number, di: number, url: string) => {
-    const key = `${pi}_${di}`;
-    // Immediately update local state for responsive UI
-    setV4Artifacts(prev => ({ ...prev, [key]: url }));
-
-    // Debounce the expensive persist + sync operations
-    if (artifactSyncTimerRef.current) clearTimeout(artifactSyncTimerRef.current);
-    artifactSyncTimerRef.current = setTimeout(() => {
-      setV4Artifacts(current => {
-        try {
-          localStorage.setItem(artifactsKey, JSON.stringify(current));
-          SyncMeta.recordChange(currentUser, artifactsKey, key);
-          setTimeout(() => appState.triggerSync().catch(() => {}), 600);
-        } catch (e) {
-          console.error(e);
-        }
-        return current; // no state change, just persisting
-      });
-
-      // Confetti check with latest task state
-      setV4State(currentState => {
-        if (isDayTasksComplete(pi, di, currentState) && isValidUrl(url)) {
-          confetti({ particleCount: 100, spread: 60, origin: { y: 0.6 } });
-        }
-        return currentState;
-      });
-    }, 500);
-  }, [artifactsKey, currentUser, appState]);
-
-  const bulkMarkTasks = (pi: number, di: number) => {
-    const day = PHASES_V4[pi].dayTasks[di];
-    setV4State(prev => {
-      const next = { ...prev };
-      const changedKeys: string[] = [];
-      day.tasks.forEach((_, ti) => {
-        const k = v4key(pi, di, ti);
-        next[k] = true;
-        changedKeys.push(k);
-      });
-      saveV4State(stateKey, next);
-      SyncMeta.recordChanges(currentUser, stateKey, changedKeys);
-      setTimeout(() => appState.triggerSync().catch(() => {}), 600);
-
+    const nextState = { ...v4state, [key]: !v4state[key] };
+    
+    // Confetti trigger on day completion
+    if (isDayTasksComplete(pi, di, nextState)) {
       const artifactUrl = v4Artifacts[`${pi}_${di}`] || '';
       if (isValidUrl(artifactUrl)) {
         confetti({ particleCount: 120, spread: 70, origin: { y: 0.6 } });
       }
-      return next;
+    }
+  };
+
+  const updateArtifactUrl = useCallback((pi: number, di: number, url: string) => {
+    appState.saveV4Artifact(pi, di, url);
+    // Confetti check with latest task state
+    if (isDayTasksComplete(pi, di, v4state) && isValidUrl(url)) {
+      confetti({ particleCount: 100, spread: 60, origin: { y: 0.6 } });
+    }
+  }, [appState, v4state, isDayTasksComplete]);
+
+  const bulkMarkTasks = (pi: number, di: number) => {
+    const day = PHASES_V4[pi].dayTasks[di];
+    day.tasks.forEach((_, ti) => {
+      const k = v4key(pi, di, ti);
+      if (!v4state[k]) {
+        appState.toggleV4Task(pi, di, ti);
+      }
     });
+
+    const artifactUrl = v4Artifacts[`${pi}_${di}`] || '';
+    if (isValidUrl(artifactUrl)) {
+      confetti({ particleCount: 120, spread: 70, origin: { y: 0.6 } });
+    }
   };
 
   const handleResetProgress = () => {
     if (window.confirm('Are you sure you want to reset all V4 roadmap progress and artifact URLs? This cannot be undone.')) {
-      // Capture current state BEFORE clearing, so SyncMeta records the correct old keys
-      setV4State(prevState => {
-        setV4Artifacts(prevArtifacts => {
-          try {
-            saveV4State(stateKey, {});
-            localStorage.setItem(artifactsKey, '{}');
-            SyncMeta.recordAll(currentUser, stateKey, prevState);
-            SyncMeta.recordAll(currentUser, artifactsKey, prevArtifacts);
-            setTimeout(() => {
-              appState.triggerSync().catch(() => {});
-            }, 600);
-          } catch (e) {
-            console.error(e);
-          }
-          return {};
-        });
-        return {};
-      });
+      appState.clearV4Progress();
       alert('Progress has been reset.');
     }
   };

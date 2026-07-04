@@ -99,6 +99,8 @@ export interface AppState {
   mockHistory: MockResult[];
   weekGoal: number;
   notifications: AppNotification[];
+  v4Tasks: Record<string, boolean>;
+  v4Artifacts: Record<string, string>;
 }
 
 const LOCAL_STORAGE_KEY_PREFIX = 'devops90_v4_';
@@ -137,10 +139,12 @@ const getBlankState = (): AppState => ({
   weekGoal: 35,
   notifications: [
     { id: 1, text: "👋 Welcome to DevOps v4! Select a day to start learning.", date: new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }), read: false }
-  ]
+  ],
+  v4Tasks: {},
+  v4Artifacts: {}
 });
 
-const parseState = (storedStr: string): AppState => {
+const parseState = (storedStr: string, userToMigrate?: string | null): AppState => {
   try {
     const parsed = JSON.parse(storedStr);
     const completedTasks: Record<string, boolean> = {};
@@ -150,6 +154,35 @@ const parseState = (storedStr: string): AppState => {
     const projdone: Record<string, boolean> = {};
     const phaseOpen: Record<string, boolean> = {};
     const dayOpen: Record<string, boolean> = {};
+    
+    // Auto-migrate legacy V4 state if present
+    let v4Tasks: Record<string, boolean> = parsed._v4Tasks || {};
+    let v4Artifacts: Record<string, string> = parsed._v4Artifacts || {};
+    
+    if (userToMigrate) {
+      const legacyTasksKey = `devops90_v4_tasks_${userToMigrate.toLowerCase()}`;
+      const legacyArtifactsKey = `devops90_v4_artifacts_${userToMigrate.toLowerCase()}`;
+      
+      try {
+        const legacyTasks = localStorage.getItem(legacyTasksKey);
+        if (legacyTasks) {
+          v4Tasks = { ...JSON.parse(legacyTasks), ...v4Tasks };
+          localStorage.removeItem(legacyTasksKey);
+        }
+      } catch (e) {
+        import('../components/MonitoringService').then(m => m.MonitoringService.logError(e, 'Legacy V4 Tasks Migration'));
+      }
+      
+      try {
+        const legacyArtifacts = localStorage.getItem(legacyArtifactsKey);
+        if (legacyArtifacts) {
+          v4Artifacts = { ...JSON.parse(legacyArtifacts), ...v4Artifacts };
+          localStorage.removeItem(legacyArtifactsKey);
+        }
+      } catch (e) {
+        import('../components/MonitoringService').then(m => m.MonitoringService.logError(e, 'Legacy V4 Artifacts Migration'));
+      }
+    }
     
     Object.keys(parsed).forEach(key => {
       if (key.startsWith('p') && key.includes('d') && key.includes('t')) {
@@ -192,9 +225,12 @@ const parseState = (storedStr: string): AppState => {
       weekGoal: Number(parsed._weekGoal) || 35,
       notifications: parsed._notifications || [
         { id: 1, text: "👋 Welcome to DevOps v4! Select a day to start learning.", date: new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }), read: false }
-      ]
+      ],
+      v4Tasks,
+      v4Artifacts
     };
-  } catch (_) {
+  } catch (e) {
+    import('../components/MonitoringService').then(m => m.MonitoringService.logError(e, 'parseState fallback'));
     return getBlankState();
   }
 };
@@ -212,7 +248,7 @@ export function useAppState() {
       const key = `${LOCAL_STORAGE_KEY_PREFIX}${user.toLowerCase()}`;
       const stored = localStorage.getItem(key);
       if (stored) {
-        return parseState(stored);
+        return parseState(stored, user);
       }
     }
     return getBlankState();
@@ -238,6 +274,8 @@ export function useAppState() {
         _mockHistory: updated.mockHistory,
         _weekGoal: updated.weekGoal,
         _notifications: updated.notifications,
+        _v4Tasks: updated.v4Tasks,
+        _v4Artifacts: updated.v4Artifacts,
       };
 
       Object.assign(flat, updated.completedTasks);
@@ -1138,6 +1176,30 @@ export function useAppState() {
     return lab.exercises.filter(ex => isLabDone(dayKey, ex.id)).length;
   }, [isLabDone]);
 
+  const toggleV4Task = (pi: number, di: number, ti: number) => {
+    const key = `v4_${pi}_${di}_${ti}`;
+    updateState(prev => ({
+      ...prev,
+      v4Tasks: { ...prev.v4Tasks, [key]: !prev.v4Tasks[key] }
+    }));
+  };
+
+  const saveV4Artifact = (pi: number, di: number, url: string) => {
+    const key = `${pi}_${di}`;
+    updateState(prev => ({
+      ...prev,
+      v4Artifacts: { ...prev.v4Artifacts, [key]: url }
+    }));
+  };
+
+  const clearV4Progress = () => {
+    updateState(prev => ({
+      ...prev,
+      v4Tasks: {},
+      v4Artifacts: {}
+    }));
+  };
+
   return {
     state,
     cntDone,
@@ -1207,7 +1269,10 @@ export function useAppState() {
     markNotificationsRead,
     isSyncUpToDate,
     triggerSync,
-    restoreSync
+    restoreSync,
+    toggleV4Task,
+    saveV4Artifact,
+    clearV4Progress
   };
 }
 export type UseAppStateReturnType = ReturnType<typeof useAppState>;
