@@ -124,8 +124,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     if (provider === 'gemini') {
-      // BUG-008 FIX: Use x-goog-api-key header instead of URL query parameter
-      const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent', {
+      let targetModel = 'gemini-1.5-flash';
+      try {
+        const modelsRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${key}`);
+        if (modelsRes.ok) {
+          const modelsData = await modelsRes.json();
+          const flashModel = modelsData.models?.find((m: any) => 
+            m.name.includes('flash') && m.supportedGenerationMethods?.includes('generateContent')
+          );
+          if (flashModel) {
+            targetModel = flashModel.name.replace('models/', '');
+          }
+        }
+      } catch (e) {
+        console.warn('Failed to auto-resolve Gemini model, falling back to default', e);
+      }
+
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${targetModel}:generateContent`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -138,7 +153,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       if (!response.ok) {
         const errorText = await response.text();
-        return res.status(response.status).json({ error: `Gemini API error: ${errorText}` });
+        return res.status(response.status).json({ error: `Gemini API error on ${targetModel}: ${errorText}` });
       }
 
       const data = await response.json();

@@ -63,24 +63,52 @@ export async function callAI(prompt: string, maxTokens: number = 1000): Promise<
   // For Claude, ChatGPT, and Grok, we must route the request through our backend proxy to avoid CORS blocks,
   // passing the user's API key (if they provided one) in a custom header.
   if (provider === 'gemini' && key) {
-    const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-goog-api-key': key
-      },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }]
-      })
-    });
-
-    if (!response.ok) {
-      const errorDetails = await response.text();
-      throw new Error(`Gemini API call failed: ${response.status} - ${errorDetails}`);
+    let targetModel = 'gemini-1.5-flash';
+    try {
+      const modelsRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${key}`);
+      if (modelsRes.ok) {
+        const modelsData = await modelsRes.json();
+        const flashModel = modelsData.models?.find((m: any) => 
+          m.name.includes('flash') && m.supportedGenerationMethods?.includes('generateContent')
+        );
+        if (flashModel) {
+          targetModel = flashModel.name.replace('models/', '');
+        }
+      }
+    } catch (e) {
+      console.warn('Failed to auto-resolve Gemini model, falling back to default', e);
     }
 
-    const data = await response.json();
-    return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    const MAX_RETRIES = 3;
+    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${targetModel}:generateContent`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-goog-api-key': key
+        },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }]
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+      }
+
+      if (response.status === 429 && attempt < MAX_RETRIES - 1) {
+        const waitSeconds = Math.min(15 * (attempt + 1), 45);
+        await new Promise(resolve => setTimeout(resolve, waitSeconds * 1000));
+        continue;
+      }
+
+      const errorDetails = await response.text();
+      if (response.status === 429) {
+        throw new Error('Gemini free-tier rate limit reached. Please wait a minute and try again.');
+      }
+      throw new Error(`Gemini API error on model ${targetModel}: ${response.status} - ${errorDetails}`);
+    }
   }
 
   // Proxy route for Claude, ChatGPT, Grok, or if Gemini key is not configured locally
