@@ -336,6 +336,9 @@ export function useAppState() {
          checkRecord('phaseOpen');
          checkRecord('dayOpen');
          
+         if (next.v4Tasks !== prev.v4Tasks) diffKeys.push('_v4Tasks');
+         if (next.v4Artifacts !== prev.v4Artifacts) diffKeys.push('_v4Artifacts');
+         
          if (next.pomoSessions !== prev.pomoSessions) diffKeys.push('_pomoSessions');
          if (next.history !== prev.history) diffKeys.push('_history');
          if (next.lastDay !== prev.lastDay) diffKeys.push('_lastDay');
@@ -358,6 +361,8 @@ export function useAppState() {
 
       return next;
     });
+
+    setIsSyncUpToDate(false);
 
     // BUG-002 + BUG-028 FIX: Module-scoped debounce prevents cascading sync loops
     if (_syncTimeout) clearTimeout(_syncTimeout);

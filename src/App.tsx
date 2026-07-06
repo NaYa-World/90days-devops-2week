@@ -549,19 +549,43 @@ export const App: React.FC = () => {
             <span className="p">OPS</span>
             <span className="v">BY GK</span>
           </div>
-          <span
-            id="apk-sync-indicator"
+          <div
+            title={appState.isSyncUpToDate ? 'Sync: Up to date' : 'Sync: Saving to GitHub...'}
             style={{
-              width: '8px',
-              height: '8px',
-              borderRadius: '50%',
-              backgroundColor: appState.isSyncUpToDate ? '#00d9a0' : '#ef4444',
-              boxShadow: appState.isSyncUpToDate ? '0 0 8px #00d9a0' : '0 0 8px #ef4444',
-              display: 'inline-block',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              background: appState.isSyncUpToDate ? 'rgba(0, 217, 160, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+              border: `1px solid ${appState.isSyncUpToDate ? 'rgba(0, 217, 160, 0.2)' : 'rgba(239, 68, 68, 0.2)'}`,
+              padding: '2px 8px',
+              borderRadius: '12px',
+              marginLeft: '8px',
               transition: 'all 0.3s ease'
             }}
-            title={appState.isSyncUpToDate ? 'Sync: Up to date' : 'Sync: Pending or Failed'}
-          />
+          >
+            <span
+              id="apk-sync-indicator"
+              style={{
+                width: '6px',
+                height: '6px',
+                borderRadius: '50%',
+                backgroundColor: appState.isSyncUpToDate ? '#00d9a0' : '#ef4444',
+                boxShadow: appState.isSyncUpToDate ? '0 0 6px #00d9a0' : '0 0 6px #ef4444',
+                display: 'inline-block',
+                transition: 'all 0.3s ease',
+                animation: appState.isSyncUpToDate ? 'none' : 'pulse 1s infinite'
+              }}
+            />
+            <span style={{ 
+              fontSize: '10px', 
+              color: appState.isSyncUpToDate ? '#00d9a0' : '#ef4444',
+              fontFamily: 'monospace',
+              fontWeight: 600,
+              letterSpacing: '0.5px'
+            }}>
+              {appState.isSyncUpToDate ? 'SAVED' : 'SAVING...'}
+            </span>
+          </div>
         </div>
         <div className="nav-tabs">
           <button
