@@ -241,5 +241,29 @@ CRITICAL RULES:
 - End with a question to drive comments`;
 
     return callAI(prompt, 600);
+  },
+
+  async tutorChat(messageHistory: { role: 'user' | 'assistant', content: string }[], taskContext: any): Promise<string> {
+    const transcript = messageHistory.map(msg => `${msg.role === 'user' ? 'Student' : 'Mentor'}: ${msg.content}`).join('\n');
+    
+    const prompt = `You are a strict but supportive Senior DevOps Mentor using the Socratic method to help a junior engineer.
+The student is currently working on the following task:
+Title: ${taskContext.title}
+Scenario: ${taskContext.scenario}
+Tasks to complete: ${taskContext.tasks?.join(', ')}
+
+CRITICAL RULES:
+1. NEVER give the exact command, code, or direct answer. If they ask "what is the command?", guide them to the man page or the concept.
+2. Ask leading questions. 
+3. Keep your responses short and punchy (1-3 sentences max).
+4. If they guess incorrectly, explain why it's wrong conceptually, then ask another guiding question.
+5. If they guess correctly, congratulate them and encourage them to run it.
+
+Chat Transcript:
+${transcript}
+
+Mentor (Respond strictly following the rules above):`;
+
+    return callAI(prompt, 300);
   }
 };
