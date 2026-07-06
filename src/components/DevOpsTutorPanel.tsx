@@ -11,9 +11,10 @@ interface DevOpsTutorPanelProps {
   isOpen: boolean;
   onClose: () => void;
   taskContext: any;
+  onRequestApiKey?: () => void;
 }
 
-export const DevOpsTutorPanel: React.FC<DevOpsTutorPanelProps> = ({ isOpen, onClose, taskContext }) => {
+export const DevOpsTutorPanel: React.FC<DevOpsTutorPanelProps> = ({ isOpen, onClose, taskContext, onRequestApiKey }) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
@@ -62,7 +63,14 @@ export const DevOpsTutorPanel: React.FC<DevOpsTutorPanelProps> = ({ isOpen, onCl
       
       setMessages([...newMessages, { id: (Date.now() + 1).toString(), role: 'assistant', content: response }]);
     } catch (err: any) {
-      setMessages([...newMessages, { id: (Date.now() + 1).toString(), role: 'assistant', content: `Error: ${err.message}. Check your API keys.` }]);
+      if (err.message?.toLowerCase().includes('api key') || err.message?.toLowerCase().includes('configured')) {
+        if (onRequestApiKey) {
+          onRequestApiKey();
+        }
+        setMessages([...newMessages, { id: (Date.now() + 1).toString(), role: 'assistant', content: `Please configure your API key to continue.` }]);
+      } else {
+        setMessages([...newMessages, { id: (Date.now() + 1).toString(), role: 'assistant', content: `Error: ${err.message}` }]);
+      }
     } finally {
       setIsTyping(false);
     }

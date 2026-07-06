@@ -899,6 +899,7 @@ export const RoadmapV4View: React.FC<RoadmapV4ViewProps> = ({ appState }) => {
         isOpen={tutorOpen}
         onClose={() => setTutorOpen(false)}
         taskContext={tutorContext}
+        onRequestApiKey={() => setShowApiKeyModal(true)}
       />
     </div>
   );
