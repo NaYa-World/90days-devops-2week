@@ -47,7 +47,7 @@ export const App: React.FC = () => {
     markNotificationsRead
   } = appState;
 
-  const [currentView, setCurrentView] = useState<string>('roadmap-v4');
+  const [currentView, setCurrentView] = useState<string>('dashboard');
   const [focusDay, setFocusDay] = useState<string>('0_0');
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const [showAnim, setShowAnim] = useState<boolean>(true);

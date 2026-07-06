@@ -88,9 +88,10 @@ function renderBoldAndCodeText(text: string) {
 
 interface DashboardViewProps {
   appState: UseAppStateReturnType;
+  switchView: (view: string) => void;
 }
 
-export const DashboardView: React.FC<DashboardViewProps> = ({ appState }) => {
+export const DashboardView: React.FC<DashboardViewProps> = ({ appState, switchView }) => {
   const {
     state,
     getLevelInfo,
@@ -249,6 +250,68 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ appState }) => {
             ⏱ {studyHours()} hrs
           </div>
           <div style={{ fontSize: '12px', color: '#8f9bb3' }}>Readiness: {readiness}%</div>
+        </div>
+      </div>
+
+      {/* Quick Access Links */}
+      <div style={{ marginBottom: '24px' }}>
+        <h4 style={{ margin: '0 0 12px 0', fontSize: '14px', fontWeight: 700, color: '#fff' }}>
+          Quick Access
+        </h4>
+        <div style={{ 
+          display: 'grid', 
+          gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', 
+          gap: '12px' 
+        }}>
+          <button 
+            onClick={() => switchView('roadmap-v4')}
+            style={{ background: '#1a1d2d', border: '1px solid #ff444444', borderRadius: '8px', padding: '12px', cursor: 'pointer', textAlign: 'center', transition: 'all 0.2s', color: '#ff4444' }}
+            onMouseEnter={e => e.currentTarget.style.background = '#2a1f2f'}
+            onMouseLeave={e => e.currentTarget.style.background = '#1a1d2d'}
+          >
+            <div style={{ fontSize: '20px', marginBottom: '4px' }}>🔥</div>
+            <div style={{ fontSize: '13px', fontWeight: 600 }}>v4 Roadmap</div>
+          </button>
+          
+          <button 
+            onClick={() => switchView('notes')}
+            style={{ background: '#1a1d2d', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', padding: '12px', cursor: 'pointer', textAlign: 'center', transition: 'all 0.2s', color: '#e8eaf0' }}
+            onMouseEnter={e => e.currentTarget.style.background = '#252838'}
+            onMouseLeave={e => e.currentTarget.style.background = '#1a1d2d'}
+          >
+            <div style={{ fontSize: '20px', marginBottom: '4px' }}>📝</div>
+            <div style={{ fontSize: '13px', fontWeight: 600 }}>Notes</div>
+          </button>
+          
+          <button 
+            onClick={() => switchView('sandbox')}
+            style={{ background: '#1a1d2d', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', padding: '12px', cursor: 'pointer', textAlign: 'center', transition: 'all 0.2s', color: '#e8eaf0' }}
+            onMouseEnter={e => e.currentTarget.style.background = '#252838'}
+            onMouseLeave={e => e.currentTarget.style.background = '#1a1d2d'}
+          >
+            <div style={{ fontSize: '20px', marginBottom: '4px' }}>⌨</div>
+            <div style={{ fontSize: '13px', fontWeight: 600 }}>AI Sandbox</div>
+          </button>
+          
+          <button 
+            onClick={() => switchView('pipeline-ref')}
+            style={{ background: '#1a1d2d', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', padding: '12px', cursor: 'pointer', textAlign: 'center', transition: 'all 0.2s', color: '#e8eaf0' }}
+            onMouseEnter={e => e.currentTarget.style.background = '#252838'}
+            onMouseLeave={e => e.currentTarget.style.background = '#1a1d2d'}
+          >
+            <div style={{ fontSize: '20px', marginBottom: '4px' }}>🗺️</div>
+            <div style={{ fontSize: '13px', fontWeight: 600 }}>Pipeline Map</div>
+          </button>
+          
+          <button 
+            onClick={() => switchView('chaos-sim')}
+            style={{ background: '#1a1d2d', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', padding: '12px', cursor: 'pointer', textAlign: 'center', transition: 'all 0.2s', color: '#e8eaf0' }}
+            onMouseEnter={e => e.currentTarget.style.background = '#252838'}
+            onMouseLeave={e => e.currentTarget.style.background = '#1a1d2d'}
+          >
+            <div style={{ fontSize: '20px', marginBottom: '4px' }}>☸️</div>
+            <div style={{ fontSize: '13px', fontWeight: 600 }}>Chaos Sim</div>
+          </button>
         </div>
       </div>
 
