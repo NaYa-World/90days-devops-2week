@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Lab } from '../data/labs';
 import { showToast } from './Toast';
+import { callAI, getProviderKey, getActiveProvider } from './AIService';
+import { ApiKeySetupModal } from './ApiKeySetupModal';
 
 interface TerminalSimulatorProps {
   dk: string;
@@ -32,6 +34,9 @@ export const TerminalSimulator: React.FC<TerminalSimulatorProps> = ({
   const [inpValue, setInpValue] = useState<string>('');
   
   const outputRef = useRef<HTMLDivElement>(null);
+  const [showApiKeyModal, setShowApiKeyModal] = useState(false);
+  const [vfsState, setVfsState] = useState<string>('Empty directory.');
+  const [isSimulating, setIsSimulating] = useState(false);
 
   // Auto scroll to bottom
   useEffect(() => {
@@ -40,26 +45,88 @@ export const TerminalSimulator: React.FC<TerminalSimulatorProps> = ({
     }
   }, [lines]);
 
-  const executeCommand = (cmd: string) => {
+  const executeCommand = async (cmd: string) => {
     const trimmed = cmd.trim();
     if (!trimmed) return;
+    if (isSimulating) return;
 
     setHistory(prev => [trimmed, ...prev]);
     setHistIdx(-1);
 
-    const result = simulateCommand(trimmed);
+    const provider = getActiveProvider();
+    const key = await getProviderKey(provider);
     
-    // Add command and output lines
+    if (!key) {
+      setLines(prev => [
+        ...prev,
+        { text: `gk@devops-lab:~$`, cmdText: trimmed, isCommand: true },
+        { text: `⚠️ AI Simulator is offline. Configure API Key to enable true Linux simulation.`, isError: true }
+      ]);
+      setShowApiKeyModal(true);
+      return;
+    }
+
+    setIsSimulating(true);
     setLines(prev => [
       ...prev,
-      { text: `gk@devops-lab:~$`, cmdText: trimmed, isCommand: true },
-      ...(result.output ? [{ text: result.output, isError: result.isError }] : [])
+      { text: `gk@devops-lab:~$`, cmdText: trimmed, isCommand: true }
     ]);
 
-    // Check exercises
-    lab.exercises.forEach(ex => {
-      if (!isLabDone(ex.id)) {
-        const passed = ex.check(result.output, trimmed);
+    let output = '';
+    let isError = false;
+    let newVfsState = vfsState;
+
+    try {
+      const prompt = `You are an Ubuntu 22.04 headless server. The user is in the /home/gk/devops-lab directory.
+Current Virtual Filesystem Context:
+${vfsState}
+
+The user just typed the command: \`${trimmed}\`
+
+Instructions:
+1. Output ONLY the exact stdout or stderr text that a real terminal would return. Do NOT use markdown code blocks, do not explain anything, do not say "Output:".
+2. If the command modifies the filesystem (like touch, mkdir, echo >, rm, mv, cp), append a special line at the VERY END of your response formatted exactly like this:
+[VFS_STATE_UPDATE: {brief description of the current files and directories in /home/gk/devops-lab after this command}]
+3. If the command fails, output the error message to stderr.`;
+
+      const aiResponse = await callAI(prompt, 600);
+      
+      const vfsMatch = aiResponse.match(/\[VFS_STATE_UPDATE:(.*?)\]/s);
+      if (vfsMatch) {
+        newVfsState = vfsMatch[1].trim();
+        output = aiResponse.replace(vfsMatch[0], '').trim();
+      } else {
+        output = aiResponse.trim();
+      }
+      
+      // Fallback check if it starts with "Error"
+      if (output.toLowerCase().startsWith('error') || output.toLowerCase().includes('command not found')) {
+        isError = true;
+      }
+      
+      setVfsState(newVfsState);
+    } catch (err: any) {
+      output = simulateCommand(trimmed).output || `AI Error: ${err.message}`;
+      isError = true;
+    }
+
+    setIsSimulating(false);
+    
+    // Add output lines
+    if (output) {
+      setLines(prev => [
+        ...prev,
+        { text: output, isError }
+      ]);
+    }
+
+
+
+    // Check exercises (Wait for next tick so lines update)
+    setTimeout(() => {
+      lab.exercises.forEach(ex => {
+        if (!isLabDone(ex.id)) {
+          const passed = ex.check(output, trimmed);
         if (passed) {
           markLabDone(ex.id);
           // Show success inside terminal after brief delay
@@ -74,6 +141,7 @@ export const TerminalSimulator: React.FC<TerminalSimulatorProps> = ({
         }
       }
     });
+    }, 50);
 
     setInpValue('');
   };
@@ -341,6 +409,14 @@ export const TerminalSimulator: React.FC<TerminalSimulatorProps> = ({
           Run ↵
         </button>
       </div>
+      <ApiKeySetupModal 
+        isOpen={showApiKeyModal} 
+        onClose={() => setShowApiKeyModal(false)}
+        onSuccess={() => {
+          showToast('AI Provider Configured Successfully!', 'rgba(0,217,160,.12)');
+          executeCommand(inpValue);
+        }}
+      />
     </div>
   );
 };

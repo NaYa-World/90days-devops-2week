@@ -44,112 +44,114 @@ export const AppViews: React.FC<AppViewsProps> = ({
   setSandboxSection,
   theme
 }) => {
-  switch (currentView) {
-    case 'roadmap':
-      return (
-        <React.Suspense fallback={<div style={{ padding: 40, color: 'var(--sub)', textAlign: 'center' }}>Loading DevOps roadmap...</div>}>
-          <RoadmapView appState={appState} switchView={setCurrentView} />
-        </React.Suspense>
-      );
-    case 'kanban':
-      return (
-        <KanbanView
-          appState={appState}
-          switchView={setCurrentView}
-          setFocusDay={setFocusDay}
-        />
-      );
-    case 'focus':
-      return (
-        <FocusView
-          appState={appState}
-          focusDay={focusDay}
-          setFocusDay={setFocusDay}
-        />
-      );
-    case 'labs':
-      return (
-        <DevOpsSandboxView 
-          appState={appState} 
-          sandboxSection="labs"
-          setSandboxSection={setSandboxSection}
-        />
-      );
-    case 'jobs':
-      return <JobsView appState={appState} />;
-    case 'qbank':
-      return <QbankView appState={appState} />;
-    case 'stats':
-      return <StatsView appState={appState} />;
-    case 'weekly':
-      return <WeeklyView appState={appState} />;
-    case 'projects':
-      return <ProjectsView appState={appState} switchView={setCurrentView} />;
-    case 'roadmap-v4':
-      return (
-        <React.Suspense fallback={<div style={{ padding: 40, color: 'var(--sub)', textAlign: 'center' }}>Loading V4 Roadmap...</div>}>
-          <RoadmapV4View appState={appState} />
-        </React.Suspense>
-      );
-    case 'github-rewriter':
-      return (
-        <ErrorBoundary name="GitHub Rewriter">
-          <GithubRewriterView appState={appState} />
-        </ErrorBoundary>
-      );
-    case 'resume':
-      return (
-        <ErrorBoundary name="Resume Scorer">
-          <ResumeView appState={appState} />
-        </ErrorBoundary>
-      );
-    case 'mock':
-      return (
-        <ErrorBoundary name="Mock Interview">
-          <MockInterviewView appState={appState} switchView={setCurrentView} />
-        </ErrorBoundary>
-      );
-    case 'skillgap':
-      return (
-        <ErrorBoundary name="Skill Gap Analyser">
-          <SkillGapView
-            appState={appState}
-            setFocusDay={setFocusDay}
-            switchView={setCurrentView}
-          />
-        </ErrorBoundary>
-      );
-    case 'buildlog':
-      return <BuildLogView appState={appState} />;
-    case 'linkedin':
-      return (
-        <ErrorBoundary name="LinkedIn Post Generator">
-          <LinkedInView appState={appState} />
-        </ErrorBoundary>
-      );
-    case 'readiness':
-      return <ReadinessView appState={appState} />;
-    case 'notes':
-      return <NotesView appState={appState} />;
-    case 'sandbox':
-      return (
-        <DevOpsSandboxView 
-          appState={appState} 
-          sandboxSection={sandboxSection}
-          setSandboxSection={setSandboxSection}
-        />
-      );
-    case 'diagram':
-      return <DiagramBuilderView appState={appState} theme={theme} />;
-    case 'devops-flows':
-      return <DevOpsFlowsView appState={appState} switchView={setCurrentView} />;
-    default:
-      return (
-        <RoadmapView
-          appState={appState}
-          switchView={setCurrentView}
-        />
-      );
-  }
+  return (
+    <React.Suspense fallback={<div style={{ padding: 40, color: 'var(--sub)', textAlign: 'center' }}>Loading view...</div>}>
+      {(() => {
+        switch (currentView) {
+          case 'roadmap':
+            return (
+              <RoadmapView appState={appState} switchView={setCurrentView} />
+            );
+          case 'kanban':
+            return (
+              <KanbanView
+                appState={appState}
+                switchView={setCurrentView}
+                setFocusDay={setFocusDay}
+              />
+            );
+          case 'focus':
+            return (
+              <FocusView
+                appState={appState}
+                focusDay={focusDay}
+                setFocusDay={setFocusDay}
+              />
+            );
+          case 'labs':
+            return (
+              <DevOpsSandboxView 
+                appState={appState} 
+                sandboxSection="labs"
+                setSandboxSection={setSandboxSection}
+              />
+            );
+          case 'jobs':
+            return <JobsView appState={appState} />;
+          case 'qbank':
+            return <QbankView appState={appState} />;
+          case 'stats':
+            return <StatsView appState={appState} />;
+          case 'weekly':
+            return <WeeklyView appState={appState} />;
+          case 'projects':
+            return <ProjectsView appState={appState} switchView={setCurrentView} />;
+          case 'roadmap-v4':
+            return (
+              <RoadmapV4View appState={appState} />
+            );
+          case 'github-rewriter':
+            return (
+              <ErrorBoundary name="GitHub Rewriter">
+                <GithubRewriterView appState={appState} />
+              </ErrorBoundary>
+            );
+          case 'resume':
+            return (
+              <ErrorBoundary name="Resume Scorer">
+                <ResumeView appState={appState} />
+              </ErrorBoundary>
+            );
+          case 'mock':
+            return (
+              <ErrorBoundary name="Mock Interview">
+                <MockInterviewView appState={appState} switchView={setCurrentView} />
+              </ErrorBoundary>
+            );
+          case 'skillgap':
+            return (
+              <ErrorBoundary name="Skill Gap Analyser">
+                <SkillGapView
+                  appState={appState}
+                  setFocusDay={setFocusDay}
+                  switchView={setCurrentView}
+                />
+              </ErrorBoundary>
+            );
+          case 'buildlog':
+            return <BuildLogView appState={appState} />;
+          case 'linkedin':
+            return (
+              <ErrorBoundary name="LinkedIn Post Generator">
+                <LinkedInView appState={appState} />
+              </ErrorBoundary>
+            );
+          case 'readiness':
+            return <ReadinessView appState={appState} />;
+          case 'notes':
+            return <NotesView appState={appState} />;
+          case 'sandbox':
+            return (
+              <DevOpsSandboxView 
+                appState={appState} 
+                sandboxSection={sandboxSection}
+                setSandboxSection={setSandboxSection}
+              />
+            );
+          case 'diagram':
+            return <DiagramBuilderView appState={appState} theme={theme} />;
+          case 'devops-flows':
+            return <DevOpsFlowsView appState={appState} switchView={setCurrentView} />;
+          default:
+            return (
+              <RoadmapView
+                appState={appState}
+                switchView={setCurrentView}
+              />
+            );
+        }
+      })()}
+    </React.Suspense>
+  );
 };
 export default AppViews;

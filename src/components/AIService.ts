@@ -55,22 +55,78 @@ export async function saveApiKey(key: string) {
   await saveProviderKey('claude', key);
 }
 
-async function callAI(prompt: string, maxTokens: number = 1000): Promise<string> {
+export async function callAI(prompt: string, maxTokens: number = 1000): Promise<string> {
   const provider = getActiveProvider();
   const key = await getProviderKey(provider);
 
-  // 1. Try serverless backend proxy first
+  // Gemini is the only provider that natively supports browser-based CORS calls without strict SDK requirements.
+  // For Claude, ChatGPT, and Grok, we must route the request through our backend proxy to avoid CORS blocks,
+  // passing the user's API key (if they provided one) in a custom header.
+  if (provider === 'gemini' && key) {
+    let targetModel = 'gemini-1.5-flash';
+    try {
+      const modelsRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${key}`);
+      if (modelsRes.ok) {
+        const modelsData = await modelsRes.json();
+        const flashModel = modelsData.models?.find((m: any) => 
+          m.name.includes('flash') && m.supportedGenerationMethods?.includes('generateContent')
+        );
+        if (flashModel) {
+          targetModel = flashModel.name.replace('models/', '');
+        }
+      }
+    } catch (e) {
+      console.warn('Failed to auto-resolve Gemini model, falling back to default', e);
+    }
+
+    const MAX_RETRIES = 3;
+    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${targetModel}:generateContent`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-goog-api-key': key
+        },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }]
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+      }
+
+      if (response.status === 429 && attempt < MAX_RETRIES - 1) {
+        const waitSeconds = Math.min(15 * (attempt + 1), 45);
+        await new Promise(resolve => setTimeout(resolve, waitSeconds * 1000));
+        continue;
+      }
+
+      const errorDetails = await response.text();
+      if (response.status === 429) {
+        throw new Error('Gemini free-tier rate limit reached. Please wait a minute and try again.');
+      }
+      throw new Error(`Gemini API error on model ${targetModel}: ${response.status} - ${errorDetails}`);
+    }
+  }
+
+  // Proxy route for Claude, ChatGPT, Grok, or if Gemini key is not configured locally
   try {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+    if (key) {
+      headers['x-user-api-key'] = key;
+    }
+
     const response = await fetch('/api/chat', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers,
       body: JSON.stringify({
         provider,
         prompt,
-        maxTokens,
-        clientKey: key || undefined
+        maxTokens
       })
     });
 
@@ -80,111 +136,17 @@ async function callAI(prompt: string, maxTokens: number = 1000): Promise<string>
         return data.text;
       }
     } else {
-      console.warn(`Serverless proxy returned status ${response.status}. Falling back to direct client call.`);
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || `API key for ${provider.toUpperCase()} is not configured or invalid.`);
     }
-  } catch (err) {
-    console.warn('Serverless proxy connection failed. Falling back to direct client call.', err);
-  }
-
-  // 2. Direct client-side fallback if proxy is unavailable
-  if (!key) {
-    throw new Error(`API key for ${provider.toUpperCase()} is not configured. Please open Settings to configure it.`);
-  }
-
-  if (provider === 'claude') {
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': key,
-        'anthropic-version': '2023-06-01',
-        'dangerously-allow-browser': 'true'
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
-        max_tokens: maxTokens,
-        messages: [{ role: 'user', content: prompt }]
-      })
-    });
-
-    if (!response.ok) {
-      const errorDetails = await response.text();
-      throw new Error(`Claude API call failed: ${response.status} - ${errorDetails}`);
+  } catch (err: any) {
+    if (err.message?.includes('not configured') || err.message?.includes('API key')) {
+      throw err;
     }
-
-    const data = await response.json();
-    return data.content && data.content[0] ? data.content[0].text : '';
+    throw new Error(`API call failed for ${provider.toUpperCase()}. Check your API key in Settings.`);
   }
 
-  if (provider === 'chatgpt') {
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${key}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        max_tokens: maxTokens,
-        messages: [{ role: 'user', content: prompt }]
-      })
-    });
-
-    if (!response.ok) {
-      const errorDetails = await response.text();
-      throw new Error(`ChatGPT API call failed: ${response.status} - ${errorDetails}`);
-    }
-
-    const data = await response.json();
-    return data.choices && data.choices[0] && data.choices[0].message ? data.choices[0].message.content : '';
-  }
-
-  if (provider === 'gemini') {
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        contents: [{
-          parts: [{ text: prompt }]
-        }]
-      })
-    });
-
-    if (!response.ok) {
-      const errorDetails = await response.text();
-      throw new Error(`Gemini API call failed: ${response.status} - ${errorDetails}`);
-    }
-
-    const data = await response.json();
-    return data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts && data.candidates[0].content.parts[0] ? data.candidates[0].content.parts[0].text : '';
-  }
-
-  if (provider === 'grok') {
-    const response = await fetch('https://api.x.ai/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${key}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        model: 'grok-beta',
-        max_tokens: maxTokens,
-        messages: [{ role: 'user', content: prompt }]
-      })
-    });
-
-    if (!response.ok) {
-      const errorDetails = await response.text();
-      throw new Error(`Grok API call failed: ${response.status} - ${errorDetails}`);
-    }
-
-    const data = await response.json();
-    return data.choices && data.choices[0] && data.choices[0].message ? data.choices[0].message.content : '';
-  }
-
-  throw new Error(`Unknown AI provider: ${provider}`);
+  return '';
 }
 
 export const AIService = {
@@ -227,8 +189,9 @@ Return ONLY valid JSON in this exact format (no markdown, no backticks, no comme
 Where answer is the 0-based index of the correct option. Make the question realistic and the distractors plausible.`;
 
     const textResponse = await callAI(prompt, 600);
-    const cleanText = textResponse.replace(/```json|```/g, '').trim();
-    return JSON.parse(cleanText);
+    const match = textResponse.match(/\{[\s\S]*\}|\[[\s\S]*\]/);
+    if (!match) throw new Error("Failed to parse AI response as JSON");
+    return JSON.parse(match[0]);
   },
 
   async gradeMockInterviewAnswer(question: string, modelAnswer: string, userAnswer: string): Promise<{
@@ -250,8 +213,9 @@ Grade this answer out of 100. Return ONLY valid JSON (no markdown, no backticks,
 Score guide: 90+=excellent, 70-89=good, 50-69=partial, <50=needs work. Be strict — this is a real interview.`;
 
     const textResponse = await callAI(prompt, 600);
-    const cleanText = textResponse.replace(/```json|```/g, '').trim();
-    return JSON.parse(cleanText);
+    const match = textResponse.match(/\{[\s\S]*\}|\[[\s\S]*\]/);
+    if (!match) throw new Error("Failed to parse AI response as JSON");
+    return JSON.parse(match[0]);
   },
 
   async generateLinkedInPost(context: string, tone: 'technical' | 'story' | 'insight'): Promise<string> {

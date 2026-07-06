@@ -9,13 +9,20 @@ export interface DeviceFlowResponse {
 }
 
 export const GitHubOAuthService = {
-  // IMPORTANT: You must replace this with your actual GitHub OAuth App Client ID!
-  // To get one: GitHub Settings -> Developer Settings -> OAuth Apps -> New OAuth App
-  // Set Authorization callback URL to anything (e.g. http://localhost)
-  // Check the "Enable Device Flow" checkbox in the app settings!
-  CLIENT_ID: 'Ov23liEmS0mPcDXsVsOd',
+  // BUG-005 FIX: Read Client ID from environment variable instead of hardcoding
+  get CLIENT_ID(): string {
+    const envId = import.meta.env.VITE_GITHUB_CLIENT_ID;
+    if (!envId) {
+      console.error('VITE_GITHUB_CLIENT_ID environment variable is not set. GitHub auth will fail.');
+    }
+    return envId || '';
+  },
 
   async initiateDeviceFlow(): Promise<DeviceFlowResponse> {
+    if (!this.CLIENT_ID) {
+      throw new Error('GitHub OAuth Client ID is not configured. Set VITE_GITHUB_CLIENT_ID in your .env file.');
+    }
+
     const baseUrl = !Capacitor.isNativePlatform() ? '/github-oauth' : 'https://github.com';
 
     const res = await fetch(`${baseUrl}/login/device/code`, {
@@ -38,10 +45,19 @@ export const GitHubOAuthService = {
     return res.json();
   },
 
-  async pollForAccessToken(deviceCode: string, interval: number): Promise<string> {
-    // Polls until the user authorizes the app, or expires
+  async pollForAccessToken(deviceCode: string, interval: number, expiresIn: number = 900): Promise<string> {
+    // BUG-018 FIX: Add timeout based on expires_in from GitHub's device flow response
     return new Promise((resolve, reject) => {
+      const startTime = Date.now();
+      const maxDuration = expiresIn * 1000; // convert to ms
+
       const poll = async () => {
+        // Check if polling has exceeded the expiry window
+        if (Date.now() - startTime > maxDuration) {
+          reject(new Error('Authorization timed out. The device code has expired. Please try again.'));
+          return;
+        }
+
         try {
           const baseUrl = !Capacitor.isNativePlatform() ? '/github-oauth' : 'https://github.com';
 
@@ -70,6 +86,8 @@ export const GitHubOAuthService = {
             setTimeout(poll, interval * 1000);
           } else if (data.error === 'slow_down') {
             setTimeout(poll, (interval + 5) * 1000);
+          } else if (data.error === 'expired_token') {
+            reject(new Error('The device code has expired. Please restart the login process.'));
           } else {
             reject(new Error(data.error_description || data.error));
           }

@@ -9,6 +9,15 @@ import { Haptics, ImpactStyle } from '@capacitor/haptics';
 import { GitHubSyncService } from '../components/GitHubSyncService';
 import { SyncMeta } from '../utils/SyncMeta';
 
+// BUG-028 FIX: Module-scoped sync timeout instead of (window as any)._syncTimeout
+let _syncTimeout: ReturnType<typeof setTimeout> | null = null;
+
+// BUG-011 FIX: Generate unique IDs without Date.now() collisions
+function uniqueId(): number {
+  // Use high-resolution time + random to avoid millisecond collisions
+  return Math.floor(performance.now() * 1000) + Math.floor(Math.random() * 10000);
+}
+
 export interface AppNotification {
   id: number;
   text: string;
@@ -90,6 +99,8 @@ export interface AppState {
   mockHistory: MockResult[];
   weekGoal: number;
   notifications: AppNotification[];
+  v4Tasks: Record<string, boolean>;
+  v4Artifacts: Record<string, string>;
 }
 
 const LOCAL_STORAGE_KEY_PREFIX = 'devops90_v4_';
@@ -128,10 +139,12 @@ const getBlankState = (): AppState => ({
   weekGoal: 35,
   notifications: [
     { id: 1, text: "👋 Welcome to DevOps v4! Select a day to start learning.", date: new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }), read: false }
-  ]
+  ],
+  v4Tasks: {},
+  v4Artifacts: {}
 });
 
-const parseState = (storedStr: string): AppState => {
+const parseState = (storedStr: string, userToMigrate?: string | null): AppState => {
   try {
     const parsed = JSON.parse(storedStr);
     const completedTasks: Record<string, boolean> = {};
@@ -141,6 +154,35 @@ const parseState = (storedStr: string): AppState => {
     const projdone: Record<string, boolean> = {};
     const phaseOpen: Record<string, boolean> = {};
     const dayOpen: Record<string, boolean> = {};
+    
+    // Auto-migrate legacy V4 state if present
+    let v4Tasks: Record<string, boolean> = parsed._v4Tasks || {};
+    let v4Artifacts: Record<string, string> = parsed._v4Artifacts || {};
+    
+    if (userToMigrate) {
+      const legacyTasksKey = `devops90_v4_tasks_${userToMigrate.toLowerCase()}`;
+      const legacyArtifactsKey = `devops90_v4_artifacts_${userToMigrate.toLowerCase()}`;
+      
+      try {
+        const legacyTasks = localStorage.getItem(legacyTasksKey);
+        if (legacyTasks) {
+          v4Tasks = { ...JSON.parse(legacyTasks), ...v4Tasks };
+          localStorage.removeItem(legacyTasksKey);
+        }
+      } catch (e) {
+        import('../components/MonitoringService').then(m => m.MonitoringService.logError(e, 'Legacy V4 Tasks Migration'));
+      }
+      
+      try {
+        const legacyArtifacts = localStorage.getItem(legacyArtifactsKey);
+        if (legacyArtifacts) {
+          v4Artifacts = { ...JSON.parse(legacyArtifacts), ...v4Artifacts };
+          localStorage.removeItem(legacyArtifactsKey);
+        }
+      } catch (e) {
+        import('../components/MonitoringService').then(m => m.MonitoringService.logError(e, 'Legacy V4 Artifacts Migration'));
+      }
+    }
     
     Object.keys(parsed).forEach(key => {
       if (key.startsWith('p') && key.includes('d') && key.includes('t')) {
@@ -183,9 +225,12 @@ const parseState = (storedStr: string): AppState => {
       weekGoal: Number(parsed._weekGoal) || 35,
       notifications: parsed._notifications || [
         { id: 1, text: "👋 Welcome to DevOps v4! Select a day to start learning.", date: new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }), read: false }
-      ]
+      ],
+      v4Tasks,
+      v4Artifacts
     };
-  } catch (_) {
+  } catch (e) {
+    import('../components/MonitoringService').then(m => m.MonitoringService.logError(e, 'parseState fallback'));
     return getBlankState();
   }
 };
@@ -203,7 +248,7 @@ export function useAppState() {
       const key = `${LOCAL_STORAGE_KEY_PREFIX}${user.toLowerCase()}`;
       const stored = localStorage.getItem(key);
       if (stored) {
-        return parseState(stored);
+        return parseState(stored, user);
       }
     }
     return getBlankState();
@@ -229,6 +274,8 @@ export function useAppState() {
         _mockHistory: updated.mockHistory,
         _weekGoal: updated.weekGoal,
         _notifications: updated.notifications,
+        _v4Tasks: updated.v4Tasks,
+        _v4Artifacts: updated.v4Artifacts,
       };
 
       Object.assign(flat, updated.completedTasks);
@@ -312,8 +359,9 @@ export function useAppState() {
       return next;
     });
 
-    if ((window as any)._syncTimeout) clearTimeout((window as any)._syncTimeout);
-    (window as any)._syncTimeout = setTimeout(() => {
+    // BUG-002 + BUG-028 FIX: Module-scoped debounce prevents cascading sync loops
+    if (_syncTimeout) clearTimeout(_syncTimeout);
+    _syncTimeout = setTimeout(() => {
       triggerSync().catch(() => {});
     }, 2000);
   };
@@ -339,6 +387,8 @@ export function useAppState() {
   };
 
   // User auth methods
+  // BUG-001 + BUG-017 FIX: Await the restore before returning so the caller
+  // knows state is fully loaded and the UI doesn't flash stale data.
   const loginUser = async (username: string, token: string): Promise<boolean> => {
     const trimmed = username.trim();
     if (!trimmed) return false;
@@ -348,8 +398,10 @@ export function useAppState() {
     localStorage.setItem('devops90_current_user', trimmed);
     setCurrentUser(trimmed);
     
-    // Attempt to restore state from GitHub immediately
-    GitHubSyncService.restoreFromGitHub(token).then(restored => {
+    // Attempt to restore state from GitHub — AWAIT completion
+    try {
+      const restored = await GitHubSyncService.restoreFromGitHub(token);
+
       const key = `${LOCAL_STORAGE_KEY_PREFIX}${trimmed.toLowerCase()}`;
       const stored = localStorage.getItem(key);
       const loadedState = stored ? parseState(stored) : getBlankState();
@@ -364,7 +416,7 @@ export function useAppState() {
         const exists = (loadedState.notifications || []).some(n => n.text === alertMsg);
         if (!exists) {
           const newNotif = {
-            id: Date.now(),
+            id: uniqueId(),
             text: alertMsg,
             date: new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
             read: false
@@ -384,7 +436,13 @@ export function useAppState() {
       } else {
         showToast('Welcome to DevOps 90 Days! Cloud backup initialized.');
       }
-    });
+    } catch (e) {
+      console.error('devops90: loginUser restore failed', e);
+      // Still load local state on failure
+      const key = `${LOCAL_STORAGE_KEY_PREFIX}${trimmed.toLowerCase()}`;
+      const stored = localStorage.getItem(key);
+      setState(stored ? parseState(stored) : getBlankState());
+    }
 
     return true;
   };
@@ -393,6 +451,8 @@ export function useAppState() {
     localStorage.removeItem('devops90_current_user');
     setCurrentUser(null);
     setState(getBlankState());
+    // BUG-010 FIX: Clear the SyncMeta cache so the next user gets a fresh cache
+    SyncMeta.invalidateCache();
   };
 
   const registerUser = (username: string, token: string = '') => {
@@ -408,7 +468,7 @@ export function useAppState() {
     updateState(prev => {
       const list = prev.notifications || [];
       const newNotif = {
-        id: Date.now(),
+        id: uniqueId(),
         text,
         date: new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
         read: false
@@ -546,6 +606,7 @@ export function useAppState() {
     return ((state.pomoSessions * 25) / 60).toFixed(1);
   }, [state.pomoSessions]);
 
+  // BUG-015 FIX: Add lowConfTasks + state.confidences to dependency array
   const readinessScore = useCallback(() => {
     const { tot, don } = typeCounts();
     const qP = tot.quiz ? don.quiz / tot.quiz : 0;
@@ -555,7 +616,7 @@ export function useAppState() {
     const lowConf = lowConfTasks().length;
     const confPenalty = Math.min(lowConf * 0.5, 10);
     return Math.max(0, Math.round((qP * .30 + prP * .30 + cP * .25 + coP * .15) * 100 - confPenalty));
-  }, [typeCounts]);
+  }, [typeCounts, state.confidences]);
 
   const calcETA = () => {
     const done = cntDone();
@@ -605,7 +666,7 @@ export function useAppState() {
   const recordToday = useCallback((tasksCount: number) => {
     const today = new Date().toDateString();
     updateState(prev => {
-      const nextHistory = { ...prev.history, [today]: tasksCount };
+      const nextHistory = { ...(prev.history || {}), [today]: tasksCount };
       let streak = prev.streak || 0;
       let lastDay = prev.lastDay;
 
@@ -728,9 +789,13 @@ export function useAppState() {
       const parsed = JSON.parse(stored);
       parsed[srKey(pi, di, ti)] = { nextReview, interval, conf };
       localStorage.setItem(userKey, JSON.stringify(parsed));
+      if (currentUser) {
+        SyncMeta.recordChange(currentUser, userKey, srKey(pi, di, ti));
+      }
     } catch (_) {}
   };
 
+  // BUG-014 FIX: Include state in deps so reviews refresh after user marks items
   const getDueReviews = useCallback(() => {
     const now = Date.now();
     const out: { ph: typeof PHASES[0]; pi: number; d: typeof PHASES[0]['data'][0]; di: number; task: typeof PHASES[0]['data'][0]['tasks'][0]; ti: number; sr: SRData }[] = [];
@@ -745,7 +810,8 @@ export function useAppState() {
       });
     });
     return out;
-  }, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state]);
 
   const markSRReviewed = (pi: number, di: number, ti: number, newConf: number) => {
     scheduleSR(pi, di, ti, newConf);
@@ -758,7 +824,7 @@ export function useAppState() {
       jobs: [
         {
           ...job,
-          id: Date.now(),
+          id: uniqueId(),
           status: 'applied',
           createdAt: new Date().toDateString(),
         },
@@ -797,7 +863,7 @@ export function useAppState() {
   const addSavedJD = (company: string, jd: string) => {
     updateState(prev => {
       const items = [
-        { id: Date.now(), company, jd, analysed: new Date().toLocaleDateString('en-IN') },
+        { id: uniqueId(), company, jd, analysed: new Date().toLocaleDateString('en-IN') },
         ...prev.savedJDs,
       ];
       return { ...prev, savedJDs: items.slice(0, 10) };
@@ -818,7 +884,7 @@ export function useAppState() {
       buildLogs: [
         {
           ...log,
-          id: Date.now(),
+          id: uniqueId(),
           date: new Date().toLocaleDateString('en-IN'),
         },
         ...prev.buildLogs,
@@ -837,7 +903,7 @@ export function useAppState() {
   const addMockResult = (res: Omit<MockResult, 'id'>) => {
     updateState(prev => {
       const hist = [
-        { ...res, id: Date.now() },
+        { ...res, id: uniqueId() },
         ...prev.mockHistory,
       ];
       return { ...prev, mockHistory: hist.slice(0, 50) };
@@ -910,6 +976,9 @@ export function useAppState() {
       if (don === tot && tot > 0 && !parsed[key]) {
         parsed[key] = true;
         localStorage.setItem(userKey, JSON.stringify(parsed));
+        if (currentUser) {
+          SyncMeta.recordChange(currentUser, userKey, key);
+        }
         return true;
       }
     } catch (_) {}
@@ -948,6 +1017,9 @@ export function useAppState() {
       const parsed = JSON.parse(stored);
       parsed._bounceback_claimed = true;
       localStorage.setItem(userKey, JSON.stringify(parsed));
+      if (currentUser) {
+        SyncMeta.recordChange(currentUser, userKey, '_bounceback_claimed');
+      }
     } catch (_) {}
   };
 
@@ -968,7 +1040,7 @@ export function useAppState() {
       if (wasDone) {
         // Task marked as pending
         const newNotif = {
-          id: Date.now(),
+           id: uniqueId(),
           text: `⚠️ Task marked as pending: "${taskName}"`,
           date: new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
           read: false
@@ -977,7 +1049,7 @@ export function useAppState() {
       } else {
         // Task completed
         const newNotif = {
-          id: Date.now(),
+           id: uniqueId(),
           text: `🎉 Task completed: "${taskName}"`,
           date: new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
           read: false
@@ -1104,6 +1176,30 @@ export function useAppState() {
     return lab.exercises.filter(ex => isLabDone(dayKey, ex.id)).length;
   }, [isLabDone]);
 
+  const toggleV4Task = (pi: number, di: number, ti: number) => {
+    const key = `v4_${pi}_${di}_${ti}`;
+    updateState(prev => ({
+      ...prev,
+      v4Tasks: { ...prev.v4Tasks, [key]: !prev.v4Tasks[key] }
+    }));
+  };
+
+  const saveV4Artifact = (pi: number, di: number, url: string) => {
+    const key = `${pi}_${di}`;
+    updateState(prev => ({
+      ...prev,
+      v4Artifacts: { ...prev.v4Artifacts, [key]: url }
+    }));
+  };
+
+  const clearV4Progress = () => {
+    updateState(prev => ({
+      ...prev,
+      v4Tasks: {},
+      v4Artifacts: {}
+    }));
+  };
+
   return {
     state,
     cntDone,
@@ -1173,7 +1269,10 @@ export function useAppState() {
     markNotificationsRead,
     isSyncUpToDate,
     triggerSync,
-    restoreSync
+    restoreSync,
+    toggleV4Task,
+    saveV4Artifact,
+    clearV4Progress
   };
 }
 export type UseAppStateReturnType = ReturnType<typeof useAppState>;

@@ -2,6 +2,8 @@ import React, { useState, useRef } from 'react';
 import { DiagramData, DiagramNode } from '../data/diagrams';
 import { Capacitor } from '@capacitor/core';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
+import { callAI, getProviderKey, getActiveProvider } from './AIService';
+import { ApiKeySetupModal } from './ApiKeySetupModal';
 
 interface InteractiveDiagramProps {
   data: DiagramData;
@@ -13,6 +15,44 @@ export const InteractiveDiagram: React.FC<InteractiveDiagramProps> = ({ data, on
   const [zoom, setZoom] = useState(1);
   const [isDragging, setIsDragging] = useState(false);
   const dragStart = useRef({ x: 0, y: 0 });
+
+  const [showApiKeyModal, setShowApiKeyModal] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generatedCode, setGeneratedCode] = useState('');
+  const [iacFormat, setIacFormat] = useState('Terraform');
+
+  const handleGenerateIaC = async () => {
+    const provider = getActiveProvider();
+    const key = await getProviderKey(provider);
+    
+    if (!key) {
+      setShowApiKeyModal(true);
+      return;
+    }
+
+    setIsGenerating(true);
+    setGeneratedCode('');
+
+    try {
+      const diagramJson = JSON.stringify(data, null, 2);
+      const prompt = `You are a Principal Cloud Architect. Read this JSON array representing an architecture diagram and generate the production-ready Infrastructure-as-Code (IaC) in ${iacFormat} format.
+
+Diagram Data:
+${diagramJson}
+
+Instructions:
+- Output ONLY the raw ${iacFormat} code.
+- Do NOT use markdown code blocks (\`\`\`).
+- Do not add any explanations or conversational text.`;
+
+      const code = await callAI(prompt, 1500);
+      setGeneratedCode(code.trim());
+    } catch (err: any) {
+      setGeneratedCode(`// Error generating IaC:\n// ${err.message}`);
+    } finally {
+      setIsGenerating(false);
+    }
+  };
 
   // Determine bounds of diagram to size the view box
   const minX = Math.min(...data.nodes.map(n => n.x)) - 60;
@@ -115,7 +155,45 @@ export const InteractiveDiagram: React.FC<InteractiveDiagramProps> = ({ data, on
         paddingBottom: '8px'
       }}>
         <span style={{ fontSize: '14px', fontWeight: 'bold', color: 'var(--text)' }}>🧭 {data.title}</span>
-        {onNodeClick && <span style={{ fontSize: '11px', color: 'var(--muted)' }}>💡 Drag to pan, scroll to zoom</span>}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {onNodeClick && <span style={{ fontSize: '11px', color: 'var(--muted)', display: 'none' }}>💡 Drag to pan, scroll to zoom</span>}
+          <select 
+            value={iacFormat} 
+            onChange={(e) => setIacFormat(e.target.value)}
+            style={{
+              padding: '4px 8px',
+              borderRadius: '4px',
+              background: 'var(--s2)',
+              border: '1px solid var(--border)',
+              color: 'var(--text)',
+              fontSize: '11px',
+              outline: 'none'
+            }}
+          >
+            <option value="Terraform">Terraform</option>
+            <option value="Kubernetes YAML">Kubernetes</option>
+            <option value="Ansible Playbook">Ansible</option>
+            <option value="Docker Compose">Docker Compose</option>
+            <option value="Pulumi TypeScript">Pulumi</option>
+          </select>
+          <button 
+            onClick={handleGenerateIaC}
+            disabled={isGenerating}
+            style={{
+              padding: '4px 12px',
+              borderRadius: '6px',
+              background: 'var(--p1)',
+              color: '#fff',
+              border: 'none',
+              fontSize: '11px',
+              fontWeight: 600,
+              cursor: isGenerating ? 'wait' : 'pointer',
+              opacity: isGenerating ? 0.7 : 1
+            }}
+          >
+            {isGenerating ? 'Generating...' : `Export IaC`}
+          </button>
+        </div>
       </div>
       
       <div 
@@ -228,6 +306,58 @@ export const InteractiveDiagram: React.FC<InteractiveDiagramProps> = ({ data, on
           </g>
         </svg>
       </div>
+
+      {generatedCode && (
+        <div style={{
+          position: 'absolute',
+          top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(0,0,0,0.85)',
+          backdropFilter: 'blur(4px)',
+          display: 'flex',
+          flexDirection: 'column',
+          padding: '20px',
+          zIndex: 100
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+            <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#fff' }}>Generated {iacFormat}</div>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button 
+                onClick={() => navigator.clipboard.writeText(generatedCode)}
+                style={{ padding: '4px 12px', borderRadius: '4px', background: 'var(--s2)', border: '1px solid var(--border)', color: '#fff', fontSize: '11px', cursor: 'pointer' }}
+              >
+                Copy
+              </button>
+              <button 
+                onClick={() => setGeneratedCode('')}
+                style={{ padding: '4px 12px', borderRadius: '4px', background: 'var(--red)', border: 'none', color: '#fff', fontSize: '11px', cursor: 'pointer' }}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+          <pre style={{
+            flex: 1,
+            margin: 0,
+            background: '#0d1117',
+            padding: '16px',
+            borderRadius: '8px',
+            border: '1px solid rgba(255,255,255,0.1)',
+            color: '#c9d1d9',
+            fontSize: '12px',
+            fontFamily: 'monospace',
+            overflow: 'auto',
+            whiteSpace: 'pre-wrap'
+          }}>
+            {generatedCode}
+          </pre>
+        </div>
+      )}
+
+      <ApiKeySetupModal 
+        isOpen={showApiKeyModal} 
+        onClose={() => setShowApiKeyModal(false)}
+        onSuccess={() => handleGenerateIaC()}
+      />
     </div>
   );
 };

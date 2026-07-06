@@ -20,6 +20,8 @@ const getAllDevopsKeys = (): Record<string, string> => {
 };
 
 let backupTimeout: any = null;
+// BUG-019 FIX: Track pending resolve callback so previous promises don't hang
+let pendingResolve: ((value: boolean) => void) | null = null;
 
 export const BackupService = {
   /**
@@ -30,8 +32,15 @@ export const BackupService = {
     if (!Capacitor.isNativePlatform()) return false;
     
     return new Promise((resolve) => {
+      // BUG-019 FIX: Resolve the previous pending promise before clearing the timeout
+      if (pendingResolve) {
+        pendingResolve(false);
+        pendingResolve = null;
+      }
       if (backupTimeout) clearTimeout(backupTimeout);
+      pendingResolve = resolve;
       backupTimeout = setTimeout(async () => {
+        pendingResolve = null;
         try {
           const data = getAllDevopsKeys();
           if (Object.keys(data).length === 0) return resolve(true);

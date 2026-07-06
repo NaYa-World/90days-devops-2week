@@ -99,36 +99,44 @@ export const App: React.FC = () => {
   };
 
   // Initialize native services (Sentry, OTA, Push, Shortcuts)
+  // BUG-003 FIX: Use refs for notification state to avoid stale closures in async callbacks
+  const notifEnabledRef = React.useRef(notificationsEnabled);
+  const morningTimeRef = React.useRef(morningTime);
+  const eveningTimeRef = React.useRef(eveningTime);
+  React.useEffect(() => { notifEnabledRef.current = notificationsEnabled; }, [notificationsEnabled]);
+  React.useEffect(() => { morningTimeRef.current = morningTime; }, [morningTime]);
+  React.useEffect(() => { eveningTimeRef.current = eveningTime; }, [eveningTime]);
+
   useEffect(() => {
     if (Capacitor.isNativePlatform()) {
       document.body.classList.add('native-platform');
       MonitoringService.init();
       OTAService.init();
 
-      // Prevent pinch-to-zoom gestures on native platform
-      document.addEventListener('touchmove', (e) => {
+      // BUG-013 FIX: Store handler references so they can be removed on cleanup
+      const touchMoveHandler = (e: TouchEvent) => {
         if (e.touches.length > 1) {
           e.preventDefault();
         }
-      }, { passive: false });
-
-      // Prevent iOS gesture zoom
-      document.addEventListener('gesturestart', (e) => {
+      };
+      const gestureHandler = (e: Event) => {
         e.preventDefault();
-      });
+      };
 
+      document.addEventListener('touchmove', touchMoveHandler, { passive: false });
+      document.addEventListener('gesturestart', gestureHandler);
 
-      // Check notification permission and sync state to avoid UI mismatch if permissions were manually revoked
+      // BUG-003 FIX: Read from refs instead of stale closure values
       LocalNotifications.checkPermissions().then(perm => {
-        if (perm.display !== 'granted' && notificationsEnabled) {
+        if (perm.display !== 'granted' && notifEnabledRef.current) {
           setNotificationsEnabled(false);
           localStorage.setItem('devops90_notifications_enabled', 'false');
-          NotificationService.sync(false, morningTime, eveningTime);
+          NotificationService.sync(false, morningTimeRef.current, eveningTimeRef.current);
         } else {
-          NotificationService.init(notificationsEnabled, morningTime, eveningTime);
+          NotificationService.init(notifEnabledRef.current, morningTimeRef.current, eveningTimeRef.current);
         }
       }).catch(() => {
-        NotificationService.init(notificationsEnabled, morningTime, eveningTime);
+        NotificationService.init(notifEnabledRef.current, morningTimeRef.current, eveningTimeRef.current);
       });
 
       // Configure native App Shortcuts (Home screen quick actions)
@@ -147,8 +155,11 @@ export const App: React.FC = () => {
         }
       });
 
+      // BUG-013 FIX: Clean up ALL event listeners
       return () => {
         shortcutListener.then(sub => sub.remove());
+        document.removeEventListener('touchmove', touchMoveHandler);
+        document.removeEventListener('gesturestart', gestureHandler);
       };
     }
     return undefined;
@@ -241,11 +252,13 @@ export const App: React.FC = () => {
       });
     }
 
+    // BUG-004 FIX: Don't reload — update state directly to prevent infinite reload loop
     if (Capacitor.isNativePlatform()) {
       BackupService.autoRestore().then(restored => {
         if (restored) {
-          console.log("devops90: Auto-restored local backup on startup. Reloading app.");
-          window.location.reload();
+          console.log("devops90: Auto-restored local backup on startup.");
+          // Re-read state from localStorage instead of reloading the page
+          appState.restoreSync().catch(() => {});
         }
       }).catch(err => {
         console.error("devops90: Auto-restore on startup failed:", err);
@@ -478,7 +491,7 @@ export const App: React.FC = () => {
         await Share.share({
           title: 'My 90 Days DevOps Notes 🚀',
           text: `I'm learning DevOps! Current study stats: ${studyHours} hours of focus sessions. Join me in the 90 Days DevOps Challenge!`,
-          url: 'https://github.com/NaYaGK/sitecore-ww',
+          url: 'https://github.com/NaYa-World/90days-devops-2week',
           dialogTitle: 'Share your DevOps Progress',
         });
       } else {
@@ -486,7 +499,7 @@ export const App: React.FC = () => {
           await navigator.share({
             title: 'My 90 Days DevOps Notes 🚀',
             text: `I'm learning DevOps! Current study stats: ${studyHours} hours of focus sessions. Join me in the 90 Days DevOps Challenge!`,
-            url: 'https://github.com/NaYaGK/sitecore-ww',
+            url: 'https://github.com/NaYa-World/90days-devops-2week',
           });
         } else {
           await navigator.clipboard.writeText(`I'm learning DevOps! Current study stats: ${studyHours} hours of focus sessions. Join me in the 90 Days DevOps Challenge!`);

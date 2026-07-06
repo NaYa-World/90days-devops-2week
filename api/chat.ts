@@ -1,14 +1,34 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
+// Allowlist of origins permitted to call this proxy.
+// Add your production domain(s) here.
+const ALLOWED_ORIGINS = [
+  'https://90days-devops.vercel.app',
+  'http://localhost:5173',
+  'http://localhost:3000',
+  'capacitor://localhost',       // iOS Capacitor
+  'http://localhost',            // Android Capacitor
+];
+
+function getCorsOrigin(req: VercelRequest): string {
+  const origin = req.headers.origin || '';
+  if (ALLOWED_ORIGINS.includes(origin)) return origin;
+  return '';  // reject unknown origins
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // Enable CORS
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
-  res.setHeader(
-    'Access-Control-Allow-Headers',
-    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
-  );
+  const corsOrigin = getCorsOrigin(req);
+
+  // Set CORS headers — only for allowed origins
+  if (corsOrigin) {
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    res.setHeader('Access-Control-Allow-Origin', corsOrigin);
+    res.setHeader('Access-Control-Allow-Methods', 'POST,OPTIONS');
+    res.setHeader(
+      'Access-Control-Allow-Headers',
+      'Content-Type, Accept, x-user-api-key'
+    );
+  }
 
   if (req.method === 'OPTIONS') {
     res.status(200).end();
@@ -19,27 +39,38 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
+  // Reject requests from unknown origins
+  if (!corsOrigin) {
+    return res.status(403).json({ error: 'Forbidden: origin not allowed' });
+  }
+
   try {
-    const { provider, prompt, maxTokens = 1000, clientKey } = req.body;
+    const { provider, prompt, maxTokens = 1000 } = req.body;
 
     if (!provider || !prompt) {
       return res.status(400).json({ error: 'Missing provider or prompt' });
     }
 
-    let key = '';
-    if (provider === 'claude') {
-      key = process.env.ANTHROPIC_API_KEY || clientKey || '';
-    } else if (provider === 'chatgpt') {
-      key = process.env.OPENAI_API_KEY || clientKey || '';
-    } else if (provider === 'gemini') {
-      key = process.env.GEMINI_API_KEY || clientKey || '';
-    } else if (provider === 'grok') {
-      key = process.env.GROK_API_KEY || clientKey || '';
+    // Accept client-supplied keys if provided (to bypass CORS blocks for browser clients)
+    // Otherwise fallback to server-side environment variables.
+    const userApiKey = req.headers['x-user-api-key'] as string | undefined;
+    let key = userApiKey || '';
+
+    if (!key) {
+      if (provider === 'claude') {
+        key = process.env.ANTHROPIC_API_KEY || '';
+      } else if (provider === 'chatgpt') {
+        key = process.env.OPENAI_API_KEY || '';
+      } else if (provider === 'gemini') {
+        key = process.env.GEMINI_API_KEY || '';
+      } else if (provider === 'grok') {
+        key = process.env.GROK_API_KEY || '';
+      }
     }
 
     if (!key) {
       return res.status(400).json({
-        error: `API key for ${provider.toUpperCase()} is not configured. Please set the environment variable on the server or configure it in settings.`
+        error: `API key for ${provider.toUpperCase()} is not configured on the server. Please set the environment variable.`
       });
     }
 
@@ -93,21 +124,36 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     if (provider === 'gemini') {
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`, {
+      let targetModel = 'gemini-1.5-flash';
+      try {
+        const modelsRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${key}`);
+        if (modelsRes.ok) {
+          const modelsData = await modelsRes.json();
+          const flashModel = modelsData.models?.find((m: any) => 
+            m.name.includes('flash') && m.supportedGenerationMethods?.includes('generateContent')
+          );
+          if (flashModel) {
+            targetModel = flashModel.name.replace('models/', '');
+          }
+        }
+      } catch (e) {
+        console.warn('Failed to auto-resolve Gemini model, falling back to default', e);
+      }
+
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${targetModel}:generateContent`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'x-goog-api-key': key
         },
         body: JSON.stringify({
-          contents: [{
-            parts: [{ text: prompt }]
-          }]
+          contents: [{ parts: [{ text: prompt }] }]
         })
       });
 
       if (!response.ok) {
         const errorText = await response.text();
-        return res.status(response.status).json({ error: `Gemini API error: ${errorText}` });
+        return res.status(response.status).json({ error: `Gemini API error on ${targetModel}: ${errorText}` });
       }
 
       const data = await response.json();
