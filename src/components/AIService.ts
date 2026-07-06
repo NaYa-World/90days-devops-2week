@@ -11,7 +11,16 @@ export const KEYS_STORAGE_KEYS: Record<AIProvider, string> = {
 };
 
 export function getActiveProvider(): AIProvider {
-  return (localStorage.getItem(PROVIDER_STORAGE_KEY) as AIProvider) || 'claude';
+  const stored = localStorage.getItem(PROVIDER_STORAGE_KEY) as AIProvider;
+  if (stored) return stored;
+
+  // Auto-detect default provider based on configured environment variables
+  if (import.meta.env.VITE_GEMINI_API_KEY) return 'gemini';
+  if (import.meta.env.VITE_OPENAI_API_KEY) return 'chatgpt';
+  if (import.meta.env.VITE_ANTHROPIC_API_KEY) return 'claude';
+  if (import.meta.env.VITE_GROK_API_KEY) return 'grok';
+
+  return 'claude';
 }
 
 export function setActiveProvider(provider: AIProvider) {
