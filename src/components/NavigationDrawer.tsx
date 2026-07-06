@@ -101,6 +101,13 @@ export const NavigationDrawer: React.FC<NavigationDrawerProps> = ({
                 <span className="ham-ico">🔥</span>v4 Roadmap
               </button>
               <button
+                className={`ham-item ${currentView === 'dashboard' ? 'active' : ''}`}
+                onClick={() => handleNavItemClick('dashboard')}
+                style={{ color: currentView === 'dashboard' ? '#38bdf8' : undefined }}
+              >
+                <span className="ham-ico">📊</span>Dashboard
+              </button>
+              <button
                 className={`ham-item ${currentView === 'qbank' ? 'active' : ''}`}
                 onClick={() => handleNavItemClick('qbank')}
               >

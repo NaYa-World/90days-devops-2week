@@ -101,6 +101,7 @@ export interface AppState {
   notifications: AppNotification[];
   v4Tasks: Record<string, boolean>;
   v4Artifacts: Record<string, string>;
+  dashboardFeedback: string;
 }
 
 const LOCAL_STORAGE_KEY_PREFIX = 'devops90_v4_';
@@ -141,7 +142,8 @@ const getBlankState = (): AppState => ({
     { id: 1, text: "👋 Welcome to DevOps v4! Select a day to start learning.", date: new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }), read: false }
   ],
   v4Tasks: {},
-  v4Artifacts: {}
+  v4Artifacts: {},
+  dashboardFeedback: ''
 });
 
 const parseState = (storedStr: string, userToMigrate?: string | null): AppState => {
@@ -227,7 +229,8 @@ const parseState = (storedStr: string, userToMigrate?: string | null): AppState 
         { id: 1, text: "👋 Welcome to DevOps v4! Select a day to start learning.", date: new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }), read: false }
       ],
       v4Tasks,
-      v4Artifacts
+      v4Artifacts,
+      dashboardFeedback: parsed._dashboardFeedback || ''
     };
   } catch (e) {
     import('../components/MonitoringService').then(m => m.MonitoringService.logError(e, 'parseState fallback'));
@@ -276,6 +279,7 @@ export function useAppState() {
         _notifications: updated.notifications,
         _v4Tasks: updated.v4Tasks,
         _v4Artifacts: updated.v4Artifacts,
+        _dashboardFeedback: updated.dashboardFeedback,
       };
 
       Object.assign(flat, updated.completedTasks);
@@ -338,6 +342,7 @@ export function useAppState() {
          
          if (next.v4Tasks !== prev.v4Tasks) diffKeys.push('_v4Tasks');
          if (next.v4Artifacts !== prev.v4Artifacts) diffKeys.push('_v4Artifacts');
+         if (next.dashboardFeedback !== prev.dashboardFeedback) diffKeys.push('_dashboardFeedback');
          
          if (next.pomoSessions !== prev.pomoSessions) diffKeys.push('_pomoSessions');
          if (next.history !== prev.history) diffKeys.push('_history');
@@ -1205,6 +1210,13 @@ export function useAppState() {
     }));
   };
 
+  const saveDashboardFeedback = (feedback: string) => {
+    updateState(prev => ({
+      ...prev,
+      dashboardFeedback: feedback
+    }));
+  };
+
   return {
     state,
     cntDone,
@@ -1277,7 +1289,8 @@ export function useAppState() {
     restoreSync,
     toggleV4Task,
     saveV4Artifact,
-    clearV4Progress
+    clearV4Progress,
+    saveDashboardFeedback
   };
 }
 export type UseAppStateReturnType = ReturnType<typeof useAppState>;

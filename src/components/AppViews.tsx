@@ -9,6 +9,7 @@ const FocusView = React.lazy(() => import('../views/FocusView').then(m => ({ def
 const JobsView = React.lazy(() => import('../views/JobsView').then(m => ({ default: m.JobsView })));
 const QbankView = React.lazy(() => import('../views/QbankView').then(m => ({ default: m.QbankView })));
 const StatsView = React.lazy(() => import('../views/StatsView').then(m => ({ default: m.StatsView })));
+const DashboardView = React.lazy(() => import('../views/DashboardView').then(m => ({ default: m.DashboardView })));
 const WeeklyView = React.lazy(() => import('../views/WeeklyView').then(m => ({ default: m.WeeklyView })));
 const ProjectsView = React.lazy(() => import('../views/ProjectsView').then(m => ({ default: m.ProjectsView })));
 const GithubRewriterView = React.lazy(() => import('../views/GithubRewriterView').then(m => ({ default: m.GithubRewriterView })));
@@ -82,6 +83,8 @@ export const AppViews: React.FC<AppViewsProps> = ({
             return <QbankView appState={appState} />;
           case 'stats':
             return <StatsView appState={appState} />;
+          case 'dashboard':
+            return <DashboardView appState={appState} />;
           case 'weekly':
             return <WeeklyView appState={appState} />;
           case 'projects':

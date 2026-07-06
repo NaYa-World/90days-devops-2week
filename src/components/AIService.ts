@@ -295,11 +295,44 @@ CRITICAL RULES:
 4. If they guess incorrectly, explain why it's wrong conceptually, then ask another guiding question.
 5. If they guess correctly, congratulate them and encourage them to run it.
 
-Chat Transcript:
-${transcript}
-
-Mentor (Respond strictly following the rules above):`;
+    Chat Transcript:
+    ${transcript}
+    
+    Mentor (Respond strictly following the rules above):`;
 
     return callAI(prompt, 300);
+  },
+
+  async generatePerformanceFeedback(stats: {
+    tasksDone: number;
+    totalTasks: number;
+    streak: number;
+    studyHours: number;
+    readiness: number;
+    xp: number;
+    level: string;
+    lowConfCount: number;
+    v4ArtifactsCount: number;
+  }): Promise<string> {
+    const prompt = `You are an elite DevOps Architect and Career Mentor. Analyze the following student's bootcamp learning progress and provide highly actionable feedback.
+
+Student Statistics:
+- Level: ${stats.level} (${stats.xp} XP)
+- Completed Tasks: ${stats.tasksDone}/${stats.totalTasks}
+- Active Study Streak: ${stats.streak} days
+- Study Hours Logged: ${stats.studyHours} hours
+- Readiness Score: ${stats.readiness}%
+- Low Confidence Tasks: ${stats.lowConfCount}
+- Artifacts Verified: ${stats.v4ArtifactsCount}
+
+Provide a comprehensive, senior-level performance evaluation in markdown format. It MUST include:
+1. 📊 **Current Status**: A realistic assessment of where they stand.
+2. 🎯 **Key Strengths**: Highlight their consistency (based on streak/XP).
+3. ⚠️ **Areas of Improvement & Risks**: Address the low confidence tasks and missing artifacts.
+4. 🚀 **Next Milestone Recommendation**: 2-3 hyper-specific next steps for their current stage.
+
+Be supportive but strictly professional, candid, and direct. Avoid generic motivation; focus on technical readiness and engineering practices. Keep it under 450 words.`;
+
+    return callAI(prompt, 1000);
   }
 };
