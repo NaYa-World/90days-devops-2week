@@ -130,9 +130,18 @@ export async function callAI(prompt: string, maxTokens: number = 1000): Promise<
         continue;
       }
 
+      if (response.status === 503 && targetModel !== 'gemini-1.5-flash' && attempt < MAX_RETRIES - 1) {
+        console.warn(`Model ${targetModel} overloaded (503). Falling back to gemini-1.5-flash.`);
+        targetModel = 'gemini-1.5-flash';
+        continue;
+      }
+
       const errorDetails = await response.text();
       if (response.status === 429) {
         throw new Error('Gemini free-tier rate limit reached. Please wait a minute and try again.');
+      }
+      if (response.status === 503) {
+        throw new Error('The AI model is currently experiencing high demand and is unavailable. Please try again later.');
       }
       throw new Error(`Gemini API error on model ${targetModel}: ${response.status} - ${errorDetails}`);
     }
