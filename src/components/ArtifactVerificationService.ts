@@ -94,22 +94,28 @@ export class ArtifactVerificationService {
       }
 
       // 2. AI Semantic Verification
-      const prompt = `You are a strict Senior Staff Cloud Architect grading a Junior DevOps Engineer's artifact submission.
-Verify if the submitted code satisfies the given Task Instruction and Scenario.
+      const prompt = `You are a supportive but thorough Senior DevOps Engineer reviewing a junior's daily learning artifact.
 
-Scenario: ${scenario}
-Instruction: ${instruction}
+Your job is to verify that the student ACTUALLY DID THE WORK for this task. Focus on SUBSTANCE, not formatting.
+
+Task Scenario: ${scenario}
+Task Instruction: ${instruction}
 
 Submitted Code/Diff:
 \`\`\`
-${code.substring(0, 3000)} // Truncated to prevent context limit
+${code.substring(0, 3000)}
 \`\`\`
 
-Evaluate if the code represents a genuine attempt to fulfill the task requirements. 
-Respond ONLY with a JSON object in this format:
+EVALUATION RULES:
+1. PASS if the content shows genuine hands-on work related to the task topic (commands executed, outputs captured, concepts demonstrated).
+2. PASS even if the file extension differs (.md vs .txt) or the repo name differs — these are cosmetic issues, not substance issues.
+3. FAIL ONLY if the content is completely unrelated to the task (e.g., a Python hello-world for a Docker task), OR if the file is empty/meaningless gibberish.
+4. When in doubt, PASS. We want to encourage students who are genuinely learning.
+
+Respond ONLY with a JSON object:
 {
   "isValid": true/false,
-  "reason": "1 sentence explaining why it passed or failed (be harsh if they uploaded irrelevant code like python scripts for a docker task)"
+  "reason": "1 sentence. If passing, mention what you liked. If failing, explain what specific content is missing."
 }`;
 
       const aiResponse = await callAI(prompt, 500);
