@@ -23,7 +23,8 @@ const ReadinessView = React.lazy(() => import('../views/ReadinessView').then(m =
 const DevOpsSandboxView = React.lazy(() => import('../views/DevOpsSandboxView').then(m => ({ default: m.DevOpsSandboxView })));
 const DiagramBuilderView = React.lazy(() => import('../views/DiagramBuilderView').then(m => ({ default: m.DiagramBuilderView })));
 const DevOpsFlowsView = React.lazy(() => import('../views/DevOpsFlowsView').then(m => ({ default: m.DevOpsFlowsView })));
-
+const PipelineReferenceView = React.lazy(() => import('../views/PipelineReferenceView').then(m => ({ default: m.PipelineReferenceView })));
+const ChaosSimulatorView = React.lazy(() => import('../views/ChaosSimulatorView').then(m => ({ default: m.ChaosSimulatorView })));
 interface AppViewsProps {
   currentView: string;
   setCurrentView: (view: string) => void;
@@ -84,7 +85,11 @@ export const AppViews: React.FC<AppViewsProps> = ({
           case 'stats':
             return <StatsView appState={appState} />;
           case 'dashboard':
-            return <DashboardView appState={appState} />;
+            return <DashboardView appState={appState} switchView={setCurrentView} />;
+          case 'pipeline-ref':
+            return <PipelineReferenceView />;
+          case 'chaos-sim':
+            return <ChaosSimulatorView />;
           case 'weekly':
             return <WeeklyView appState={appState} />;
           case 'projects':

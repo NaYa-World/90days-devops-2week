@@ -334,5 +334,24 @@ Provide a comprehensive, senior-level performance evaluation in markdown format.
 Be supportive but strictly professional, candid, and direct. Avoid generic motivation; focus on technical readiness and engineering practices. Keep it under 450 words.`;
 
     return callAI(prompt, 1000);
+  },
+
+  async simulateK8sCommand(command: string, scenarioId: string): Promise<string> {
+    const prompt = `You are a Kubernetes control plane (kube-apiserver). 
+A user is taking a Kubernetes Chaos Simulator test and has executed the following command:
+\`${command}\`
+
+Current Scenario ID: ${scenarioId}
+
+Scenarios:
+1. "OOMKilled": The "payment-service" pod in "default" namespace is crashlooping due to OOMKilled.
+2. "BrokenIngress": The ingress for "frontend" namespace is routing to the wrong service port.
+3. "PendingPod": A pod in "kube-system" is stuck in Pending because there are no nodes with enough CPU.
+
+Based on the command and the current scenario, output ONLY the exact raw terminal output that kubectl would return. 
+Do not include markdown formatting like \`\`\`, do not include introductory text, do not explain. Just the exact CLI output.
+If the command is not a valid kubectl command or is completely unrelated, output standard bash error or kubectl error.`;
+
+    return callAI(prompt, 500);
   }
 };

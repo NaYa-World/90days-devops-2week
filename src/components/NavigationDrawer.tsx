@@ -108,6 +108,13 @@ export const NavigationDrawer: React.FC<NavigationDrawerProps> = ({
                 <span className="ham-ico">📊</span>Dashboard
               </button>
               <button
+                className={`ham-item ${currentView === 'pipeline-ref' ? 'active' : ''}`}
+                onClick={() => handleNavItemClick('pipeline-ref')}
+              >
+                <span className="ham-ico">🗺️</span>Pipeline Map
+                <span className="ham-badge hot">new</span>
+              </button>
+              <button
                 className={`ham-item ${currentView === 'qbank' ? 'active' : ''}`}
                 onClick={() => handleNavItemClick('qbank')}
               >
@@ -128,6 +135,13 @@ export const NavigationDrawer: React.FC<NavigationDrawerProps> = ({
                 }}
               >
                 <span className="ham-ico">⌨</span>Labs
+                <span className="ham-badge hot">new</span>
+              </button>
+              <button
+                className={`ham-item ${currentView === 'chaos-sim' ? 'active' : ''}`}
+                onClick={() => handleNavItemClick('chaos-sim')}
+              >
+                <span className="ham-ico">☸️</span>Chaos Sim
                 <span className="ham-badge hot">new</span>
               </button>
               <button
