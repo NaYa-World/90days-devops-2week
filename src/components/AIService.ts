@@ -65,8 +65,26 @@ export async function saveApiKey(key: string) {
 }
 
 export async function callAI(prompt: string, maxTokens: number = 1000): Promise<string> {
-  const provider = getActiveProvider();
-  const key = await getProviderKey(provider);
+  let provider = getActiveProvider();
+  let key = await getProviderKey(provider);
+
+  // Robust Fallback: If the user has a stored preference but NO key is configured for it,
+  // automatically try to fall back to ANY provider that is configured in the environment variables.
+  if (!key) {
+    if (import.meta.env.VITE_GEMINI_API_KEY) {
+      provider = 'gemini';
+      key = import.meta.env.VITE_GEMINI_API_KEY;
+    } else if (import.meta.env.VITE_OPENAI_API_KEY) {
+      provider = 'chatgpt';
+      key = import.meta.env.VITE_OPENAI_API_KEY;
+    } else if (import.meta.env.VITE_ANTHROPIC_API_KEY) {
+      provider = 'claude';
+      key = import.meta.env.VITE_ANTHROPIC_API_KEY;
+    } else if (import.meta.env.VITE_GROK_API_KEY) {
+      provider = 'grok';
+      key = import.meta.env.VITE_GROK_API_KEY;
+    }
+  }
 
   // Gemini is the only provider that natively supports browser-based CORS calls without strict SDK requirements.
   // For Claude, ChatGPT, and Grok, we must route the request through our backend proxy to avoid CORS blocks,
