@@ -27,6 +27,16 @@ export function setActiveProvider(provider: AIProvider) {
   localStorage.setItem(PROVIDER_STORAGE_KEY, provider);
 }
 
+export function formatProviderName(provider: AIProvider): string {
+  switch (provider) {
+    case 'claude': return 'Claude';
+    case 'chatgpt': return 'ChatGPT';
+    case 'gemini': return 'Gemini';
+    case 'grok': return 'Grok';
+    default: return 'AI';
+  }
+}
+
 export async function getProviderKey(provider: AIProvider): Promise<string> {
   if (provider === 'claude' && import.meta.env.VITE_ANTHROPIC_API_KEY) {
     return import.meta.env.VITE_ANTHROPIC_API_KEY;

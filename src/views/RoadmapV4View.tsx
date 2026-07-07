@@ -4,6 +4,7 @@ import type { UseAppStateReturnType } from '../hooks/useAppState';
 import confetti from 'canvas-confetti';
 import { ArtifactVerificationService } from '../components/ArtifactVerificationService';
 import { ApiKeySetupModal } from '../components/ApiKeySetupModal';
+import { getActiveProvider, formatProviderName } from '../components/AIService';
 
 import { DevOpsTutorPanel } from '../components/DevOpsTutorPanel';
 
@@ -604,7 +605,7 @@ export const RoadmapV4View: React.FC<RoadmapV4ViewProps> = ({ appState }) => {
                                       gap: '4px'
                                     }}
                                   >
-                                    🤖 Ask AI Mentor
+                                    🤖 Ask {formatProviderName(getActiveProvider())} Mentor
                                   </button>
                                   <button
                                     onClick={() => bulkMarkTasks(pi, di)}

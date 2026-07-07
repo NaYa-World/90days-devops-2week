@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { UseAppStateReturnType } from '../hooks/useAppState';
-import { AIService } from '../components/AIService';
+import { AIService, getActiveProvider, formatProviderName } from '../components/AIService';
 import { showToast } from '../components/Toast';
 import { ApiKeySetupModal } from '../components/ApiKeySetupModal';
 
@@ -377,7 +377,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ appState, switchVi
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '12px' }}>
           <div>
             <h4 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: '#fff' }}>
-              🤖 AI Mentor Evaluation & Feedback
+              🤖 {formatProviderName(getActiveProvider())} Mentor Evaluation & Feedback
             </h4>
             <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: '#8f9bb3' }}>
               Synthesizes your roadmap progress, streak, and quiz scores to offer actionable guidance.

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { AIService } from './AIService';
+import { AIService, getActiveProvider, formatProviderName } from './AIService';
 
 interface Message {
   id: string;
@@ -118,7 +118,7 @@ export const DevOpsTutorPanel: React.FC<DevOpsTutorPanelProps> = ({ isOpen, onCl
             justifyContent: 'center',
             fontSize: '14px'
           }}>🤖</div>
-          <span style={{ fontWeight: 600, color: '#e6edf3' }}>AI Mentor</span>
+          <span style={{ fontWeight: 600, color: '#e6edf3' }}>{formatProviderName(getActiveProvider())} Mentor</span>
         </div>
         <button 
           onClick={onClose}
