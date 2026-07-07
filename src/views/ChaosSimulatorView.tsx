@@ -1,215 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import styled from 'styled-components';
 import { AIService } from '../components/AIService';
-import { Terminal, RefreshCcw, AlertTriangle, CheckCircle2 } from 'lucide-react';
-
-const PageContainer = styled.div\`
-  padding: 24px;
-  max-width: 1200px;
-  margin: 0 auto;
-  color: #e8eaf0;
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-  height: calc(100vh - 80px);
-\`;
-
-const Header = styled.div\`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-\`;
-
-const Title = styled.h1\`
-  font-family: 'Syne', sans-serif;
-  font-size: 24px;
-  font-weight: 800;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  
-  .badge {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 11px;
-    font-weight: 600;
-    background: #ff5f5f22;
-    color: #ff5f5f;
-    padding: 4px 8px;
-    border-radius: 4px;
-    border: 1px solid #ff5f5f44;
-  }
-\`;
-
-const ScenarioCard = styled.div\`
-  background: #111318;
-  border: 1px solid #2a2d38;
-  border-radius: 12px;
-  padding: 20px;
-  
-  h3 {
-    margin-top: 0;
-    margin-bottom: 8px;
-    color: #e8eaf0;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  
-  p {
-    color: #7a7d8a;
-    font-size: 14px;
-    line-height: 1.6;
-    margin-bottom: 16px;
-  }
-  
-  .scenario-actions {
-    display: flex;
-    gap: 12px;
-  }
-  
-  select {
-    background: #1a1d25;
-    color: #e8eaf0;
-    border: 1px solid #3a3d4a;
-    padding: 8px 12px;
-    border-radius: 6px;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 13px;
-    outline: none;
-    
-    &:focus {
-      border-color: #7c6fff;
-    }
-  }
-  
-  button {
-    background: #1a1d25;
-    color: #e8eaf0;
-    border: 1px solid #3a3d4a;
-    padding: 8px 16px;
-    border-radius: 6px;
-    font-weight: 600;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    transition: all 0.2s;
-    
-    &:hover {
-      background: #2a2d38;
-    }
-    
-    &.primary {
-      background: #7c6fff;
-      border-color: #7c6fff;
-      
-      &:hover {
-        background: #6a5eee;
-      }
-    }
-  }
-\`;
-
-const TerminalContainer = styled.div\`
-  background: #0a0c10;
-  border: 1px solid #2a2d38;
-  border-radius: 12px;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-\`;
-
-const TerminalHeader = styled.div\`
-  background: #111318;
-  padding: 12px 16px;
-  border-bottom: 1px solid #2a2d38;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 12px;
-  color: #7a7d8a;
-  
-  .dots {
-    display: flex;
-    gap: 6px;
-    margin-right: 12px;
-    
-    span {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      background: #3a3d4a;
-      
-      &:nth-child(1) { background: #ff5f5f; }
-      &:nth-child(2) { background: #f5a623; }
-      &:nth-child(3) { background: #4cde8a; }
-    }
-  }
-\`;
-
-const TerminalBody = styled.div\`
-  padding: 16px;
-  flex: 1;
-  overflow-y: auto;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 14px;
-  line-height: 1.5;
-  color: #a0aabf;
-\`;
-
-const TerminalLine = styled.div\`
-  margin-bottom: 4px;
-  word-break: break-all;
-  white-space: pre-wrap;
-  
-  &.command {
-    color: #e8eaf0;
-    .prompt {
-      color: #2dd4a0;
-      margin-right: 8px;
-    }
-  }
-  
-  &.output {
-    color: #a0aabf;
-    margin-bottom: 12px;
-  }
-  
-  &.error {
-    color: #ff5f5f;
-    margin-bottom: 12px;
-  }
-  
-  &.system {
-    color: #7c6fff;
-    font-style: italic;
-    margin-bottom: 12px;
-  }
-\`;
-
-const InputRow = styled.form\`
-  display: flex;
-  align-items: center;
-  margin-top: 8px;
-  
-  .prompt {
-    color: #2dd4a0;
-    margin-right: 8px;
-  }
-  
-  input {
-    flex: 1;
-    background: transparent;
-    border: none;
-    color: #e8eaf0;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 14px;
-    outline: none;
-  }
-\`;
+import { ApiKeySetupModal } from '../components/ApiKeySetupModal';
 
 type HistoryEntry = {
   type: 'command' | 'output' | 'error' | 'system';
@@ -231,6 +22,7 @@ export const ChaosSimulatorView: React.FC = () => {
   ]);
   const [input, setInput] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [retryCommand, setRetryCommand] = useState<string | null>(null);
   
   const endOfTerminalRef = useRef<HTMLDivElement>(null);
   
@@ -240,7 +32,7 @@ export const ChaosSimulatorView: React.FC = () => {
   
   const handleStartScenario = () => {
     setHistory([
-      { type: 'system', content: \`Initializing scenario: \${scenarioId}...\` },
+      { type: 'system', content: `Initializing scenario: ${scenarioId}...` },
       { type: 'system', content: 'Alert received: An issue has been detected in the cluster.' },
       { type: 'system', content: 'Use kubectl to diagnose the problem.' }
     ]);
@@ -261,6 +53,10 @@ export const ChaosSimulatorView: React.FC = () => {
     
     setIsProcessing(true);
     
+    await executeCommand(cmd);
+  };
+  
+  const executeCommand = async (cmd: string) => {
     try {
       const output = await AIService.simulateK8sCommand(cmd, scenarioId);
       
@@ -268,62 +64,86 @@ export const ChaosSimulatorView: React.FC = () => {
         ...prev, 
         { type: output.toLowerCase().includes('error') ? 'error' : 'output', content: output }
       ]);
-    } catch (err) {
-      setHistory(prev => [...prev, { type: 'error', content: 'Simulator connection error. Please try again.' }]);
+    } catch (err: any) {
+      if (err.message === 'NO_API_KEY' || err.message?.includes('API key')) {
+        setRetryCommand(cmd);
+      } else {
+        setHistory(prev => [...prev, { type: 'error', content: 'Simulator connection error. Please try again.' }]);
+      }
     } finally {
       setIsProcessing(false);
     }
   };
 
   return (
-    <PageContainer>
-      <Header>
-        <Title>
-          <Terminal size={28} color="#7c6fff" />
+    <div style={{ padding: '24px', maxWidth: '1200px', margin: '0 auto', color: '#e8eaf0', display: 'flex', flexDirection: 'column', gap: '24px', height: 'calc(100vh - 80px)' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <h1 style={{ fontFamily: 'Syne, sans-serif', fontSize: '24px', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '12px', margin: 0 }}>
+          <span style={{ fontSize: '28px', color: '#7c6fff' }}>☸️</span>
           Kubernetes Chaos Simulator
-          <span className="badge">BETA</span>
-        </Title>
-      </Header>
+          <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '11px', fontWeight: 600, background: '#ff5f5f22', color: '#ff5f5f', padding: '4px 8px', borderRadius: '4px', border: '1px solid #ff5f5f44' }}>BETA</span>
+        </h1>
+      </div>
       
-      <ScenarioCard>
-        <h3><AlertTriangle size={18} color="#f5a623" /> Active Incident</h3>
-        <p>
+      <div style={{ background: '#111318', border: '1px solid #2a2d38', borderRadius: '12px', padding: '20px' }}>
+        <h3 style={{ marginTop: 0, marginBottom: '8px', color: '#e8eaf0', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span style={{ fontSize: '18px', color: '#f5a623' }}>⚠️</span> Active Incident
+        </h3>
+        <p style={{ color: '#7a7d8a', fontSize: '14px', lineHeight: '1.6', marginBottom: '16px' }}>
           You are the on-call engineer. PagerDuty just went off. A critical service in the cluster is failing. 
           Use the terminal below to diagnose the issue using standard <code>kubectl</code> commands. The cluster state is simulated via AI based on the scenario.
         </p>
-        <div className="scenario-actions">
+        <div style={{ display: 'flex', gap: '12px' }}>
           <select 
             value={scenarioId} 
             onChange={(e) => setScenarioId(e.target.value)}
             disabled={isProcessing}
+            style={{ background: '#1a1d25', color: '#e8eaf0', border: '1px solid #3a3d4a', padding: '8px 12px', borderRadius: '6px', fontFamily: 'JetBrains Mono, monospace', fontSize: '13px', outline: 'none' }}
           >
             {SCENARIOS.map(s => (
               <option key={s.id} value={s.id}>{s.name}</option>
             ))}
           </select>
-          <button onClick={handleStartScenario} disabled={isProcessing}>
-            <RefreshCcw size={14} /> Restart Scenario
+          <button 
+            onClick={handleStartScenario} 
+            disabled={isProcessing}
+            style={{ background: '#1a1d25', color: '#e8eaf0', border: '1px solid #3a3d4a', padding: '8px 16px', borderRadius: '6px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', transition: 'all 0.2s' }}
+          >
+            🔄 Restart Scenario
           </button>
         </div>
-      </ScenarioCard>
+      </div>
       
-      <TerminalContainer>
-        <TerminalHeader>
-          <div className="dots">
-            <span /><span /><span />
+      <div style={{ background: '#0a0c10', border: '1px solid #2a2d38', borderRadius: '12px', flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: '0 10px 30px rgba(0,0,0,0.5)' }}>
+        <div style={{ background: '#111318', padding: '12px 16px', borderBottom: '1px solid #2a2d38', display: 'flex', alignItems: 'center', gap: '8px', fontFamily: 'JetBrains Mono, monospace', fontSize: '12px', color: '#7a7d8a' }}>
+          <div style={{ display: 'flex', gap: '6px', marginRight: '12px' }}>
+            <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#ff5f5f' }} />
+            <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#f5a623' }} />
+            <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#4cde8a' }} />
           </div>
           kube-admin@cluster-ops
-        </TerminalHeader>
-        <TerminalBody onClick={() => document.getElementById('term-input')?.focus()}>
+        </div>
+        <div 
+          onClick={() => document.getElementById('term-input')?.focus()}
+          style={{ padding: '16px', flex: 1, overflowY: 'auto', fontFamily: 'JetBrains Mono, monospace', fontSize: '14px', lineHeight: '1.5', color: '#a0aabf' }}
+        >
           {history.map((entry, idx) => (
-            <TerminalLine key={idx} className={entry.type}>
-              {entry.type === 'command' && <span className="prompt">root@k8s:~$</span>}
+            <div key={idx} style={{
+              marginBottom: entry.type === 'command' ? '4px' : '12px',
+              wordBreak: 'break-all',
+              whiteSpace: 'pre-wrap',
+              color: entry.type === 'command' ? '#e8eaf0' : 
+                     entry.type === 'error' ? '#ff5f5f' : 
+                     entry.type === 'system' ? '#7c6fff' : '#a0aabf',
+              fontStyle: entry.type === 'system' ? 'italic' : 'normal'
+            }}>
+              {entry.type === 'command' && <span style={{ color: '#2dd4a0', marginRight: '8px' }}>root@k8s:~$</span>}
               {entry.content}
-            </TerminalLine>
+            </div>
           ))}
           
-          <InputRow onSubmit={handleSubmit}>
-            <span className="prompt">root@k8s:~$</span>
+          <form onSubmit={handleSubmit} style={{ display: 'flex', alignItems: 'center', marginTop: '8px' }}>
+            <span style={{ color: '#2dd4a0', marginRight: '8px' }}>root@k8s:~$</span>
             <input
               id="term-input"
               type="text"
@@ -333,14 +153,28 @@ export const ChaosSimulatorView: React.FC = () => {
               autoComplete="off"
               spellCheck="false"
               autoFocus
+              style={{ flex: 1, background: 'transparent', border: 'none', color: '#e8eaf0', fontFamily: 'JetBrains Mono, monospace', fontSize: '14px', outline: 'none' }}
             />
-          </InputRow>
+          </form>
           {isProcessing && (
-            <TerminalLine className="system">Executing command in simulated cluster...</TerminalLine>
+            <div style={{ color: '#7c6fff', fontStyle: 'italic', marginBottom: '12px' }}>Executing command in simulated cluster...</div>
           )}
           <div ref={endOfTerminalRef} />
-        </TerminalBody>
-      </TerminalContainer>
-    </PageContainer>
+        </div>
+      </div>
+      
+      <ApiKeySetupModal 
+        isOpen={!!retryCommand} 
+        onClose={() => setRetryCommand(null)} 
+        onSuccess={() => {
+          const cmd = retryCommand;
+          setRetryCommand(null);
+          if (cmd) {
+            setIsProcessing(true);
+            executeCommand(cmd);
+          }
+        }} 
+      />
+    </div>
   );
 };

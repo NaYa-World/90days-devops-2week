@@ -63,7 +63,7 @@ export const DevOpsTutorPanel: React.FC<DevOpsTutorPanelProps> = ({ isOpen, onCl
       
       setMessages([...newMessages, { id: (Date.now() + 1).toString(), role: 'assistant', content: response }]);
     } catch (err: any) {
-      if (err.message?.toLowerCase().includes('api key') || err.message?.toLowerCase().includes('configured')) {
+      if (err.message === 'NO_API_KEY' || err.message?.toLowerCase().includes('api key') || err.message?.toLowerCase().includes('configured')) {
         if (onRequestApiKey) {
           onRequestApiKey();
         }

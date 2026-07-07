@@ -3,6 +3,7 @@ import { QBANK } from '../data/qbank';
 import { UseAppStateReturnType } from '../hooks/useAppState';
 import { AIService } from '../components/AIService';
 import { showToast } from '../components/Toast';
+import { ApiKeySetupModal } from '../components/ApiKeySetupModal';
 
 interface MockInterviewViewProps {
   appState: UseAppStateReturnType;
@@ -35,6 +36,7 @@ export const MockInterviewView: React.FC<MockInterviewViewProps> = ({ appState, 
   const [gradeResult, setGradeResult] = useState<any | null>(null);
   const [isTimedOut, setIsTimedOut] = useState(false);
   const [showResults, setShowResults] = useState(false);
+  const [isApiKeyModalOpen, setIsApiKeyModalOpen] = useState(false);
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -108,18 +110,22 @@ export const MockInterviewView: React.FC<MockInterviewViewProps> = ({ appState, 
         answers: [...prev.answers, { q: q.q, cat: q.cat, score: result.score }]
       }));
     } catch (e: any) {
-      showToast(e.message || 'AI grading failed. Saving default grade.', 'var(--red)');
-      setGradeResult({
-        score: 50,
-        improvement: 'Failed to connect to Claude. Model answer is shown below.',
-        correct: [],
-        missing: [],
-        wrong: [],
-      });
-      setMock(prev => ({
-        ...prev,
-        answers: [...prev.answers, { q: q.q, cat: q.cat, score: 50 }]
-      }));
+      if (e.message === 'NO_API_KEY' || e.message?.includes('API key')) {
+        setIsApiKeyModalOpen(true);
+      } else {
+        showToast(e.message || 'AI grading failed. Saving default grade.', 'var(--red)');
+        setGradeResult({
+          score: 50,
+          improvement: 'Failed to connect to AI. Model answer is shown below.',
+          correct: [],
+          missing: [],
+          wrong: [],
+        });
+        setMock(prev => ({
+          ...prev,
+          answers: [...prev.answers, { q: q.q, cat: q.cat, score: 50 }]
+        }));
+      }
     } finally {
       setIsGrading(false);
     }
@@ -436,6 +442,15 @@ export const MockInterviewView: React.FC<MockInterviewViewProps> = ({ appState, 
           })()}
         </div>
       )}
+      
+      <ApiKeySetupModal 
+        isOpen={isApiKeyModalOpen} 
+        onClose={() => setIsApiKeyModalOpen(false)} 
+        onSuccess={() => {
+          setIsApiKeyModalOpen(false);
+          submitAnswer();
+        }} 
+      />
     </div>
   );
 };

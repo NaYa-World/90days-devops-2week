@@ -5,6 +5,7 @@ import { AIService } from '../components/AIService';
 import { showToast } from '../components/Toast';
 import { Capacitor } from '@capacitor/core';
 import { Haptics, ImpactStyle, NotificationType } from '@capacitor/haptics';
+import { ApiKeySetupModal } from '../components/ApiKeySetupModal';
 
 
 const getSTARQuestion = (day: { id: string; title: string }): string => {
@@ -56,6 +57,8 @@ export const FocusView: React.FC<FocusViewProps> = ({
 
   const [pi, setPi] = useState(0);
   const [di, setDi] = useState(0);
+  const [showNotesModal, setShowNotesModal] = useState(false);
+  const [retryAction, setRetryAction] = useState<(() => void) | null>(null);
   const [starRevealed, setStarRevealed] = useState(false);
 
   // Sync state when focusDay prop changes
@@ -528,7 +531,11 @@ const AIBriefWidget: React.FC<AIBriefWidgetProps> = ({
       const text = await AIService.generateDailyBrief(day, label, phaseTitle, tasksText, note);
       setBrief(text);
     } catch (e: any) {
-      setBrief(`⚠ Error: ${e.message || 'Could not connect. Configure your Anthropic Key.'}`);
+      if (e.message === 'NO_API_KEY' || e.message?.includes('API key')) {
+        setRetryAction(() => handleGenerateBrief);
+      } else {
+        setBrief(`⚠ Error: ${e.message || 'Could not connect. Configure your Anthropic Key.'}`);
+      }
     } finally {
       setLoadingBrief(false);
     }
@@ -543,7 +550,11 @@ const AIBriefWidget: React.FC<AIBriefWidgetProps> = ({
       const q = await AIService.generateQuiz(label, tasksText);
       setQuiz(q);
     } catch (e: any) {
-      showToast(`⚠ Quiz Error: ${e.message || 'Failed to generate.'}`, 'var(--red)');
+      if (e.message === 'NO_API_KEY' || e.message?.includes('API key')) {
+        setRetryAction(() => handleGenerateQuiz);
+      } else {
+        showToast(`⚠ Quiz Error: ${e.message || 'Failed to generate.'}`, 'var(--red)');
+      }
     } finally {
       setLoadingQuiz(false);
     }
@@ -663,6 +674,16 @@ const AIBriefWidget: React.FC<AIBriefWidgetProps> = ({
           )}
         </div>
       )}
+      
+      <ApiKeySetupModal 
+        isOpen={!!retryAction} 
+        onClose={() => setRetryAction(null)} 
+        onSuccess={() => {
+          const action = retryAction;
+          setRetryAction(null);
+          if (action) action();
+        }} 
+      />
     </div>
   );
 };
