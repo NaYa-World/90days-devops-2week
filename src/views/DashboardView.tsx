@@ -1,91 +1,10 @@
 import React, { useState } from 'react';
+import { SimpleMarkdown } from '../components/SimpleMarkdown';
 import { UseAppStateReturnType } from '../hooks/useAppState';
 import { AIService, getActiveProvider, formatProviderName } from '../components/AIService';
 import { showToast } from '../components/Toast';
 import { ApiKeySetupModal } from '../components/ApiKeySetupModal';
 
-// A simple local Markdown renderer to avoid installing external packages
-const SimpleMarkdown: React.FC<{ text: string }> = ({ text }) => {
-  const lines = text.split('\n');
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-      {lines.map((line, idx) => {
-        let trimmed = line.trim();
-        if (!trimmed) return <div key={idx} style={{ height: '4px' }} />;
-        
-        // Headers
-        if (trimmed.startsWith('### ')) {
-          return <h4 key={idx} style={{ margin: '8px 0 4px 0', fontSize: '14px', fontWeight: 700, color: '#fff' }}>{trimmed.replace('### ', '')}</h4>;
-        }
-        if (trimmed.startsWith('## ')) {
-          return <h3 key={idx} style={{ margin: '12px 0 6px 0', fontSize: '16px', fontWeight: 700, color: '#fff' }}>{trimmed.replace('## ', '')}</h3>;
-        }
-        if (trimmed.startsWith('# ')) {
-          return <h2 key={idx} style={{ margin: '16px 0 8px 0', fontSize: '18px', fontWeight: 800, color: '#fff' }}>{trimmed.replace('# ', '')}</h2>;
-        }
-
-        // List items
-        if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
-          const content = trimmed.substring(2);
-          return (
-            <li key={idx} style={{ marginLeft: '16px', fontSize: '13px', color: '#d1d5db', listStyleType: 'disc' }}>
-              {renderBoldAndCodeText(content)}
-            </li>
-          );
-        }
-        
-        // Numbered list
-        const numMatch = trimmed.match(/^(\d+)\.\s(.*)/);
-        if (numMatch) {
-          return (
-            <div key={idx} style={{ display: 'flex', gap: '6px', marginLeft: '8px', fontSize: '13px', color: '#d1d5db' }}>
-              <span style={{ fontWeight: 700, color: '#7c6fff' }}>{numMatch[1]}.</span>
-              <span>{renderBoldAndCodeText(numMatch[2])}</span>
-            </div>
-          );
-        }
-
-        return <p key={idx} style={{ margin: 0, fontSize: '13px', color: '#d1d5db', lineHeight: '1.6' }}>{renderBoldAndCodeText(trimmed)}</p>;
-      })}
-    </div>
-  );
-};
-
-// Helper to replace **bold** and `code` with React elements
-function renderBoldAndCodeText(text: string) {
-  const boldParts = text.split(/\*\*(.*?)\*\*/g);
-  return boldParts.map((boldPart, i) => {
-    const isBold = i % 2 === 1;
-    
-    const codeParts = boldPart.split(/`(.*?)`/g);
-    const content = codeParts.map((codePart, j) => {
-      const isCode = j % 2 === 1;
-      if (isCode) {
-        return (
-          <code 
-            key={j} 
-            style={{ 
-              fontFamily: 'monospace', 
-              background: 'rgba(255,255,255,0.08)', 
-              padding: '2px 4px', 
-              borderRadius: '4px',
-              color: '#38bdf8',
-              fontSize: '11px'
-            }}
-          >
-            {codePart}
-          </code>
-        );
-      }
-      return codePart;
-    });
-
-    if (isBold) {
-      return <strong key={i} style={{ fontWeight: 700, color: '#fff' }}>{content}</strong>;
-    }
-    return <React.Fragment key={i}>{content}</React.Fragment>;
-  });
-}
 
 interface DashboardViewProps {
   appState: UseAppStateReturnType;

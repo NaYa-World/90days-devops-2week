@@ -7,7 +7,8 @@ import { ApiKeySetupModal } from '../components/ApiKeySetupModal';
 import { getActiveProvider, formatProviderName } from '../components/AIService';
 
 import { DevOpsTutorPanel } from '../components/DevOpsTutorPanel';
-
+import { v4NotesData } from '../data/v4-notes';
+import { SimpleMarkdown } from '../components/SimpleMarkdown';
 // Optimized React.memo component to prevent massive Virtual DOM re-renders
 const TaskRow = React.memo(({ task, isDone, onToggle }: { task: string, isDone: boolean, onToggle: () => void }) => (
   <div
@@ -99,6 +100,7 @@ export const RoadmapV4View: React.FC<RoadmapV4ViewProps> = ({ appState }) => {
   
   const [tutorOpen, setTutorOpen] = useState(false);
   const [tutorContext, setTutorContext] = useState<any>(null);
+  const [selectedNotesDay, setSelectedNotesDay] = useState<string | null>(null);
 
   // URL validation helper
   const isValidUrl = (url: string): boolean => {
@@ -607,6 +609,23 @@ export const RoadmapV4View: React.FC<RoadmapV4ViewProps> = ({ appState }) => {
                                   >
                                     🤖 Ask {formatProviderName(getActiveProvider())} Mentor
                                   </button>
+                                  {v4NotesData[day.id] && (
+                                    <button
+                                      onClick={() => setSelectedNotesDay(day.id)}
+                                      style={{
+                                        fontSize: '9px',
+                                        fontWeight: 700,
+                                        color: '#34d399',
+                                        border: '1px solid rgba(52,211,153,0.2)',
+                                        background: 'transparent',
+                                        padding: '2px 6px',
+                                        borderRadius: '4px',
+                                        cursor: 'pointer',
+                                      }}
+                                    >
+                                      📖 View Notes
+                                    </button>
+                                  )}
                                   <button
                                     onClick={() => bulkMarkTasks(pi, di)}
                                     style={{
@@ -902,6 +921,64 @@ export const RoadmapV4View: React.FC<RoadmapV4ViewProps> = ({ appState }) => {
         taskContext={tutorContext}
         onRequestApiKey={() => setShowApiKeyModal(true)}
       />
+
+      {/* Bootcamp Notes Modal */}
+      {selectedNotesDay && (
+        <div style={{
+          position: 'fixed',
+          top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.8)',
+          zIndex: 1000,
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          backdropFilter: 'blur(5px)'
+        }}>
+          <div style={{
+            background: '#141520',
+            width: '90%',
+            maxWidth: '800px',
+            maxHeight: '85vh',
+            borderRadius: '12px',
+            border: '1px solid rgba(255,255,255,0.1)',
+            display: 'flex',
+            flexDirection: 'column',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
+          }}>
+            <div style={{
+              padding: '16px 20px',
+              borderBottom: '1px solid rgba(255,255,255,0.1)',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
+            }}>
+              <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: '#fff' }}>
+                Bootcamp Notes
+              </h3>
+              <button 
+                onClick={() => setSelectedNotesDay(null)}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: '#9ca3af',
+                  cursor: 'pointer',
+                  fontSize: '20px',
+                  padding: '4px'
+                }}
+              >
+                ×
+              </button>
+            </div>
+            <div style={{
+              padding: '20px',
+              overflowY: 'auto',
+              flex: 1
+            }}>
+              <SimpleMarkdown text={v4NotesData[selectedNotesDay]} />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
