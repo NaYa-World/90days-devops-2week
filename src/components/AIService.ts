@@ -69,21 +69,23 @@ export async function callAI(prompt: string, maxTokens: number = 1000): Promise<
   let key = await getProviderKey(provider);
 
   // Robust Fallback: If the user has a stored preference but NO key is configured for it,
-  // automatically try to fall back to ANY provider that is configured in the environment variables.
+  // automatically try to fall back to ANY provider that is configured in the environment variables or secure storage.
   if (!key) {
-    if (import.meta.env.VITE_GEMINI_API_KEY) {
-      provider = 'gemini';
-      key = import.meta.env.VITE_GEMINI_API_KEY;
-    } else if (import.meta.env.VITE_OPENAI_API_KEY) {
-      provider = 'chatgpt';
-      key = import.meta.env.VITE_OPENAI_API_KEY;
-    } else if (import.meta.env.VITE_ANTHROPIC_API_KEY) {
-      provider = 'claude';
-      key = import.meta.env.VITE_ANTHROPIC_API_KEY;
-    } else if (import.meta.env.VITE_GROK_API_KEY) {
-      provider = 'grok';
-      key = import.meta.env.VITE_GROK_API_KEY;
+    const providers: AIProvider[] = ['claude', 'gemini', 'chatgpt', 'grok'];
+    for (const p of providers) {
+      const pKey = await getProviderKey(p);
+      if (pKey) {
+        provider = p;
+        key = pKey;
+        // Auto-update the active provider so we stick to the working one
+        setActiveProvider(p);
+        break;
+      }
     }
+  }
+
+  if (!key) {
+    throw new Error('NO_API_KEY');
   }
 
   // Gemini is the only provider that natively supports browser-based CORS calls without strict SDK requirements.

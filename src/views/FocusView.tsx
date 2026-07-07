@@ -57,8 +57,7 @@ export const FocusView: React.FC<FocusViewProps> = ({
 
   const [pi, setPi] = useState(0);
   const [di, setDi] = useState(0);
-  const [showNotesModal, setShowNotesModal] = useState(false);
-  const [retryAction, setRetryAction] = useState<(() => void) | null>(null);
+
   const [starRevealed, setStarRevealed] = useState(false);
 
   // Sync state when focusDay prop changes
@@ -515,6 +514,7 @@ const AIBriefWidget: React.FC<AIBriefWidgetProps> = ({
   const [quiz, setQuiz] = useState<QuizState | null>(null);
   const [loadingQuiz, setLoadingQuiz] = useState(false);
   const [selectedOpt, setSelectedOpt] = useState<number | null>(null);
+  const [retryAction, setRetryAction] = useState<(() => void) | null>(null);
 
   // Reset widget when day changes
   useEffect(() => {
@@ -687,5 +687,4 @@ const AIBriefWidget: React.FC<AIBriefWidgetProps> = ({
     </div>
   );
 };
-
 export default FocusView;

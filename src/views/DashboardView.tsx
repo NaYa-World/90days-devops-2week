@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { UseAppStateReturnType } from '../hooks/useAppState';
 import { AIService } from '../components/AIService';
 import { showToast } from '../components/Toast';
+import { ApiKeySetupModal } from '../components/ApiKeySetupModal';
 
 // A simple local Markdown renderer to avoid installing external packages
 const SimpleMarkdown: React.FC<{ text: string }> = ({ text }) => {
@@ -105,6 +106,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ appState, switchVi
   } = appState;
 
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isApiKeyModalOpen, setIsApiKeyModalOpen] = useState(false);
 
   const levelInfo = getLevelInfo();
   const readiness = readinessScore();
@@ -136,7 +138,11 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ appState, switchVi
       saveDashboardFeedback(feedback);
       showToast('✓ AI Feedback updated and auto-saved!', 'rgba(0,217,160,.1)');
     } catch (err: any) {
-      showToast(err.message || 'Failed to generate feedback', 'var(--red)');
+      if (err.message === 'NO_API_KEY' || err.message?.includes('API key')) {
+        setIsApiKeyModalOpen(true);
+      } else {
+        showToast(err.message || 'Failed to generate feedback', 'var(--red)');
+      }
     } finally {
       setIsGenerating(false);
     }
@@ -314,6 +320,15 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ appState, switchVi
           </button>
         </div>
       </div>
+      
+      <ApiKeySetupModal 
+        isOpen={isApiKeyModalOpen} 
+        onClose={() => setIsApiKeyModalOpen(false)} 
+        onSuccess={() => {
+          setIsApiKeyModalOpen(false);
+          handleGenerateFeedback();
+        }} 
+      />
 
       {/* Heatmap Card */}
       <div style={{ 

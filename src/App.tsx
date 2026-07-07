@@ -32,6 +32,7 @@ import { showToast } from './components/Toast';
 
 import { AppViews } from './components/AppViews';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { Analytics } from "@vercel/analytics/react";
 
 export const App: React.FC = () => {
   const appState = useAppState();
@@ -775,6 +776,7 @@ export const App: React.FC = () => {
         onClose={() => setIsChallengeOpen(false)}
         challengeWeekday={challengeWeekday}
       />
+      <Analytics />
     </div>
   );
 };

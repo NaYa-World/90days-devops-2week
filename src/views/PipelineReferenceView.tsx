@@ -1,7 +1,4 @@
 import React, { useState } from 'react';
-import styled from 'styled-components';
-import { motion, AnimatePresence } from 'framer-motion';
-import { X } from 'lucide-react';
 
 const PIPELINE_DATA: Record<string, any> = {
   'developer': {
@@ -481,11 +478,13 @@ const PIPELINE_DATA: Record<string, any> = {
   }
 };
 
-const PageContainer = styled.div\`
-  padding: 24px;
-  max-width: 1200px;
-  margin: 0 auto;
-  color: #e8eaf0;
+const STYLES = `
+  .page-container {
+    padding: 24px;
+    max-width: 1200px;
+    margin: 0 auto;
+    color: #e8eaf0;
+  }
   
   .hint {
     padding: 12px 16px;
@@ -499,61 +498,66 @@ const PageContainer = styled.div\`
     display: flex;
     align-items: center;
     gap: 8px;
-    
-    b { color: #2dd4a0; }
   }
+  
+  .hint b { color: #2dd4a0; }
 
-  /* SVG node styles */
   .node-group {
     cursor: pointer;
-    rect, circle {
-      transition: filter 0.15s ease, stroke 0.15s ease;
-    }
-    &:hover rect, &:hover circle {
-      filter: brightness(1.3);
-      stroke-width: 1.5;
-    }
-    &:active rect, &:active circle {
-      filter: brightness(1.6);
-    }
   }
-\`;
+  .node-group rect, .node-group circle {
+    transition: filter 0.15s ease, stroke 0.15s ease;
+  }
+  .node-group:hover rect, .node-group:hover circle {
+    filter: brightness(1.3);
+    stroke-width: 1.5;
+  }
+  .node-group:active rect, .node-group:active circle {
+    filter: brightness(1.6);
+  }
 
-const CanvasWrapper = styled.div\`
-  overflow-x: auto;
-  background: #0a0c10;
-  border-radius: 12px;
-  border: 1px solid #2a2d38;
-  padding: 40px 24px;
+  .canvas-wrapper {
+    overflow-x: auto;
+    background: #0a0c10;
+    border-radius: 12px;
+    border: 1px solid #2a2d38;
+    padding: 40px 24px;
+  }
 
-  svg {
+  .canvas-wrapper svg {
     display: block;
     width: 100%;
     max-width: 760px;
     margin: 0 auto;
   }
-\`;
 
-const SheetOverlay = styled(motion.div)\`
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.55);
-  z-index: 1000;
-  backdrop-filter: blur(3px);
-\`;
+  .sheet-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.55);
+    z-index: 1000;
+    backdrop-filter: blur(3px);
+  }
 
-const SheetContainer = styled(motion.div)\`
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: #111318;
-  border-top: 1px solid #3a3d4a;
-  border-radius: 20px 20px 0 0;
-  z-index: 1001;
-  max-height: 85vh;
-  overflow-y: auto;
-  padding-bottom: env(safe-area-inset-bottom, 24px);
+  .sheet-container {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: #111318;
+    border-top: 1px solid #3a3d4a;
+    border-radius: 20px 20px 0 0;
+    z-index: 1001;
+    max-height: 85vh;
+    overflow-y: auto;
+    padding-bottom: env(safe-area-inset-bottom, 24px);
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    transform: translateY(100%);
+  }
+  
+  .sheet-container.open {
+    transform: translateY(0);
+  }
 
   .sheet-handle {
     width: 40px; height: 4px;
@@ -601,123 +605,123 @@ const SheetContainer = styled(motion.div)\`
     display: flex; align-items: center; justify-content: center;
     cursor: pointer;
     transition: background 0.15s, color 0.15s;
-    
-    &:hover {
-      background: #2a2d38;
-      color: #e8eaf0;
-    }
+  }
+  
+  .sheet-close:hover {
+    background: #2a2d38;
+    color: #e8eaf0;
   }
 
   .sheet-body {
     padding: 24px 28px;
-    
-    .block {
-      margin-bottom: 24px;
-    }
-    .block-label {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 10px;
-      letter-spacing: 0.12em;
-      color: #7a7d8a;
-      text-transform: uppercase;
-      margin-bottom: 8px;
-    }
-    p {
-      font-size: 15px;
-      line-height: 1.7;
-      color: #c8cad4;
-    }
-    p + p { margin-top: 10px; }
-    
-    .highlight-box {
-      background: #1a1d25;
-      border: 1px solid #2a2d38;
-      border-left: 3px solid #2dd4a0;
-      border-radius: 0 8px 8px 0;
-      padding: 14px 16px;
-      margin: 16px 0;
-      font-size: 14px;
-      line-height: 1.6;
-      color: #c8cad4;
-      
-      &.warn { border-left-color: #f5a623; }
-      &.danger { border-left-color: #ff5f5f; }
-      &.info { border-left-color: #4fa3e8; }
-      &.purple { border-left-color: #7c6fff; }
-    }
-    
-    .tag-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-top: 12px;
-    }
-    .tag {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 11px;
-      padding: 4px 10px;
-      border-radius: 4px;
-      border: 1px solid;
-      
-      &.purple { color: #7c6fff; border-color: #7c6fff44; background: #7c6fff11; }
-      &.teal { color: #2dd4a0; border-color: #2dd4a044; background: #2dd4a011; }
-      &.amber { color: #f5a623; border-color: #f5a62344; background: #f5a62311; }
-      &.red { color: #ff5f5f; border-color: #ff5f5f44; background: #ff5f5f11; }
-      &.green { color: #4cde8a; border-color: #4cde8a44; background: #4cde8a11; }
-      &.blue { color: #4fa3e8; border-color: #4fa3e844; background: #4fa3e811; }
-    }
-    
-    .mini-flow {
-      display: flex;
-      align-items: center;
-      gap: 0;
-      flex-wrap: wrap;
-      margin: 14px 0;
-      row-gap: 8px;
-      
-      .flow-step {
-        background: #1a1d25;
-        border: 1px solid #2a2d38;
-        border-radius: 6px;
-        padding: 7px 14px;
-        font-size: 13px;
-        font-family: 'JetBrains Mono', monospace;
-        white-space: nowrap;
-      }
-      .flow-arrow {
-        color: #7a7d8a;
-        padding: 0 6px;
-        font-size: 14px;
-      }
-    }
-
-    .compare {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 13px;
-      margin: 14px 0;
-      
-      th {
-        text-align: left;
-        padding: 8px 12px;
-        background: #1a1d25;
-        border: 1px solid #2a2d38;
-        font-family: 'JetBrains Mono', monospace;
-        font-size: 11px;
-        color: #7a7d8a;
-        letter-spacing: 0.06em;
-      }
-      td {
-        padding: 10px 12px;
-        border: 1px solid #2a2d38;
-        color: #c8cad4;
-        vertical-align: top;
-        line-height: 1.5;
-      }
-      tr:nth-child(even) td { background: #1a1d25; }
-    }
   }
-\`;
+  
+  .sheet-body .block {
+    margin-bottom: 24px;
+  }
+  .sheet-body .block-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    color: #7a7d8a;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .sheet-body p {
+    font-size: 15px;
+    line-height: 1.7;
+    color: #c8cad4;
+  }
+  .sheet-body p + p { margin-top: 10px; }
+  
+  .sheet-body .highlight-box {
+    background: #1a1d25;
+    border: 1px solid #2a2d38;
+    border-left: 3px solid #2dd4a0;
+    border-radius: 0 8px 8px 0;
+    padding: 14px 16px;
+    margin: 16px 0;
+    font-size: 14px;
+    line-height: 1.6;
+    color: #c8cad4;
+  }
+  
+  .sheet-body .highlight-box.warn { border-left-color: #f5a623; }
+  .sheet-body .highlight-box.danger { border-left-color: #ff5f5f; }
+  .sheet-body .highlight-box.info { border-left-color: #4fa3e8; }
+  .sheet-body .highlight-box.purple { border-left-color: #7c6fff; }
+  
+  .sheet-body .tag-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+  }
+  .sheet-body .tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 4px;
+    border: 1px solid;
+  }
+  
+  .sheet-body .tag.purple { color: #7c6fff; border-color: #7c6fff44; background: #7c6fff11; }
+  .sheet-body .tag.teal { color: #2dd4a0; border-color: #2dd4a044; background: #2dd4a011; }
+  .sheet-body .tag.amber { color: #f5a623; border-color: #f5a62344; background: #f5a62311; }
+  .sheet-body .tag.red { color: #ff5f5f; border-color: #ff5f5f44; background: #ff5f5f11; }
+  .sheet-body .tag.green { color: #4cde8a; border-color: #4cde8a44; background: #4cde8a11; }
+  .sheet-body .tag.blue { color: #4fa3e8; border-color: #4fa3e844; background: #4fa3e811; }
+  
+  .sheet-body .mini-flow {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    flex-wrap: wrap;
+    margin: 14px 0;
+    row-gap: 8px;
+  }
+  
+  .sheet-body .mini-flow .flow-step {
+    background: #1a1d25;
+    border: 1px solid #2a2d38;
+    border-radius: 6px;
+    padding: 7px 14px;
+    font-size: 13px;
+    font-family: 'JetBrains Mono', monospace;
+    white-space: nowrap;
+  }
+  .sheet-body .mini-flow .flow-arrow {
+    color: #7a7d8a;
+    padding: 0 6px;
+    font-size: 14px;
+  }
+
+  .sheet-body .compare {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    margin: 14px 0;
+  }
+  
+  .sheet-body .compare th {
+    text-align: left;
+    padding: 8px 12px;
+    background: #1a1d25;
+    border: 1px solid #2a2d38;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: #7a7d8a;
+    letter-spacing: 0.06em;
+  }
+  .sheet-body .compare td {
+    padding: 10px 12px;
+    border: 1px solid #2a2d38;
+    color: #c8cad4;
+    vertical-align: top;
+    line-height: 1.5;
+  }
+  .sheet-body .compare tr:nth-child(even) td { background: #1a1d25; }
+`;
 
 export const PipelineReferenceView: React.FC = () => {
   const [activeNode, setActiveNode] = useState<string | null>(null);
@@ -725,12 +729,13 @@ export const PipelineReferenceView: React.FC = () => {
   const selectedData = activeNode ? PIPELINE_DATA[activeNode] : null;
 
   return (
-    <PageContainer>
+    <div className="page-container">
+      <style>{STYLES}</style>
       <div className="hint">
         <span>💡</span> <b>Tap any node</b> in the diagram to open a detailed explanation with examples
       </div>
 
-      <CanvasWrapper>
+      <div className="canvas-wrapper">
         <svg className="pipeline-svg" viewBox="0 0 740 860" xmlns="http://www.w3.org/2000/svg">
           <defs>
             <marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
@@ -894,55 +899,43 @@ export const PipelineReferenceView: React.FC = () => {
           </g>
           <path d="M164 496 L180 496" fill="none" stroke="#534ab7" strokeWidth="0.8" strokeDasharray="3 2" markerEnd="url(#arr)"/>
         </svg>
-      </CanvasWrapper>
+      </div>
 
-      <AnimatePresence>
-        {activeNode && selectedData && (
-          <>
-            <SheetOverlay
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setActiveNode(null)}
-            />
-            <SheetContainer
-              initial={{ y: '100%' }}
-              animate={{ y: 0 }}
-              exit={{ y: '100%' }}
-              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            >
-              <div className="sheet-handle" />
-              <div className="sheet-header">
-                <div 
-                  className="sheet-icon" 
-                  style={{ background: selectedData.iconBg, border: \`1px solid \${selectedData.iconBorder}\` }}
-                >
-                  {selectedData.icon}
+      {activeNode && selectedData && (
+        <>
+          <div
+            className="sheet-overlay"
+            onClick={() => setActiveNode(null)}
+          />
+          <div className="sheet-container open">
+            <div className="sheet-handle" />
+            <div className="sheet-header">
+              <div 
+                className="sheet-icon" 
+                style={{ background: selectedData.iconBg, border: `1px solid ${selectedData.iconBorder}` }}
+              >
+                {selectedData.icon}
+              </div>
+              <div>
+                <div className="sheet-title" style={{ color: selectedData.color }}>
+                  {selectedData.title}
                 </div>
-                <div>
-                  <div className="sheet-title" style={{ color: selectedData.color }}>
-                    {selectedData.title}
-                  </div>
-                  <div className="sheet-subtitle">
-                    {selectedData.subtitle}
-                  </div>
-                </div>
-                <div className="sheet-close" onClick={() => setActiveNode(null)}>
-                  <X size={18} />
+                <div className="sheet-subtitle">
+                  {selectedData.subtitle}
                 </div>
               </div>
-              
-              {/* Note: In a real app we'd parse this cleanly or use MDX, 
-                  but for this direct port we can dangerouslySetInnerHTML 
-                  since the data is static and trusted. */}
-              <div 
-                className="sheet-body"
-                dangerouslySetInnerHTML={{ __html: selectedData.body }} 
-              />
-            </SheetContainer>
-          </>
-        )}
-      </AnimatePresence>
-    </PageContainer>
+              <div className="sheet-close" onClick={() => setActiveNode(null)}>
+                <span style={{ fontSize: '18px' }}>×</span>
+              </div>
+            </div>
+            
+            <div 
+              className="sheet-body"
+              dangerouslySetInnerHTML={{ __html: selectedData.body }} 
+            />
+          </div>
+        </>
+      )}
+    </div>
   );
 };
