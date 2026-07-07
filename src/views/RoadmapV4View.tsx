@@ -5,6 +5,8 @@ import confetti from 'canvas-confetti';
 import { ArtifactVerificationService } from '../components/ArtifactVerificationService';
 import { ApiKeySetupModal } from '../components/ApiKeySetupModal';
 
+import { DevOpsTutorPanel } from '../components/DevOpsTutorPanel';
+
 // Optimized React.memo component to prevent massive Virtual DOM re-renders
 const TaskRow = React.memo(({ task, isDone, onToggle }: { task: string, isDone: boolean, onToggle: () => void }) => (
   <div
@@ -93,6 +95,9 @@ export const RoadmapV4View: React.FC<RoadmapV4ViewProps> = ({ appState }) => {
   const [verificationStatus, setVerificationStatus] = useState<Record<string, { status: 'idle' | 'loading' | 'verified' | 'rejected', message?: string }>>({});
   const [showApiKeyModal, setShowApiKeyModal] = useState(false);
   const [pendingVerifyParams, setPendingVerifyParams] = useState<{pi: number, di: number, url: string, instruction: string, scenario: string} | null>(null);
+  
+  const [tutorOpen, setTutorOpen] = useState(false);
+  const [tutorContext, setTutorContext] = useState<any>(null);
 
   // URL validation helper
   const isValidUrl = (url: string): boolean => {
@@ -579,21 +584,44 @@ export const RoadmapV4View: React.FC<RoadmapV4ViewProps> = ({ appState }) => {
                                 <div style={{ fontSize: '11px', color: '#38bdf8', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.5px' }}>
                                   📋 Execution Checklist
                                 </div>
-                                <button
-                                  onClick={() => bulkMarkTasks(pi, di)}
-                                  style={{
-                                    fontSize: '9px',
-                                    fontWeight: 700,
-                                    color: '#38bdf8',
-                                    border: '1px solid rgba(56,189,248,0.2)',
-                                    background: 'transparent',
-                                    padding: '2px 6px',
-                                    borderRadius: '4px',
-                                    cursor: 'pointer',
-                                  }}
-                                >
-                                  Check All
-                                </button>
+                                <div style={{ display: 'flex', gap: '8px' }}>
+                                  <button
+                                    onClick={() => {
+                                      setTutorContext(day);
+                                      setTutorOpen(true);
+                                    }}
+                                    style={{
+                                      fontSize: '9px',
+                                      fontWeight: 700,
+                                      color: '#000',
+                                      border: 'none',
+                                      background: 'var(--green)',
+                                      padding: '2px 8px',
+                                      borderRadius: '4px',
+                                      cursor: 'pointer',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      gap: '4px'
+                                    }}
+                                  >
+                                    🤖 Ask AI Mentor
+                                  </button>
+                                  <button
+                                    onClick={() => bulkMarkTasks(pi, di)}
+                                    style={{
+                                      fontSize: '9px',
+                                      fontWeight: 700,
+                                      color: '#38bdf8',
+                                      border: '1px solid rgba(56,189,248,0.2)',
+                                      background: 'transparent',
+                                      padding: '2px 6px',
+                                      borderRadius: '4px',
+                                      cursor: 'pointer',
+                                    }}
+                                  >
+                                    Check All
+                                  </button>
+                                </div>
                               </div>
                               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                                 {day.tasks.map((task, ti) => {
@@ -865,6 +893,13 @@ export const RoadmapV4View: React.FC<RoadmapV4ViewProps> = ({ appState }) => {
             setPendingVerifyParams(null);
           }
         }}
+      />
+      
+      <DevOpsTutorPanel
+        isOpen={tutorOpen}
+        onClose={() => setTutorOpen(false)}
+        taskContext={tutorContext}
+        onRequestApiKey={() => setShowApiKeyModal(true)}
       />
     </div>
   );

@@ -11,7 +11,16 @@ export const KEYS_STORAGE_KEYS: Record<AIProvider, string> = {
 };
 
 export function getActiveProvider(): AIProvider {
-  return (localStorage.getItem(PROVIDER_STORAGE_KEY) as AIProvider) || 'claude';
+  const stored = localStorage.getItem(PROVIDER_STORAGE_KEY) as AIProvider;
+  if (stored) return stored;
+
+  // Auto-detect default provider based on configured environment variables
+  if (import.meta.env.VITE_GEMINI_API_KEY) return 'gemini';
+  if (import.meta.env.VITE_OPENAI_API_KEY) return 'chatgpt';
+  if (import.meta.env.VITE_ANTHROPIC_API_KEY) return 'claude';
+  if (import.meta.env.VITE_GROK_API_KEY) return 'grok';
+
+  return 'claude';
 }
 
 export function setActiveProvider(provider: AIProvider) {
@@ -56,8 +65,28 @@ export async function saveApiKey(key: string) {
 }
 
 export async function callAI(prompt: string, maxTokens: number = 1000): Promise<string> {
-  const provider = getActiveProvider();
-  const key = await getProviderKey(provider);
+  let provider = getActiveProvider();
+  let key = await getProviderKey(provider);
+
+  // Robust Fallback: If the user has a stored preference but NO key is configured for it,
+  // automatically try to fall back to ANY provider that is configured in the environment variables or secure storage.
+  if (!key) {
+    const providers: AIProvider[] = ['claude', 'gemini', 'chatgpt', 'grok'];
+    for (const p of providers) {
+      const pKey = await getProviderKey(p);
+      if (pKey) {
+        provider = p;
+        key = pKey;
+        // Auto-update the active provider so we stick to the working one
+        setActiveProvider(p);
+        break;
+      }
+    }
+  }
+
+  if (!key) {
+    throw new Error('NO_API_KEY');
+  }
 
   // Gemini is the only provider that natively supports browser-based CORS calls without strict SDK requirements.
   // For Claude, ChatGPT, and Grok, we must route the request through our backend proxy to avoid CORS blocks,
@@ -103,9 +132,18 @@ export async function callAI(prompt: string, maxTokens: number = 1000): Promise<
         continue;
       }
 
+      if (response.status === 503 && targetModel !== 'gemini-1.5-flash' && attempt < MAX_RETRIES - 1) {
+        console.warn(`Model ${targetModel} overloaded (503). Falling back to gemini-1.5-flash.`);
+        targetModel = 'gemini-1.5-flash';
+        continue;
+      }
+
       const errorDetails = await response.text();
       if (response.status === 429) {
         throw new Error('Gemini free-tier rate limit reached. Please wait a minute and try again.');
+      }
+      if (response.status === 503) {
+        throw new Error('The AI model is currently experiencing high demand and is unavailable. Please try again later.');
       }
       throw new Error(`Gemini API error on model ${targetModel}: ${response.status} - ${errorDetails}`);
     }
@@ -241,5 +279,81 @@ CRITICAL RULES:
 - End with a question to drive comments`;
 
     return callAI(prompt, 600);
+  },
+
+  async tutorChat(messageHistory: { role: 'user' | 'assistant', content: string }[], taskContext: any): Promise<string> {
+    const transcript = messageHistory.map(msg => `${msg.role === 'user' ? 'Student' : 'Mentor'}: ${msg.content}`).join('\n');
+    
+    const prompt = `You are a strict but supportive Senior DevOps Mentor using the Socratic method to help a junior engineer.
+The student is currently working on the following task:
+Title: ${taskContext.title}
+Scenario: ${taskContext.scenario}
+Tasks to complete: ${taskContext.tasks?.join(', ')}
+
+CRITICAL RULES:
+1. NEVER give the exact command, code, or direct answer. If they ask "what is the command?", guide them to the man page or the concept.
+2. Ask leading questions. 
+3. Keep your responses short and punchy (1-3 sentences max).
+4. If they guess incorrectly, explain why it's wrong conceptually, then ask another guiding question.
+5. If they guess correctly, congratulate them and encourage them to run it.
+
+    Chat Transcript:
+    ${transcript}
+    
+    Mentor (Respond strictly following the rules above):`;
+
+    return callAI(prompt, 300);
+  },
+
+  async generatePerformanceFeedback(stats: {
+    tasksDone: number;
+    totalTasks: number;
+    streak: number;
+    studyHours: number;
+    readiness: number;
+    xp: number;
+    level: string;
+    lowConfCount: number;
+    v4ArtifactsCount: number;
+  }): Promise<string> {
+    const prompt = `You are an elite DevOps Architect and Career Mentor. Analyze the following student's bootcamp learning progress and provide highly actionable feedback.
+
+Student Statistics:
+- Level: ${stats.level} (${stats.xp} XP)
+- Completed Tasks: ${stats.tasksDone}/${stats.totalTasks}
+- Active Study Streak: ${stats.streak} days
+- Study Hours Logged: ${stats.studyHours} hours
+- Readiness Score: ${stats.readiness}%
+- Low Confidence Tasks: ${stats.lowConfCount}
+- Artifacts Verified: ${stats.v4ArtifactsCount}
+
+Provide a comprehensive, senior-level performance evaluation in markdown format. It MUST include:
+1. 📊 **Current Status**: A realistic assessment of where they stand.
+2. 🎯 **Key Strengths**: Highlight their consistency (based on streak/XP).
+3. ⚠️ **Areas of Improvement & Risks**: Address the low confidence tasks and missing artifacts.
+4. 🚀 **Next Milestone Recommendation**: 2-3 hyper-specific next steps for their current stage.
+
+Be supportive but strictly professional, candid, and direct. Avoid generic motivation; focus on technical readiness and engineering practices. Keep it under 450 words.`;
+
+    return callAI(prompt, 1000);
+  },
+
+  async simulateK8sCommand(command: string, scenarioId: string): Promise<string> {
+    const prompt = `You are a Kubernetes control plane (kube-apiserver). 
+A user is taking a Kubernetes Chaos Simulator test and has executed the following command:
+\`${command}\`
+
+Current Scenario ID: ${scenarioId}
+
+Scenarios:
+1. "OOMKilled": The "payment-service" pod in "default" namespace is crashlooping due to OOMKilled.
+2. "BrokenIngress": The ingress for "frontend" namespace is routing to the wrong service port.
+3. "PendingPod": A pod in "kube-system" is stuck in Pending because there are no nodes with enough CPU.
+
+Based on the command and the current scenario, output ONLY the exact raw terminal output that kubectl would return. 
+Do not include markdown formatting like \`\`\`, do not include introductory text, do not explain. Just the exact CLI output.
+If the command is not a valid kubectl command or is completely unrelated, output standard bash error or kubectl error.`;
+
+    return callAI(prompt, 500);
   }
 };

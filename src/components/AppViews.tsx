@@ -9,6 +9,7 @@ const FocusView = React.lazy(() => import('../views/FocusView').then(m => ({ def
 const JobsView = React.lazy(() => import('../views/JobsView').then(m => ({ default: m.JobsView })));
 const QbankView = React.lazy(() => import('../views/QbankView').then(m => ({ default: m.QbankView })));
 const StatsView = React.lazy(() => import('../views/StatsView').then(m => ({ default: m.StatsView })));
+const DashboardView = React.lazy(() => import('../views/DashboardView').then(m => ({ default: m.DashboardView })));
 const WeeklyView = React.lazy(() => import('../views/WeeklyView').then(m => ({ default: m.WeeklyView })));
 const ProjectsView = React.lazy(() => import('../views/ProjectsView').then(m => ({ default: m.ProjectsView })));
 const GithubRewriterView = React.lazy(() => import('../views/GithubRewriterView').then(m => ({ default: m.GithubRewriterView })));
@@ -22,7 +23,8 @@ const ReadinessView = React.lazy(() => import('../views/ReadinessView').then(m =
 const DevOpsSandboxView = React.lazy(() => import('../views/DevOpsSandboxView').then(m => ({ default: m.DevOpsSandboxView })));
 const DiagramBuilderView = React.lazy(() => import('../views/DiagramBuilderView').then(m => ({ default: m.DiagramBuilderView })));
 const DevOpsFlowsView = React.lazy(() => import('../views/DevOpsFlowsView').then(m => ({ default: m.DevOpsFlowsView })));
-
+const PipelineReferenceView = React.lazy(() => import('../views/PipelineReferenceView').then(m => ({ default: m.PipelineReferenceView })));
+const ChaosSimulatorView = React.lazy(() => import('../views/ChaosSimulatorView').then(m => ({ default: m.ChaosSimulatorView })));
 interface AppViewsProps {
   currentView: string;
   setCurrentView: (view: string) => void;
@@ -82,6 +84,12 @@ export const AppViews: React.FC<AppViewsProps> = ({
             return <QbankView appState={appState} />;
           case 'stats':
             return <StatsView appState={appState} />;
+          case 'dashboard':
+            return <DashboardView appState={appState} switchView={setCurrentView} />;
+          case 'pipeline-ref':
+            return <PipelineReferenceView />;
+          case 'chaos-sim':
+            return <ChaosSimulatorView />;
           case 'weekly':
             return <WeeklyView appState={appState} />;
           case 'projects':

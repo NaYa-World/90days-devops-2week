@@ -3,6 +3,7 @@ import { UseAppStateReturnType } from '../hooks/useAppState';
 import { PROJECTS } from '../data/projects';
 import { AIService } from '../components/AIService';
 import { showToast } from '../components/Toast';
+import { ApiKeySetupModal } from '../components/ApiKeySetupModal';
 
 interface LinkedInViewProps {
   appState: UseAppStateReturnType;
@@ -15,6 +16,7 @@ export const LinkedInView: React.FC<LinkedInViewProps> = ({ appState }) => {
   const [customInput, setCustomInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [generatedPost, setGeneratedPost] = useState('');
+  const [isApiKeyModalOpen, setIsApiKeyModalOpen] = useState(false);
 
   const handleGenerate = async () => {
     setLoading(true);
@@ -35,8 +37,12 @@ export const LinkedInView: React.FC<LinkedInViewProps> = ({ appState }) => {
       setGeneratedPost(text);
       showToast('✦ Post generated!', 'rgba(0,217,160,.1)');
     } catch (e: any) {
-      setGeneratedPost(`⚠ Error: ${e.message || 'Could not connect. Configure your Anthropic Key.'}`);
-      showToast('Generation failed', 'var(--red)');
+      if (e.message === 'NO_API_KEY' || e.message?.includes('API key')) {
+        setIsApiKeyModalOpen(true);
+      } else {
+        setGeneratedPost(`⚠ Error: ${e.message || 'Could not connect. Configure your Anthropic Key.'}`);
+        showToast('Generation failed', 'var(--red)');
+      }
     } finally {
       setLoading(false);
     }
@@ -143,6 +149,15 @@ export const LinkedInView: React.FC<LinkedInViewProps> = ({ appState }) => {
       <div style={{ marginTop: '12px', padding: '12px 14px', background: 'var(--s2)', borderRadius: 'var(--r12)', fontSize: '13px', color: 'var(--sub)' }}>
         <strong style={{ color: 'var(--text)' }}>The rule:</strong> Never write "Today I learned X." Always write "Today I deployed X and here's what happened." The first sounds like a student. The second sounds like an engineer.
       </div>
+      
+      <ApiKeySetupModal 
+        isOpen={isApiKeyModalOpen} 
+        onClose={() => setIsApiKeyModalOpen(false)} 
+        onSuccess={() => {
+          setIsApiKeyModalOpen(false);
+          handleGenerate();
+        }} 
+      />
     </div>
   );
 };
