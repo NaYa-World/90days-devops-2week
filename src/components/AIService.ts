@@ -1,4 +1,5 @@
 import { SecurityService } from './SecurityService';
+import { SecurityFirewall } from './SecurityFirewall';
 
 export type AIProvider = 'claude' | 'chatgpt' | 'gemini' | 'grok';
 
@@ -75,6 +76,12 @@ export async function saveApiKey(key: string) {
 }
 
 export async function callAI(prompt: string, maxTokens: number = 1000): Promise<string> {
+  // Red Hat Hacker Firewall Inspection
+  if (!SecurityFirewall.enforceRateLimit('callAI')) {
+    throw new Error('Firewall rate limit triggered. Request blocked.');
+  }
+  SecurityFirewall.assertSafeString(prompt, 'AI Prompt');
+
   let provider = getActiveProvider();
   let key = await getProviderKey(provider);
 
