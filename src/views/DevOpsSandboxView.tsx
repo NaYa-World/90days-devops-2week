@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { getActiveProvider, getProviderKey } from '../components/AIService';
+import { getActiveProvider, getProviderKey, AIService } from '../components/AIService';
 import { LABS, Lab, Exercise } from '../data/labs';
 import { TerminalSimulator } from '../components/TerminalSimulator';
 import { UseAppStateReturnType } from '../hooks/useAppState';
@@ -376,77 +376,15 @@ export const DevOpsSandboxView: React.FC<Props> = ({
   };
 
   const askAICoach = async () => {
-    const provider = getActiveProvider();
-    const key = await getProviderKey(provider);
-    if (!key) {
-      addLine('error', `⚠️ No API key configured for ${provider}. Go to Settings → API Keys to add one.`);
-      return;
-    }
-
     setAiCoachLoading(true);
+    const provider = getActiveProvider();
     const context = lines.slice(-10).map(l => l.text).join('\n');
     const currentInstruction = activeScenario
       ? activeScenario.steps[currentStep]?.instruction || 'Free practice'
       : 'Free practice mode';
 
-    const prompt = `You are a DevOps mentor helping a student in an interactive CLI sandbox.
-
-Current task: ${currentInstruction}
-Recent terminal activity:
-${context}
-
-Provide a brief, helpful hint (2-3 sentences max). Don't give the exact answer — guide them to discover it. If they seem stuck, mention the specific command name they should use. Be encouraging.`;
-
     try {
-      let response: string;
-      if (provider === 'claude') {
-        const res = await fetch('https://api.anthropic.com/v1/messages', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-api-key': key,
-            'anthropic-version': '2023-06-01',
-            'dangerously-allow-browser': 'true'
-          },
-          body: JSON.stringify({
-            model: 'claude-3-5-sonnet-20241022',
-            max_tokens: 300,
-            messages: [{ role: 'user', content: prompt }]
-          })
-        });
-        const data = await res.json();
-        response = data.content?.[0]?.text || 'No response from AI coach.';
-      } else if (provider === 'chatgpt') {
-        const res = await fetch('https://api.openai.com/v1/chat/completions', {
-          method: 'POST',
-          headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            model: 'gpt-4o-mini', max_tokens: 300,
-            messages: [{ role: 'user', content: prompt }]
-          })
-        });
-        const data = await res.json();
-        response = data.choices?.[0]?.message?.content || 'No response from AI coach.';
-      } else if (provider === 'gemini') {
-        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
-        });
-        const data = await res.json();
-        response = data.candidates?.[0]?.content?.parts?.[0]?.text || 'No response from AI coach.';
-      } else {
-        const res = await fetch('https://api.x.ai/v1/chat/completions', {
-          method: 'POST',
-          headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            model: 'grok-beta', max_tokens: 300,
-            messages: [{ role: 'user', content: prompt }]
-          })
-        });
-        const data = await res.json();
-        response = data.choices?.[0]?.message?.content || 'No response from AI coach.';
-      }
+      const response = await AIService.askCoach(currentInstruction, context);
 
       addLine('system', `🤖 AI Coach (${provider}): ${response}`);
     } catch (err) {
