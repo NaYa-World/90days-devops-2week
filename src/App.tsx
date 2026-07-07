@@ -327,8 +327,8 @@ export const App: React.FC = () => {
         if (isDrawerOpen) { setIsDrawerOpen(false); return; }
 
         setCurrentView(prevView => {
-          if (prevView !== 'roadmap-v4') {
-            return 'roadmap-v4';
+          if (prevView !== 'dashboard') {
+            return 'dashboard';
           }
           const now = Date.now();
           if (now - lastBackPress < 2000) {
@@ -544,7 +544,7 @@ export const App: React.FC = () => {
           <span></span>
           <span></span>
         </button>
-        <div className="nav-brand" onClick={() => handleNavItemClick('roadmap-v4')} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div className="nav-brand" onClick={() => handleNavItemClick('dashboard')} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}>
           <div>
             <span className="g">DEV</span>
             <span className="p">OPS</span>
@@ -595,6 +595,13 @@ export const App: React.FC = () => {
             style={{ background: currentView === 'roadmap' ? 'rgba(0,217,160,.15)' : undefined, color: currentView === 'roadmap' ? 'var(--green)' : undefined }}
           >
             💥 DevOps Roadmap
+          </button>
+          <button
+            className={`nav-tab ${currentView === 'dashboard' ? 'active' : ''}`}
+            onClick={() => handleNavItemClick('dashboard')}
+            style={{ background: currentView === 'dashboard' ? 'rgba(59,130,246,.15)' : undefined, color: currentView === 'dashboard' ? '#3b82f6' : undefined }}
+          >
+            📊 Dashboard
           </button>
           <button
             className={`nav-tab ${currentView === 'roadmap-v4' ? 'active' : ''}`}
@@ -694,6 +701,12 @@ export const App: React.FC = () => {
 
       {/* Mobile Bottom Navigation Bar */}
       <div id="bottom-bar">
+        <button
+          className={`btab ${currentView === 'dashboard' ? 'active' : ''}`}
+          onClick={() => handleNavItemClick('dashboard')}
+        >
+          <span className="bico">📊</span>Home
+        </button>
         <button
           className={`btab ${currentView === 'roadmap-v4' ? 'active' : ''}`}
           onClick={() => handleNavItemClick('roadmap-v4')}
