@@ -9,6 +9,7 @@ import { getActiveProvider, formatProviderName } from '../components/AIService';
 import { DevOpsTutorPanel } from '../components/DevOpsTutorPanel';
 import { v4NotesData } from '../data/v4-notes';
 import { SimpleMarkdown } from '../components/SimpleMarkdown';
+import { BOOTCAMP_NOTES_V5 } from '../v5-notes/bootcampNotes';
 // Optimized React.memo component to prevent massive Virtual DOM re-renders
 const TaskRow = React.memo(({ task, isDone, onToggle }: { task: string, isDone: boolean, onToggle: () => void }) => (
   <div
@@ -90,6 +91,7 @@ export const RoadmapV4View: React.FC<RoadmapV4ViewProps> = ({ appState }) => {
   const [openPhases, setOpenPhases] = useState<Record<number, boolean>>({ 0: true });
   const [openDays, setOpenDays] = useState<Record<string, boolean>>({});
   const [revealedAnswers, setRevealedAnswers] = useState<Record<string, boolean>>({});
+  const [openV5Notes, setOpenV5Notes] = useState<Record<string, boolean>>({});
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<'all' | 'todo' | 'done'>('all');
 
@@ -153,7 +155,13 @@ export const RoadmapV4View: React.FC<RoadmapV4ViewProps> = ({ appState }) => {
   const totalXP = completedTasks * 15 + completedDaysCount * 100;
 
   const togglePhase = (pi: number) => {
-    setOpenPhases(prev => ({ ...prev, [pi]: !prev[pi] }));
+    setOpenPhases(prev => {
+      const isCurrentlyOpen = prev[pi];
+      if (isCurrentlyOpen) {
+        setOpenV5Notes({}); // Clear memory on collapse
+      }
+      return { ...prev, [pi]: !prev[pi] };
+    });
   };
 
   const toggleDay = (pi: number, di: number) => {
@@ -357,12 +365,14 @@ export const RoadmapV4View: React.FC<RoadmapV4ViewProps> = ({ appState }) => {
           // Phase search check
           const sl = search.toLowerCase();
           const matchDayCount = phase.dayTasks.filter(day => {
+            const notes = BOOTCAMP_NOTES_V5[day.id];
+            const notesMatch = typeof notes === 'string' && notes.toLowerCase().includes(sl);
             return !search ||
               day.title.toLowerCase().includes(sl) ||
               day.scenario.toLowerCase().includes(sl) ||
               day.tasks.some(t => t.toLowerCase().includes(sl)) ||
               (day.commands && day.commands.some(c => c.toLowerCase().includes(sl))) ||
-              day.gotcha.toLowerCase().includes(sl);
+              day.gotcha.toLowerCase().includes(sl) || notesMatch;
           }).length;
 
           if (search && matchDayCount === 0) return null;
@@ -465,11 +475,13 @@ export const RoadmapV4View: React.FC<RoadmapV4ViewProps> = ({ appState }) => {
 
                     // Day query check
                     if (search) {
+                      const notes = BOOTCAMP_NOTES_V5[day.id];
+                      const notesMatch = typeof notes === 'string' && notes.toLowerCase().includes(sl);
                       const dayMatch = day.title.toLowerCase().includes(sl) ||
                         day.scenario.toLowerCase().includes(sl) ||
                         day.tasks.some(t => t.toLowerCase().includes(sl)) ||
                         (day.commands && day.commands.some(c => c.toLowerCase().includes(sl))) ||
-                        day.gotcha.toLowerCase().includes(sl);
+                        day.gotcha.toLowerCase().includes(sl) || notesMatch;
                       if (!dayMatch) return null;
                     }
 
@@ -719,6 +731,36 @@ export const RoadmapV4View: React.FC<RoadmapV4ViewProps> = ({ appState }) => {
                                 {day.gotcha}
                               </div>
                             </div>
+
+                            {/* v5 Bootcamp Notes Accordion */}
+                            {BOOTCAMP_NOTES_V5[day.id] && (
+                              <div style={{ margin: '16px 0', border: '1px solid rgba(0,217,160,0.15)', borderRadius: '8px', overflow: 'hidden' }}>
+                                <div
+                                  onClick={() => setOpenV5Notes(prev => ({ ...prev, [dayKey]: !prev[dayKey] }))}
+                                  style={{
+                                    padding: '12px 14px',
+                                    background: 'rgba(0,217,160,0.03)',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center',
+                                    userSelect: 'none',
+                                  }}
+                                >
+                                  <div style={{ fontSize: '11px', color: 'var(--green, #00d9a0)', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.5px' }}>
+                                    📖 Bootcamp Notes — Trainer · Engineer · CTO
+                                  </div>
+                                  <span style={{ fontSize: '11px', color: 'var(--green, #00d9a0)', textDecoration: 'underline' }}>
+                                    {openV5Notes[dayKey] ? 'Hide' : 'Show'}
+                                  </span>
+                                </div>
+                                {openV5Notes[dayKey] && (
+                                  <div style={{ padding: '16px', background: 'var(--s1, #07090f)', borderTop: '1px solid rgba(0,217,160,0.1)' }}>
+                                    <SimpleMarkdown text={BOOTCAMP_NOTES_V5[day.id]} />
+                                  </div>
+                                )}
+                              </div>
+                            )}
 
                             {/* 5. Interview Reveal Box */}
                             <div style={{ margin: '16px 0', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '8px', overflow: 'hidden' }}>
