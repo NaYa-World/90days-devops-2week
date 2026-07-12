@@ -94,7 +94,7 @@ const phase1: Phase = {
           'ssh -i ~/.ssh/devops-key.pem ec2-user@<YOUR-EC2-IP>',
           'uname -r && whoami && uptime && free -h && df -h | tee ~/linux/day1.txt',
         ],
-        gotcha: 'chmod 400 is not optional. If you leave the .pem at 644 (default), SSH refuses the connection with "WARNING: UNPROTECTED PRIVATE KEY FILE". 90% of beginners hit this on day one and spend 30 minutes checking the wrong thing.',
+        gotcha: 'chmod 400 is not optional. If you leave the .pem at 644 (default), SSH refuses the connection with "WARNING: UNPROTECTED PRIVATE KEY FILE". (Quick cheat sheet: 4 = Read, 2 = Write, 0 = No Access. 400 means ONLY the owner can read it, and no one else can). 90% of beginners hit this on day one and spend 30 minutes checking the wrong thing.',
         interviewAnswer: 'SSH key permissions must be 400 — readable only by owner. AWS enforces this because a world-readable private key is a security violation. I also set up an SSH config alias on day one so I am not typing IPs — that is the first sign of someone who has done this before.',
         artifactContract: {
           type: 'github-commit',

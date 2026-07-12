@@ -29,8 +29,12 @@ Launch a \`t2.micro\` Amazon Linux 2023 instance, generate an \`ed25519\` key pa
 # 1. Generate a modern key pair locally (do this on YOUR machine, not the server)
 ssh-keygen -t ed25519 -C "gk-devops-bootcamp" -f ~/.ssh/gk_ec2_day1
 
-# 2. Lock down the private key — SSH will refuse loose permissions
-chmod 600 ~/.ssh/gk_ec2_day1
+# 2. Lock down the private key (SSH will refuse loose permissions)
+# 🧠 Permission Breakdown (Owner-Group-Public):
+# '4' = Read, '2' = Write, '0' = No access.
+# chmod 400 = Read-only for you (owner), ZERO access for anyone else.
+# chmod 600 = Read/Write for you (owner), ZERO access for anyone else.
+chmod 400 ~/.ssh/gk_ec2_day1
 
 # 3. Connect to the instance (replace with your Elastic/Public IP)
 ssh -i ~/.ssh/gk_ec2_day1 ec2-user@<EC2_PUBLIC_IP>
