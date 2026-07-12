@@ -271,10 +271,7 @@ export const NotesView: React.FC<NotesViewProps> = ({ appState }) => {
 
   const syncToGitHub = useCallback(async () => {
     const oauthToken = await SecurityService.getSecureCredential('devops90_github_token') || '';
-    const pat = oauthToken;
     const ghUsername = currentUser || '';
-    const repo = '90days-devops-my-notes';
-    const branch = 'main';
 
     if (!oauthToken || !ghUsername) {
       showToast('⚠️ Please sign in with GitHub in Settings & Profile (top-right menu) to sync your notes.');

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { getActiveProvider, getProviderKey, AIService } from '../components/AIService';
+import { getActiveProvider, AIService } from '../components/AIService';
 import { LABS, Lab, Exercise } from '../data/labs';
 import { TerminalSimulator } from '../components/TerminalSimulator';
 import { UseAppStateReturnType } from '../hooks/useAppState';
