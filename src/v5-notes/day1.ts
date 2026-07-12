@@ -55,7 +55,29 @@ Host gk-ec2-day1
     IdentityFile ~/.ssh/gk_ec2_day1
     StrictHostKeyChecking accept-new
 \`\`\`
-Now \`ssh gk-ec2-day1\` just works — no flags, no typos.
+Now \`ssh gk-ec2-day1\` just works — no typos, no flags.
+
+### 📝 Essential Linux Survival Toolkit (Vim & Logs)
+Forget \`nano\`. Senior engineers use \`vim\` to edit and \`tail\`/\`head\` to inspect files without opening them.
+
+**Vim (vi editor) Cheatsheet:**
+- \`i\` → Enter **insert mode** (to type/make changes)
+- \`Esc\` → Exit insert mode (go back to command mode)
+- \`o\` → Move cursor to a new line below and enter insert mode
+- \`:wq\` → Save and exit
+- \`:q!\` → Quit without saving (force abandon changes)
+- \`y10y\` → Copy (yank) 10 lines
+- \`p\` → Paste copied lines
+- \`d10d\` → Delete 10 lines
+- \`:%s/old_word/new_word/g\` → Find and replace all occurrences globally
+- \`:%s/old_word/new_word/gc\` → Replace with confirmation prompts
+- \`:set number\` → Show line numbers
+- \`/search_term\` → Search for a word (press \`n\` for next match)
+
+**File Inspection:**
+- \`head -n 20 /var/log/syslog\` → View the first 20 lines of a file
+- \`tail -n 50 /var/log/syslog\` → View the last 50 lines
+- \`tail -f /var/log/syslog\` → "Follow" the file (streams new logs in real-time — crucial for debugging apps!)
 
 ### Troubleshooting Tree
 | Symptom | Check | Fix |
