@@ -311,6 +311,55 @@ export const GitHubSyncService = {
       console.error('devops90: Restore failed', e);
       return false;
     }
+  },
+
+  async pushFile(filePath: string, contentBase64: string, commitMessage: string): Promise<boolean> {
+    const token = await this.getToken();
+    if (!token) throw new Error('GitHub token not found. Please log in.');
+    
+    const username = await this.getUsername(token);
+    if (!username) throw new Error('Could not fetch GitHub username.');
+
+    const ok = await this.ensureRepository(token, username);
+    if (!ok) throw new Error(`Repository ${this.REPO_NAME} could not be created or accessed.`);
+
+    let sha: string | undefined;
+    try {
+      const checkRes = await fetch(
+        `https://api.github.com/repos/${username}/${this.REPO_NAME}/contents/${filePath}?ref=main`,
+        { headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github.v3+json' } }
+      );
+      if (checkRes.ok) {
+        const existing = await checkRes.json();
+        sha = existing.sha;
+      }
+    } catch { /* file doesn't exist yet */ }
+
+    const body: Record<string, string> = {
+      message: commitMessage,
+      content: contentBase64,
+      branch: 'main'
+    };
+    if (sha) body.sha = sha;
+
+    const res = await fetch(
+      `https://api.github.com/repos/${username}/${this.REPO_NAME}/contents/${filePath}`,
+      {
+        method: 'PUT',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: 'application/vnd.github.v3+json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(body)
+      }
+    );
+
+    if (!res.ok) {
+      const err = await res.text();
+      throw new Error(err);
+    }
+    return true;
   }
 };
 

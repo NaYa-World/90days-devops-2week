@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { showToast } from '../components/Toast';
-import { autoSyncToGitHub } from '../components/GitHubSyncService';
+import { autoSyncToGitHub, GitHubSyncService } from '../components/GitHubSyncService';
 import { SecurityService } from '../components/SecurityService';
 import { UseAppStateReturnType } from '../hooks/useAppState';
 import days from '../data/notes';
@@ -271,10 +271,7 @@ export const NotesView: React.FC<NotesViewProps> = ({ appState }) => {
 
   const syncToGitHub = useCallback(async () => {
     const oauthToken = await SecurityService.getSecureCredential('devops90_github_token') || '';
-    const pat = oauthToken;
     const ghUsername = currentUser || '';
-    const repo = '90days-devops-my-notes';
-    const branch = 'main';
 
     if (!oauthToken || !ghUsername) {
       showToast('⚠️ Please sign in with GitHub in Settings & Profile (top-right menu) to sync your notes.');
@@ -296,77 +293,12 @@ export const NotesView: React.FC<NotesViewProps> = ({ appState }) => {
       const today = new Date().toISOString().split('T')[0];
       const content = day.github?.template?.replace(/YYYY-MM-DD/g, today) || `# Day ${day.day}\n\nNotes for Day ${day.day}`;
       const base64Content = btoa(unescape(encodeURIComponent(content)));
+      const message = day.github?.commitMessage || `Add Day ${day.day} notes: ${day.title}`;
 
-      // 1. Check if repository exists, if not, try to create it
-      const repoCheck = await fetch(`https://api.github.com/repos/${ghUsername}/${repo}`, {
-        headers: { Authorization: `Bearer ${pat}`, Accept: 'application/vnd.github.v3+json' }
-      });
-      
-      if (repoCheck.status === 404) {
-        // Repository doesn't exist, create it!
-        const createRes = await fetch('https://api.github.com/user/repos', {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${pat}`,
-            Accept: 'application/vnd.github.v3+json',
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            name: repo,
-            description: 'My DevOps 90 Days Bootcamp study notes',
-            private: false,
-            auto_init: true
-          })
-        });
-        if (!createRes.ok) {
-          const createErr = await createRes.text();
-          throw new Error(`Repository '${repo}' not found and creation failed: ${createErr}`);
-        }
-        // Wait for GitHub database replication
-        await new Promise(resolve => setTimeout(resolve, 2000));
-      }
+      await GitHubSyncService.pushFile(filePath, base64Content, message);
 
-      // Check if file already exists (to get SHA for update)
-      let sha: string | undefined;
-      try {
-        const checkRes = await fetch(
-          `https://api.github.com/repos/${ghUsername}/${repo}/contents/${filePath}?ref=${branch}`,
-          { headers: { Authorization: `Bearer ${pat}`, Accept: 'application/vnd.github.v3+json' } }
-        );
-        if (checkRes.ok) {
-          const existing = await checkRes.json();
-          sha = existing.sha;
-        }
-      } catch { /* file doesn't exist yet, that's fine */ }
-
-      // PUT the file
-      const body: Record<string, string> = {
-        message: day.github?.commitMessage || `Add Day ${day.day} notes: ${day.title}`,
-        content: base64Content,
-        branch
-      };
-      if (sha) body.sha = sha;
-
-      const res = await fetch(
-        `https://api.github.com/repos/${ghUsername}/${repo}/contents/${filePath}`,
-        {
-          method: 'PUT',
-          headers: {
-            Authorization: `Bearer ${pat}`,
-            Accept: 'application/vnd.github.v3+json',
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(body)
-        }
-      );
-
-      if (res.ok) {
-        setSyncStatus('success');
-        showToast(`✅ Day ${day.day} notes pushed to ${ghUsername}/${repo}!`);
-      } else {
-        const err = await res.text();
-        throw new Error(err);
-      }
+      setSyncStatus('success');
+      showToast(`✅ Day ${day.day} notes pushed to ${ghUsername}/90days-devops-my-notes!`);
     } catch (err) {
       setSyncStatus('error');
       showToast(`❌ GitHub sync failed: ${err instanceof Error ? err.message : 'Unknown error'}`);

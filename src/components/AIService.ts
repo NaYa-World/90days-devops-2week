@@ -1,4 +1,5 @@
 import { SecurityService } from './SecurityService';
+import { SecurityFirewall } from './SecurityFirewall';
 
 export type AIProvider = 'claude' | 'chatgpt' | 'gemini' | 'grok';
 
@@ -25,6 +26,16 @@ export function getActiveProvider(): AIProvider {
 
 export function setActiveProvider(provider: AIProvider) {
   localStorage.setItem(PROVIDER_STORAGE_KEY, provider);
+}
+
+export function formatProviderName(provider: AIProvider): string {
+  switch (provider) {
+    case 'claude': return 'Claude';
+    case 'chatgpt': return 'ChatGPT';
+    case 'gemini': return 'Gemini';
+    case 'grok': return 'Grok';
+    default: return 'AI';
+  }
 }
 
 export async function getProviderKey(provider: AIProvider): Promise<string> {
@@ -65,6 +76,12 @@ export async function saveApiKey(key: string) {
 }
 
 export async function callAI(prompt: string, maxTokens: number = 1000): Promise<string> {
+  // Red Hat Hacker Firewall Inspection
+  if (!SecurityFirewall.enforceRateLimit('callAI')) {
+    throw new Error('Firewall rate limit triggered. Request blocked.');
+  }
+  SecurityFirewall.assertSafeString(prompt, 'AI Prompt');
+
   let provider = getActiveProvider();
   let key = await getProviderKey(provider);
 
@@ -355,5 +372,16 @@ Do not include markdown formatting like \`\`\`, do not include introductory text
 If the command is not a valid kubectl command or is completely unrelated, output standard bash error or kubectl error.`;
 
     return callAI(prompt, 500);
+  },
+
+  async askCoach(instruction: string, terminalContext: string): Promise<string> {
+    const prompt = `You are a DevOps mentor helping a student in an interactive CLI sandbox.
+
+Current task: ${instruction}
+Recent terminal activity:
+${terminalContext}
+
+Provide a brief, helpful hint (2-3 sentences max). Don't give the exact answer — guide them to discover it. If they seem stuck, mention the specific command name they should use. Be encouraging.`;
+    return callAI(prompt, 300);
   }
 };
