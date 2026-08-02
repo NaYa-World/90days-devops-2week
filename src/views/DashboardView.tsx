@@ -4,7 +4,7 @@ import { UseAppStateReturnType } from '../hooks/useAppState';
 import { AIService, getActiveProvider, formatProviderName } from '../components/AIService';
 import { showToast } from '../components/Toast';
 import { ApiKeySetupModal } from '../components/ApiKeySetupModal';
-
+import { LearningSystemView } from './LearningSystemView';
 
 interface DashboardViewProps {
   appState: UseAppStateReturnType;
@@ -160,7 +160,19 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ appState, switchVi
         </div>
 
         {/* Completion */}
-        <div style={{ background: '#131520', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px', padding: '16px' }}>
+        <div 
+          onClick={() => switchView('material')}
+          style={{ 
+            background: '#131520', 
+            border: '1px solid rgba(255,255,255,0.05)', 
+            borderRadius: '12px', 
+            padding: '16px',
+            cursor: 'pointer',
+            transition: 'border-color 0.2s'
+          }}
+          onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)'}
+          onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.05)'}
+        >
           <div style={{ fontSize: '11px', color: '#8f9bb3', textTransform: 'uppercase', fontWeight: 600 }}>Progress Ratio</div>
           <div style={{ fontSize: '28px', fontWeight: 800, margin: '4px 0', color: '#00d9a0' }}>
             {progressPct}%
@@ -169,7 +181,19 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ appState, switchVi
         </div>
 
         {/* Study Hours */}
-        <div style={{ background: '#131520', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px', padding: '16px' }}>
+        <div 
+          onClick={() => switchView('material')}
+          style={{ 
+            background: '#131520', 
+            border: '1px solid rgba(255,255,255,0.05)', 
+            borderRadius: '12px', 
+            padding: '16px',
+            cursor: 'pointer',
+            transition: 'border-color 0.2s'
+          }}
+          onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)'}
+          onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.05)'}
+        >
           <div style={{ fontSize: '11px', color: '#8f9bb3', textTransform: 'uppercase', fontWeight: 600 }}>Time Invested</div>
           <div style={{ fontSize: '28px', fontWeight: 800, margin: '4px 0', color: '#38bdf8' }}>
             ⏱ {studyHours()} hrs
@@ -237,6 +261,16 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ appState, switchVi
             <div style={{ fontSize: '20px', marginBottom: '4px' }}>☸️</div>
             <div style={{ fontSize: '13px', fontWeight: 600 }}>Chaos Sim</div>
           </button>
+          
+          <button 
+            onClick={() => switchView('tracker')}
+            style={{ background: '#1a1d2d', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', padding: '12px', cursor: 'pointer', textAlign: 'center', transition: 'all 0.2s', color: '#e8eaf0' }}
+            onMouseEnter={e => e.currentTarget.style.background = '#252838'}
+            onMouseLeave={e => e.currentTarget.style.background = '#1a1d2d'}
+          >
+            <div style={{ fontSize: '20px', marginBottom: '4px' }}>🎯</div>
+            <div style={{ fontSize: '13px', fontWeight: 600 }}>Learning Tracker</div>
+          </button>
         </div>
       </div>
       
@@ -248,6 +282,11 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ appState, switchVi
           handleGenerateFeedback();
         }} 
       />
+
+      {/* Learning System Embedded Graph */}
+      <div style={{ marginBottom: '24px', height: '480px' }}>
+        <LearningSystemView switchView={switchView} />
+      </div>
 
       {/* Heatmap Card */}
       <div style={{ 
