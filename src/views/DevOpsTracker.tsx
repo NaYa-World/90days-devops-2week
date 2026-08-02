@@ -69,8 +69,8 @@ const TOPICS = [
   { name: 'Linux Commands',         desc: 'Core Linux administration for DevOps: file systems, permissions, processes, and networking.' },
   { name: 'Git',                    desc: 'Version control workflows, branching, merging, and collaboration.' },
   { name: 'GitHub / SCM',           desc: 'Source code management, PRs, Git Flow, and GitHub Actions basics.' },
-  { name: 'Jenkins',                desc: 'Continuous Integration server setup, declarative pipelines, and plugins.' },
   { name: 'Maven',                  desc: 'Java build tool, dependencies management, and build profiles.' },
+  { name: 'Jenkins',                desc: 'Continuous Integration server setup, declarative pipelines, and plugins.' },
   { name: 'SonarCloud',             desc: 'Static Code Analysis, quality gates, and automated code review.' },
   { name: 'Artifact Repository',    desc: 'Managing build artifacts, Docker images, and package registries.' },
   { name: 'Docker',                 desc: 'Containerization, Dockerfiles, Compose, and AWS ECR.' },
@@ -92,8 +92,8 @@ const TOPIC_AXIS_MAP: Record<number, number> = {
   0: 0, // Linux Commands → Linux
   1: 1, // Git   → Git
   2: 1, // GitHub / SCM → Git
-  3: 2, // Jenkins → CI/CD
-  4: 2, // Maven → CI/CD
+  3: 2, // Maven → CI/CD
+  4: 2, // Jenkins → CI/CD
   5: 3, // SonarCloud → Code Quality
   6: 3, // Artifact Repository → Code Quality
   7: 4, // Docker → Docker

@@ -46,16 +46,16 @@ const NODES: NodeDef[] = [
     labs: ['Lab A','Lab B','Lab C'],
   },
   {
-    id: 3, label: 'Jenkins', sublabel: 'Module 04', deps: [2],
-    x: COL_W * 3, y: ROW2_Y, lessons: 8,
-    topics: ['CI/CD Fundamentals','Jenkins Installation on AWS EC2','Jenkins Architecture (Master/Agent)','Essential Plugins','Declarative Pipeline (Jenkinsfile)','GitHub Integration','Shared Libraries (vars/, src/, structure)','P1 Incident Simulation'],
-    labs: ['Lab A: Install Jenkins on EC2, configure plugins','Lab B: Connect GitHub repo with Jenkinsfile','Lab C: Trigger pipeline on code push','Lab D: Simulate P1 incident and rollback'],
-  },
-  {
-    id: 4, label: 'Maven', sublabel: 'Module 05', deps: [3],
-    x: COL_W * 4, y: ROW1_Y, lessons: 7,
+    id: 3, label: 'Maven', sublabel: 'Module 04', deps: [2],
+    x: COL_W * 3, y: ROW2_Y, lessons: 7,
     topics: ['Maven vs Gradle','Maven Installation & Setup','Understanding pom.xml','Maven Build Lifecycle','Dependencies Management','Build Profiles','Jenkins–Maven Integration'],
     labs: ['Lab A: Clone Java Spring Boot project, run mvn clean package','Lab B: Add dependencies to pom.xml','Lab C: Integrate Maven into Jenkins pipeline','Lab D: Create Dev/Prod profiles'],
+  },
+  {
+    id: 4, label: 'Jenkins', sublabel: 'Module 05', deps: [3],
+    x: COL_W * 4, y: ROW1_Y, lessons: 8,
+    topics: ['CI/CD Fundamentals','Jenkins Installation on AWS EC2','Jenkins Architecture (Master/Agent)','Essential Plugins','Declarative Pipeline (Jenkinsfile)','GitHub Integration','Shared Libraries (vars/, src/, structure)','P1 Incident Simulation'],
+    labs: ['Lab A: Install Jenkins on EC2, configure plugins','Lab B: Connect GitHub repo with Jenkinsfile','Lab C: Trigger pipeline on code push','Lab D: Simulate P1 incident and rollback'],
   },
   {
     id: 5, label: 'SonarCloud', sublabel: 'Module 06', deps: [4],

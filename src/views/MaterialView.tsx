@@ -99,6 +99,32 @@ const MODULES: ModuleData[] = [
   },
   {
     id: 4,
+    title: 'Maven',
+    description: 'Java build tool, dependencies management, and build profiles.',
+    lessons: 7,
+    authored: 7,
+    topics: [
+      { title: 'Maven vs Gradle', subtitle: 'Comparing JVM build tools' },
+      { title: 'Maven Installation & Setup', subtitle: 'M2_HOME and PATH' },
+      { title: 'Understanding pom.xml', subtitle: 'Project Object Model' },
+      { title: 'Maven Build Lifecycle', subtitle: 'clean, compile, test, package' },
+      { title: 'Dependencies Management', subtitle: 'Resolving artifacts' },
+      { title: 'Build Profiles', subtitle: 'Environment specific configs' },
+      { title: 'Jenkins–Maven Integration', subtitle: 'Running builds in CI' },
+    ],
+    labs: [
+      'Lab A: Clone Java Spring Boot project, run mvn clean package',
+      'Lab B: Add dependencies to pom.xml',
+      'Lab C: Integrate Maven into Jenkins pipeline',
+      'Lab D: Create Dev/Prod profiles'
+    ],
+    resources: [
+      { title: 'Apache Maven Docs', type: 'DOCS', url: '#' },
+      { title: 'Baeldung: Maven Guide', type: 'GUIDE', url: '#' },
+    ],
+  },
+  {
+    id: 5,
     title: 'Jenkins',
     description: 'Continuous Integration server setup, declarative pipelines, and plugins.',
     lessons: 8,
@@ -122,32 +148,6 @@ const MODULES: ModuleData[] = [
     resources: [
       { title: 'Jenkins User Documentation', type: 'DOCS', url: '#' },
       { title: 'Pipeline Syntax Guide', type: 'GUIDE', url: '#' },
-    ],
-  },
-  {
-    id: 5,
-    title: 'Maven',
-    description: 'Java build tool, dependencies management, and build profiles.',
-    lessons: 7,
-    authored: 7,
-    topics: [
-      { title: 'Maven vs Gradle', subtitle: 'Comparing JVM build tools' },
-      { title: 'Maven Installation & Setup', subtitle: 'M2_HOME and PATH' },
-      { title: 'Understanding pom.xml', subtitle: 'Project Object Model' },
-      { title: 'Maven Build Lifecycle', subtitle: 'clean, compile, test, package' },
-      { title: 'Dependencies Management', subtitle: 'Resolving artifacts' },
-      { title: 'Build Profiles', subtitle: 'Environment specific configs' },
-      { title: 'Jenkins–Maven Integration', subtitle: 'Running builds in CI' },
-    ],
-    labs: [
-      'Lab A: Clone Java Spring Boot project, run mvn clean package',
-      'Lab B: Add dependencies to pom.xml',
-      'Lab C: Integrate Maven into Jenkins pipeline',
-      'Lab D: Create Dev/Prod profiles'
-    ],
-    resources: [
-      { title: 'Apache Maven Docs', type: 'DOCS', url: '#' },
-      { title: 'Baeldung: Maven Guide', type: 'GUIDE', url: '#' },
     ],
   },
   {
