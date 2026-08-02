@@ -1,7 +1,7 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import { useAppState } from './hooks/useAppState';
 import { PomodoroModal } from './components/PomodoroModal';
-import { SettingsView } from './views/SettingsView';
+
 import { NotificationDropdown } from './components/NotificationDropdown';
 import { NavigationDrawer } from './components/NavigationDrawer';
 import { DailyChallengeModal } from './components/DailyChallengeModal';
@@ -306,9 +306,9 @@ export const App: React.FC = () => {
     return undefined;
   }, [notificationsEnabled, morningTime, eveningTime, currentUser]);
 
-  // Prevent background scrolling when settings or pomo modal is open
+  // Prevent background scrolling when pomo modal is open
   useEffect(() => {
-    if (isSettingsOpen || isPomoOpen) {
+    if (isPomoOpen) {
       document.body.classList.add('modal-open');
     } else {
       document.body.classList.remove('modal-open');
@@ -316,7 +316,7 @@ export const App: React.FC = () => {
     return () => {
       document.body.classList.remove('modal-open');
     };
-  }, [isSettingsOpen, isPomoOpen]);
+  }, [isPomoOpen]);
 
   // Native hardware back button & keyboard handling
   useEffect(() => {
@@ -325,7 +325,7 @@ export const App: React.FC = () => {
       
       let lastBackPress = 0;
       const backListener = CapacitorApp.addListener('backButton', () => {
-        if (isSettingsOpen) { setIsSettingsOpen(false); return; }
+        if (currentView === 'settings') { setCurrentView('dashboard'); return; }
         if (isPomoOpen) { setIsPomoOpen(false); return; }
         if (isDrawerOpen) { setIsDrawerOpen(false); return; }
 
@@ -349,7 +349,7 @@ export const App: React.FC = () => {
       };
     }
     return undefined;
-  }, [isSettingsOpen, isPomoOpen, isDrawerOpen]);
+  }, [isPomoOpen, isDrawerOpen, currentView]);
 
 
   const handleMorningTimeChange = async (newTime: string) => {
@@ -736,7 +736,7 @@ export const App: React.FC = () => {
               currentUser={currentUser}
               handleTestNotification={() => {
                 if (Capacitor.isNativePlatform()) {
-                  NotificationService.sendTestNotification();
+                  NotificationService.testFireNow();
                 } else {
                   alert('Test notifications are only supported on native devices.');
                 }
