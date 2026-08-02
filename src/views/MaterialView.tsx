@@ -657,9 +657,57 @@ export const MaterialView: React.FC = () => {
                 ))}
               </div>
             </div>
-          </div>
         </div>
       </div>
+      
+      {/* HTML Guide Modal */}
+      {selectedGuideUrl && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.8)',
+          zIndex: 1000,
+          display: 'flex',
+          flexDirection: 'column',
+          padding: '20px'
+        }}>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'flex-end',
+            marginBottom: '10px'
+          }}>
+            <button
+              onClick={() => setSelectedGuideUrl(null)}
+              style={{
+                background: '#e53e3e',
+                color: 'white',
+                border: 'none',
+                padding: '8px 16px',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontWeight: 'bold',
+                fontSize: '14px'
+              }}
+            >
+              Close Guide
+            </button>
+          </div>
+          <iframe 
+            src={selectedGuideUrl} 
+            style={{
+              flex: 1,
+              width: '100%',
+              border: '1px solid #333',
+              borderRadius: '8px',
+              backgroundColor: '#fff' // The iframe's content has its own background, but fallback to white.
+            }}
+            title="Interactive Guide"
+          />
+        </div>
+      )}
     );
   }
 
@@ -758,55 +806,8 @@ export const MaterialView: React.FC = () => {
           ))}
         </div>
       </div>
-      
-      {/* HTML Guide Modal */}
-      {selectedGuideUrl && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0,0,0,0.8)',
-          zIndex: 1000,
-          display: 'flex',
-          flexDirection: 'column',
-          padding: '20px'
-        }}>
-          <div style={{
-            display: 'flex',
-            justifyContent: 'flex-end',
-            marginBottom: '10px'
-          }}>
-            <button
-              onClick={() => setSelectedGuideUrl(null)}
-              style={{
-                background: '#e53e3e',
-                color: 'white',
-                border: 'none',
-                padding: '8px 16px',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontWeight: 'bold',
-                fontSize: '14px'
-              }}
-            >
-              Close Guide
-            </button>
-          </div>
-          <iframe 
-            src={selectedGuideUrl} 
-            style={{
-              flex: 1,
-              width: '100%',
-              border: '1px solid #333',
-              borderRadius: '8px',
-              backgroundColor: '#fff' // The iframe's content has its own background, but fallback to white.
-            }}
-            title="Interactive Guide"
-          />
         </div>
-      )}
+      </div>
     </div>
   );
 };
