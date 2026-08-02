@@ -104,18 +104,18 @@ const MODULES: ModuleData[] = [
     lessons: 12,
     authored: 12,
     topics: [
-      { title: 'What is Maven?', subtitle: 'Build automation & roles' },
-      { title: 'Installation & Setup', subtitle: 'JDK and Maven on Linux' },
-      { title: 'POM — Project Object Model', subtitle: 'The single source of truth' },
-      { title: 'Build Lifecycle', subtitle: 'Clean, Default, Site phases' },
-      { title: 'Dependency Management', subtitle: 'Scopes and conflict resolution' },
-      { title: 'Plugins & Goals', subtitle: 'Extending Maven capabilities' },
-      { title: 'Repositories', subtitle: 'Local, Central, and Remote' },
-      { title: 'Profiles', subtitle: 'Environment-specific builds' },
-      { title: 'Multi-Module Projects', subtitle: 'Parent and child POMs' },
-      { title: 'Properties & Filtering', subtitle: 'Dynamic variable injection' },
-      { title: 'Test Management', subtitle: 'Surefire and Failsafe plugins' },
-      { title: 'CI/CD Integration', subtitle: 'Jenkins pipelines and caching' },
+      { title: 'What is Maven?', subtitle: 'Build automation & roles', anchor: '#concept' },
+      { title: 'Installation & Setup', subtitle: 'JDK and Maven on Linux', anchor: '#installation' },
+      { title: 'POM — Project Object Model', subtitle: 'The single source of truth', anchor: '#pom' },
+      { title: 'Build Lifecycle', subtitle: 'Clean, Default, Site phases', anchor: '#lifecycle' },
+      { title: 'Dependency Management', subtitle: 'Scopes and conflict resolution', anchor: '#dependencies' },
+      { title: 'Plugins & Goals', subtitle: 'Extending Maven capabilities', anchor: '#plugins' },
+      { title: 'Repositories', subtitle: 'Local, Central, and Remote', anchor: '#repositories' },
+      { title: 'Profiles', subtitle: 'Environment-specific builds', anchor: '#profiles' },
+      { title: 'Multi-Module Projects', subtitle: 'Parent and child POMs', anchor: '#multi-module' },
+      { title: 'Properties & Filtering', subtitle: 'Dynamic variable injection', anchor: '#properties' },
+      { title: 'Test Management', subtitle: 'Surefire and Failsafe plugins', anchor: '#testing' },
+      { title: 'CI/CD Integration', subtitle: 'Jenkins pipelines and caching', anchor: '#ci-integration' },
     ],
     labs: [
       'Easy Challenge: Add Guava Dependency',
@@ -536,6 +536,13 @@ export const MaterialView: React.FC = () => {
                 {selectedModule.topics.map((topic, idx) => (
                   <div
                     key={idx}
+                    onClick={() => {
+                      const guide = selectedModule.resources?.find(r => r.type === 'INTERACTIVE' || r.type === 'GUIDE' || r.type === 'DOCS');
+                      if (guide && guide.url !== '#') {
+                        const urlToOpen = (topic as any).anchor ? `${guide.url}${(topic as any).anchor}` : guide.url;
+                        window.open(urlToOpen, '_blank');
+                      }
+                    }}
                     style={{
                       border: '1px solid #1f1f1f',
                       borderRadius: 12,
