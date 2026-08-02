@@ -704,10 +704,61 @@ export const MaterialView: React.FC = () => {
               width: '100%',
               border: '1px solid #333',
               borderRadius: '8px',
-              backgroundColor: '#fff' // The iframe's content has its own background, but fallback to white.
+              backgroundColor: '#fff', // The iframe's content has its own background, but fallback to white.
+              marginBottom: '16px'
             }}
             title="Interactive Guide"
           />
+          
+          {/* Finish Line Footer */}
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            background: '#0a0a0b',
+            border: '1px solid #3f1d1d', /* subtle red tint border */
+            borderRadius: '12px',
+            padding: '20px 24px',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.5)'
+          }}>
+            <div>
+              <div style={{ fontSize: '11px', letterSpacing: '0.15em', color: '#666', textTransform: 'uppercase', marginBottom: '8px', fontWeight: 600 }}>
+                Finish Line
+              </div>
+              <div style={{ fontSize: '13px', color: '#999' }}>
+                Lesson completed — it counts toward your streak and coverage.
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+              <button style={{
+                background: 'rgba(34, 197, 94, 0.1)',
+                color: '#22c55e',
+                border: '1px solid rgba(34, 197, 94, 0.2)',
+                padding: '8px 16px',
+                borderRadius: '8px',
+                fontSize: '13px',
+                fontWeight: 600,
+                cursor: 'default'
+              }}>
+                Completed ✓
+              </button>
+              <button 
+                onClick={() => setSelectedGuideUrl(null)}
+                style={{
+                  background: 'linear-gradient(135deg, #ef4444 0%, #b91c1c 100%)',
+                  color: 'white',
+                  border: 'none',
+                  padding: '8px 20px',
+                  borderRadius: '8px',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  boxShadow: '0 2px 10px rgba(239, 68, 68, 0.3)'
+              }}>
+                Next lesson
+              </button>
+            </div>
+          </div>
         </div>
       )}
       </React.Fragment>
