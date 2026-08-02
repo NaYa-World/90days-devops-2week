@@ -1,7 +1,7 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import { useAppState } from './hooks/useAppState';
 import { PomodoroModal } from './components/PomodoroModal';
-import { SettingsModal } from './components/SettingsModal';
+import { SettingsView } from './views/SettingsView';
 import { NotificationDropdown } from './components/NotificationDropdown';
 import { NavigationDrawer } from './components/NavigationDrawer';
 import { DailyChallengeModal } from './components/DailyChallengeModal';
@@ -28,7 +28,11 @@ import { NotificationService } from './components/NotificationService';
 import { AppShortcuts } from '@capawesome/capacitor-app-shortcuts';
 import { Network } from '@capacitor/network';
 import { showToast } from './components/Toast';
-
+import {
+  LayoutGrid, Clock, Compass, Library, 
+  Briefcase, Code, Layers, HelpCircle, MessageSquare, 
+  LineChart, Settings
+} from 'lucide-react';
 
 import { AppViews } from './components/AppViews';
 import { ErrorBoundary } from './components/ErrorBoundary';
@@ -64,7 +68,6 @@ export const App: React.FC = () => {
   // Modals visibility
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isPomoOpen, setIsPomoOpen] = useState(false);
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [notificationsEnabled, setNotificationsEnabled] = useState(() => {
     return localStorage.getItem('devops90_notifications_enabled') === 'true';
@@ -446,7 +449,7 @@ export const App: React.FC = () => {
       gemini: geminiKey,
       grok: grokKey
     });
-    setIsSettingsOpen(true);
+    setCurrentView('settings');
   };
 
   const handleSaveSettings = async () => {
@@ -456,8 +459,6 @@ export const App: React.FC = () => {
     await SecurityService.saveSecureCredential('devops90_gemini_api_key', providerKeys.gemini);
     await SecurityService.saveSecureCredential('devops90_grok_api_key', providerKeys.grok);
     
-    setIsSettingsOpen(false);
-
     if (Capacitor.isNativePlatform()) {
       await BackupService.autoBackup();
     }
@@ -477,6 +478,11 @@ export const App: React.FC = () => {
   const handleNavItemClick = (view: string) => {
     if (Capacitor.isNativePlatform()) {
       Haptics.impact({ style: ImpactStyle.Light }).catch(() => {});
+    }
+    if (view === 'settings') {
+      handleOpenSettings();
+      setIsDrawerOpen(false);
+      return;
     }
     setCurrentView(view);
     setIsDrawerOpen(false);
@@ -526,166 +532,183 @@ export const App: React.FC = () => {
     );
   }
 
+  // Sidebar nav sections
+  const sidebarSections = [
+    {
+      label: 'LEARN',
+      items: [
+        { view: 'dashboard', icon: <LayoutGrid size={18} strokeWidth={1.5} />, label: 'Overview' },
+        { view: 'focus', icon: <Clock size={18} strokeWidth={1.5} />, label: "Today's Lesson" },
+        { view: 'roadmap-v4', icon: <Compass size={18} strokeWidth={1.5} />, label: 'Explore a Topic' },
+        { view: 'notes', icon: <Library size={18} strokeWidth={1.5} />, label: 'Knowledge Library' },
+      ],
+    },
+    {
+      label: 'PRACTICE',
+      items: [
+        { view: 'projects', icon: <Briefcase size={18} strokeWidth={1.5} />, label: 'Portfolio Projects' },
+        { view: 'sandbox', icon: <Code size={18} strokeWidth={1.5} />, label: 'Python Exercises' },
+        { view: 'qbank', icon: <Layers size={18} strokeWidth={1.5} />, label: 'Flashcards' },
+        { view: 'readiness', icon: <HelpCircle size={18} strokeWidth={1.5} />, label: 'Quizzes' },
+        { view: 'mock', icon: <MessageSquare size={18} strokeWidth={1.5} />, label: 'Interview Prep' },
+      ],
+    },
+    {
+      label: 'ACCOUNT',
+      items: [
+        { view: 'tracker', icon: <LineChart size={18} strokeWidth={1.5} />, label: 'Progress' },
+        { view: 'settings', icon: <Settings size={18} strokeWidth={1.5} />, label: 'Settings' },
+      ],
+    },
+  ];
+
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)', '--offline-h': isOffline ? 'calc(33px + env(safe-area-inset-top, 0px))' : '0px' } as React.CSSProperties}>
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'row',
+        width: '100vw',
+        height: '100vh',
+        background: '#0a0a0b',
+        color: '#f4f4f5',
+        overflow: 'hidden',
+        position: 'relative',
+        '--offline-h': isOffline ? 'calc(33px + env(safe-area-inset-top, 0px))' : '0px',
+      } as React.CSSProperties}
+    >
+      {/* Offline Banner */}
       <div className={`offline-banner ${isOffline ? 'visible' : ''}`}>
         🔌 Offline Mode. AI-powered features require internet and are temporarily disabled.
       </div>
-      {/* Navigation Top Bar */}
-      <nav id="nav">
-        <button
-          id="ham-btn"
-          className={isDrawerOpen ? 'open' : ''}
-          onClick={() => setIsDrawerOpen(!isDrawerOpen)}
-          aria-label="Menu"
-          aria-expanded={isDrawerOpen}
-        >
-          <span></span>
-          <span></span>
-          <span></span>
-        </button>
-        <div className="nav-brand" onClick={() => handleNavItemClick('dashboard')} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <div>
-            <span className="g">DEV</span>
-            <span className="p">OPS</span>
-            <span className="v">BY GK</span>
+
+      {/* DESKTOP: Permanent Left Sidebar */}
+      {/* DESKTOP SIDEBAR */}
+      <aside style={{
+        display: typeof window !== 'undefined' && window.innerWidth < 768 ? 'none' : 'flex',
+        flexDirection: 'column',
+        width: '260px',
+        minWidth: '260px',
+        height: '100vh',
+        position: 'sticky',
+        top: 0,
+        borderRight: '1px solid rgba(255,255,255,0.07)',
+        background: 'rgba(14,14,16,0.90)',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
+        overflowY: 'auto',
+        overflowX: 'hidden',
+        zIndex: 50,
+        flexShrink: 0,
+      }}>
+        <div className="os-sidebar-brand" onClick={() => handleNavItemClick('dashboard')} style={{cursor:'pointer'}}>
+          <svg viewBox="0 0 32 32" className="os-sidebar-logo" aria-hidden="true">
+            <defs>
+              <linearGradient id="logo-grad" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stopColor="#ff5c5c" />
+                <stop offset="1" stopColor="#b71f1f" />
+              </linearGradient>
+            </defs>
+            <path d="M16 3 L27 9 v8 c0 6-5 10-11 12 C10 27 5 23 5 17 V9 Z" fill="none" stroke="url(#logo-grad)" strokeWidth="1.8" strokeLinejoin="round" />
+            <path d="M11 12 l5 3 5-3 M16 15 v6" fill="none" stroke="url(#logo-grad)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          <div className="os-sidebar-brand-text">
+            <div className="os-sidebar-brand-name">DevOps <span className="os-accent-text">90</span></div>
+            <div className="os-sidebar-brand-sub">BY GK</div>
           </div>
-          <div
-            title={appState.isSyncUpToDate ? 'Sync: Up to date' : 'Sync: Saving to GitHub...'}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              background: appState.isSyncUpToDate ? 'rgba(0, 217, 160, 0.1)' : 'rgba(239, 68, 68, 0.1)',
-              border: `1px solid ${appState.isSyncUpToDate ? 'rgba(0, 217, 160, 0.2)' : 'rgba(239, 68, 68, 0.2)'}`,
-              padding: '2px 8px',
-              borderRadius: '12px',
-              marginLeft: '8px',
-              transition: 'all 0.3s ease'
-            }}
-          >
-            <span
-              id="apk-sync-indicator"
-              style={{
-                width: '6px',
-                height: '6px',
-                borderRadius: '50%',
-                backgroundColor: appState.isSyncUpToDate ? '#00d9a0' : '#ef4444',
-                boxShadow: appState.isSyncUpToDate ? '0 0 6px #00d9a0' : '0 0 6px #ef4444',
-                display: 'inline-block',
-                transition: 'all 0.3s ease',
-                animation: appState.isSyncUpToDate ? 'none' : 'pulse 1s infinite'
-              }}
-            />
-            <span style={{ 
-              fontSize: '10px', 
-              color: appState.isSyncUpToDate ? '#00d9a0' : '#ef4444',
-              fontFamily: 'monospace',
-              fontWeight: 600,
-              letterSpacing: '0.5px'
-            }}>
-              {appState.isSyncUpToDate ? 'SAVED' : 'SAVING...'}
-            </span>
+          <div className="os-sync-pill" title={appState.isSyncUpToDate ? 'Sync: Up to date' : 'Sync: Saving...'} style={{ background: appState.isSyncUpToDate ? 'rgba(0,217,160,.1)' : 'rgba(239,68,68,.1)', borderColor: appState.isSyncUpToDate ? 'rgba(0,217,160,.25)' : 'rgba(239,68,68,.25)' }}>
+            <span style={{ width:6, height:6, borderRadius:'50%', display:'inline-block', backgroundColor: appState.isSyncUpToDate ? '#00d9a0' : '#ef4444', boxShadow: appState.isSyncUpToDate ? '0 0 6px #00d9a0' : '0 0 6px #ef4444', animation: appState.isSyncUpToDate ? 'none' : 'pulse 1s infinite' }} />
           </div>
         </div>
-        <div className="nav-tabs">
-          <button
-            className={`nav-tab ${currentView === 'roadmap' ? 'active' : ''}`}
-            onClick={() => handleNavItemClick('roadmap')}
-            style={{ background: currentView === 'roadmap' ? 'rgba(0,217,160,.15)' : undefined, color: currentView === 'roadmap' ? 'var(--green)' : undefined }}
-          >
-            💥 DevOps Roadmap
-          </button>
-          <button
-            className={`nav-tab ${currentView === 'dashboard' ? 'active' : ''}`}
-            onClick={() => handleNavItemClick('dashboard')}
-            style={{ background: currentView === 'dashboard' ? 'rgba(59,130,246,.15)' : undefined, color: currentView === 'dashboard' ? '#3b82f6' : undefined }}
-          >
-            📊 Dashboard
-          </button>
-          <button
-            className={`nav-tab ${currentView === 'roadmap-v4' ? 'active' : ''}`}
-            onClick={() => handleNavItemClick('roadmap-v4')}
-            style={{ background: currentView === 'roadmap-v4' ? 'rgba(239,68,68,.15)' : undefined, color: currentView === 'roadmap-v4' ? '#ef4444' : undefined }}
-          >
-            🔥 v4 Roadmap
-          </button>
-          <button
-            className={`nav-tab ${currentView === 'kanban' ? 'active' : ''}`}
-            onClick={() => handleNavItemClick('kanban')}
-          >
-            ⊞ Kanban
-          </button>
-          <button
-            className={`nav-tab ${currentView === 'focus' ? 'active' : ''}`}
-            onClick={() => handleNavItemClick('focus')}
-          >
-            ◎ Focus
-          </button>
-          <button
-            className={`nav-tab ${currentView === 'sandbox' && sandboxSection !== 'labs' ? 'active' : ''}`}
-            onClick={() => {
-              setSandboxSection(null);
-              handleNavItemClick('sandbox');
-            }}
-          >
-            🧑‍💻 Sandbox
-          </button>
+
+        <nav className="os-sidebar-nav">
+          {sidebarSections.map((section) => (
+            <div key={section.label} className="os-sidebar-section">
+              <div className="os-sidebar-section-label">{section.label}</div>
+              <ul>
+                {section.items.map((item) => {
+                  const isActive = currentView === item.view ||
+                    (item.view === 'sandbox' && currentView === 'sandbox' && sandboxSection !== 'labs') ||
+                    (item.view === 'labs' && currentView === 'labs');
+                  return (
+                    <li key={item.view}>
+                      <button
+                        className={`os-sidebar-item ${isActive ? 'active' : ''}`}
+                        onClick={() => { if (item.view === 'sandbox') setSandboxSection(null); handleNavItemClick(item.view); }}
+                      >
+                        {isActive && <span className="os-sidebar-active-pill" />}
+                        <span className="os-sidebar-item-icon">{item.icon}</span>
+                        <span className="os-sidebar-item-label">{item.label}</span>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          ))}
+        </nav>
+
+        <div className="os-sidebar-footer">
+          <div className="os-sidebar-footer-user">
+            <span>👤</span>
+            <span>{currentUser}</span>
+            <button className="os-sidebar-logout" onClick={handleLogout}>Logout</button>
+          </div>
         </div>
-        <div className="nav-right">
-          <button className="nav-btn" onClick={() => handleNavItemClick('notes')}>📝 Notes</button>
-          <button className="nav-btn hi" onClick={() => setIsPomoOpen(true)}>⏱</button>
-          <button className="nav-btn" onClick={handleShareProgress} title="Share Progress">📤 Share</button>
+      </aside>
 
-          <NotificationDropdown
-            isNotifOpen={isNotifOpen}
-            setIsNotifOpen={setIsNotifOpen}
-            notifications={state.notifications || []}
-            markNotificationsRead={markNotificationsRead}
-            clearNotifications={clearNotifications}
-          />
+      {/* MAIN COLUMN */}
+      <div style={{
+        flex: '1 1 0%',
+        minWidth: 0,
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden',
+      }}>
+        {/* Top Bar */}
+        <header style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '8px',
+          padding: '0 20px',
+          height: '53px',
+          borderBottom: '1px solid rgba(255,255,255,0.07)',
+          background: 'rgba(14,14,16,0.85)',
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
+          position: 'sticky',
+          top: 0,
+          zIndex: 40,
+          flexShrink: 0,
+        }}>
+          <div className="os-top-bar-mobile-brand">
+            <button className={`os-ham-btn ${isDrawerOpen ? 'open' : ''}`} onClick={() => setIsDrawerOpen(!isDrawerOpen)} aria-label="Menu">
+              <span /><span /><span />
+            </button>
+            <svg viewBox="0 0 32 32" style={{width:26,height:26}} aria-hidden="true">
+              <defs><linearGradient id="logo-m" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#ff5c5c" /><stop offset="1" stopColor="#b71f1f" /></linearGradient></defs>
+              <path d="M16 3 L27 9 v8 c0 6-5 10-11 12 C10 27 5 23 5 17 V9 Z" fill="none" stroke="url(#logo-m)" strokeWidth="1.8" strokeLinejoin="round" />
+              <path d="M11 12 l5 3 5-3 M16 15 v6" fill="none" stroke="url(#logo-m)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </div>
+          <div className="os-top-bar-actions">
+            <button className="os-action-btn" onClick={() => setIsPomoOpen(true)}>⏱ Timer</button>
+            <button className="os-action-btn" onClick={handleShareProgress}>📤 Share</button>
+            <NotificationDropdown isNotifOpen={isNotifOpen} setIsNotifOpen={setIsNotifOpen} notifications={state.notifications || []} markNotificationsRead={markNotificationsRead} clearNotifications={clearNotifications} />
+            <button className="os-action-btn" onClick={toggleTheme}>{theme === 'dark' ? '☀️' : '🌙'}</button>
+            <button className="os-action-btn" onClick={handleOpenSettings}>⚙️ Settings</button>
+          </div>
+        </header>
 
-          <button className="nav-btn" onClick={toggleTheme}>◑ Theme</button>
-          <button className="nav-btn" onClick={handleOpenSettings}>⚙️ Settings</button>
-          <button
-            className="nav-btn"
-            onClick={handleLogout}
-            style={{
-              borderColor: 'rgba(255,95,95,.4)',
-              color: 'var(--red)',
-              background: 'rgba(255,95,95,.05)'
-            }}
-          >
-            👤 {currentUser} (Logout)
-          </button>
-        </div>
-      </nav>
-
-      <NavigationDrawer
-        isDrawerOpen={isDrawerOpen}
-        setIsDrawerOpen={setIsDrawerOpen}
-        currentView={currentView}
-        handleNavItemClick={handleNavItemClick}
-        openHamSections={openHamSections}
-        toggleHamSection={toggleHamSection}
-        setChallengeWeekday={setChallengeWeekday}
-        setIsChallengeOpen={setIsChallengeOpen}
-        handleOpenSettings={handleOpenSettings}
-        notificationsEnabled={notificationsEnabled}
-        toggleStudyReminders={toggleStudyReminders}
-        theme={theme}
-        toggleTheme={toggleTheme}
-        handleShareProgress={handleShareProgress}
-        handleLogout={handleLogout}
-        currentUser={currentUser}
-        sandboxSection={sandboxSection}
-        setSandboxSection={setSandboxSection}
-      />
-
-      <main style={{ paddingBottom: '80px' }}>
-        <Suspense fallback={<div className="wrap" style={{ display: 'flex', justifyContent: 'center', padding: '60px 0' }}><div className="ai-spinner"></div></div>}>
-          <ErrorBoundary name="Main App Routing">
-            <AppViews
+        {/* Page Content */}
+        <main style={{
+          flex: 1,
+          overflowY: 'auto',
+          padding: '32px 24px 80px',
+        }}>
+          <Suspense fallback={<div style={{display:'flex',justifyContent:'center',padding:'60px 0'}}><div className="ai-spinner"/></div>}>
+            <ErrorBoundary name="Main App Routing">
+              <AppViews
               currentView={currentView}
               setCurrentView={setCurrentView}
               appState={appState}
@@ -694,52 +717,46 @@ export const App: React.FC = () => {
               sandboxSection={sandboxSection}
               setSandboxSection={setSandboxSection}
               theme={theme}
-            />
-          </ErrorBoundary>
-        </Suspense>
-      </main>
+              // Settings props
+              activeProvider={activeProvider}
+              setActiveProviderState={setActiveProviderState}
+              providerKeys={providerKeys}
+              setProviderKeys={setProviderKeys}
+              uiScale={uiScale}
+              setUiScale={setUiScale}
+              notificationsEnabled={notificationsEnabled}
+              toggleStudyReminders={toggleStudyReminders}
+              morningTime={morningTime}
+              handleMorningTimeChange={handleMorningTimeChange}
+              eveningTime={eveningTime}
+              handleEveningTimeChange={handleEveningTimeChange}
+              handleSaveSettings={handleSaveSettings}
+              syncWithSystemTheme={syncWithSystemTheme}
+              setSyncWithSystemTheme={setSyncWithSystemTheme}
+              currentUser={currentUser}
+              handleTestNotification={() => {
+                if (Capacitor.isNativePlatform()) {
+                  NotificationService.sendTestNotification();
+                } else {
+                  alert('Test notifications are only supported on native devices.');
+                }
+              }}
+            /></ErrorBoundary>
+          </Suspense>
+        </main>
+      </div>
+
+      {/* Mobile: Slide-in Drawer */}
+      <NavigationDrawer isDrawerOpen={isDrawerOpen} setIsDrawerOpen={setIsDrawerOpen} currentView={currentView} handleNavItemClick={handleNavItemClick} openHamSections={openHamSections} toggleHamSection={toggleHamSection} setChallengeWeekday={setChallengeWeekday} setIsChallengeOpen={setIsChallengeOpen} handleOpenSettings={handleOpenSettings} notificationsEnabled={notificationsEnabled} toggleStudyReminders={toggleStudyReminders} theme={theme} toggleTheme={toggleTheme} handleShareProgress={handleShareProgress} handleLogout={handleLogout} currentUser={currentUser} sandboxSection={sandboxSection} setSandboxSection={setSandboxSection} />
 
       {/* Mobile Bottom Navigation Bar */}
       <div id="bottom-bar">
-        <button
-          className={`btab ${currentView === 'dashboard' ? 'active' : ''}`}
-          onClick={() => handleNavItemClick('dashboard')}
-        >
-          <span className="bico">📊</span>Home
-        </button>
-        <button
-          className={`btab ${currentView === 'roadmap-v4' ? 'active' : ''}`}
-          onClick={() => handleNavItemClick('roadmap-v4')}
-        >
-          <span className="bico">🔥</span>Roadmap
-        </button>
-        <button
-          className={`btab ${currentView === 'kanban' ? 'active' : ''}`}
-          onClick={() => handleNavItemClick('kanban')}
-        >
-          <span className="bico">⊞</span>Kanban
-        </button>
-        <button
-          className={`btab ${currentView === 'focus' ? 'active' : ''}`}
-          onClick={() => handleNavItemClick('focus')}
-        >
-          <span className="bico">◎</span>Focus
-        </button>
-        <button
-          className={`btab ${currentView === 'sandbox' && sandboxSection !== 'labs' ? 'active' : ''}`}
-          onClick={() => {
-            setSandboxSection(null);
-            handleNavItemClick('sandbox');
-          }}
-        >
-          <span className="bico">🧑‍💻</span>Sandbox
-        </button>
-        <button
-          className="btab"
-          onClick={() => setIsDrawerOpen(!isDrawerOpen)}
-        >
-          <span className="bico">☰</span>More
-        </button>
+        <button className={`btab ${currentView==='dashboard'?'active':''}`} onClick={() => handleNavItemClick('dashboard')}><span className="bico">📊</span>Home</button>
+        <button className={`btab ${currentView==='roadmap-v4'?'active':''}`} onClick={() => handleNavItemClick('roadmap-v4')}><span className="bico">🔥</span>Roadmap</button>
+        <button className={`btab ${currentView==='kanban'?'active':''}`} onClick={() => handleNavItemClick('kanban')}><span className="bico">⊞</span>Kanban</button>
+        <button className={`btab ${currentView==='focus'?'active':''}`} onClick={() => handleNavItemClick('focus')}><span className="bico">◎</span>Focus</button>
+        <button className={`btab ${currentView==='sandbox'&&sandboxSection!=='labs'?'active':''}`} onClick={() => { setSandboxSection(null); handleNavItemClick('sandbox'); }}><span className="bico">🧑‍💻</span>Sandbox</button>
+        <button className="btab" onClick={() => setIsDrawerOpen(!isDrawerOpen)}><span className="bico">☰</span>More</button>
       </div>
 
       {/* Pomodoro Timer Modal */}
@@ -754,35 +771,6 @@ export const App: React.FC = () => {
 
       {/* Back to Top button */}
       <BackToTop />
-
-      <SettingsModal
-        isOpen={isSettingsOpen}
-        onClose={() => setIsSettingsOpen(false)}
-        activeProvider={activeProvider}
-        setActiveProviderState={setActiveProviderState}
-        providerKeys={providerKeys}
-        setProviderKeys={setProviderKeys}
-        uiScale={uiScale}
-        setUiScale={setUiScale}
-        notificationsEnabled={notificationsEnabled}
-        toggleStudyReminders={toggleStudyReminders}
-        morningTime={morningTime}
-        handleMorningTimeChange={handleMorningTimeChange}
-        eveningTime={eveningTime}
-        handleEveningTimeChange={handleEveningTimeChange}
-        handleSaveSettings={handleSaveSettings}
-        syncWithSystemTheme={syncWithSystemTheme}
-        setSyncWithSystemTheme={setSyncWithSystemTheme}
-        theme={theme}
-        currentUser={currentUser}
-        handleTestNotification={async () => {
-          if (Capacitor.isNativePlatform()) {
-            await NotificationService.testFireNow();
-            showToast('Test notification scheduled in 10 seconds. Close the app to see it!');
-          }
-        }}
-        triggerSync={appState.triggerSync}
-      />
 
       <DailyChallengeModal
         isOpen={isChallengeOpen}

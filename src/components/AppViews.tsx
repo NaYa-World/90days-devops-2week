@@ -25,6 +25,9 @@ const DiagramBuilderView = React.lazy(() => import('../views/DiagramBuilderView'
 const DevOpsFlowsView = React.lazy(() => import('../views/DevOpsFlowsView').then(m => ({ default: m.DevOpsFlowsView })));
 const PipelineReferenceView = React.lazy(() => import('../views/PipelineReferenceView').then(m => ({ default: m.PipelineReferenceView })));
 const ChaosSimulatorView = React.lazy(() => import('../views/ChaosSimulatorView').then(m => ({ default: m.ChaosSimulatorView })));
+const SettingsView = React.lazy(() => import('../views/SettingsView').then(m => ({ default: m.SettingsView })));
+const DevOpsTracker = React.lazy(() => import('../views/DevOpsTracker'));
+const LearningSystemView = React.lazy(() => import('../views/LearningSystemView').then(m => ({ default: m.LearningSystemView })));
 interface AppViewsProps {
   currentView: string;
   setCurrentView: (view: string) => void;
@@ -34,122 +37,166 @@ interface AppViewsProps {
   sandboxSection: 'scenarios' | 'labs' | 'free' | null;
   setSandboxSection: React.Dispatch<React.SetStateAction<'scenarios' | 'labs' | 'free' | null>>;
   theme: 'dark' | 'light';
+  activeProvider?: any;
+  setActiveProviderState?: any;
+  providerKeys?: any;
+  setProviderKeys?: any;
+  uiScale?: any;
+  setUiScale?: any;
+  notificationsEnabled?: any;
+  toggleStudyReminders?: any;
+  morningTime?: any;
+  handleMorningTimeChange?: any;
+  eveningTime?: any;
+  handleEveningTimeChange?: any;
+  handleSaveSettings?: any;
+  syncWithSystemTheme?: any;
+  setSyncWithSystemTheme?: any;
+  currentUser?: any;
+  handleTestNotification?: any;
 }
 
-export const AppViews: React.FC<AppViewsProps> = ({
-  currentView,
-  setCurrentView,
-  appState,
-  focusDay,
-  setFocusDay,
-  sandboxSection,
-  setSandboxSection,
-  theme
-}) => {
+export const AppViews: React.FC<AppViewsProps> = (props) => {
   return (
     <React.Suspense fallback={<div style={{ padding: 40, color: 'var(--sub)', textAlign: 'center' }}>Loading view...</div>}>
       {(() => {
-        switch (currentView) {
+        switch (props.currentView) {
           case 'roadmap':
             return (
-              <RoadmapView appState={appState} switchView={setCurrentView} />
+              <RoadmapView appState={props.appState} switchView={props.setCurrentView} />
+            );
+          case 'settings':
+            return (
+              <SettingsView
+                activeProvider={props.activeProvider}
+                setActiveProviderState={props.setActiveProviderState}
+                providerKeys={props.providerKeys}
+                setProviderKeys={props.setProviderKeys}
+                uiScale={props.uiScale}
+                setUiScale={props.setUiScale}
+                notificationsEnabled={props.notificationsEnabled}
+                toggleStudyReminders={props.toggleStudyReminders}
+                morningTime={props.morningTime}
+                handleMorningTimeChange={props.handleMorningTimeChange}
+                eveningTime={props.eveningTime}
+                handleEveningTimeChange={props.handleEveningTimeChange}
+                handleSaveSettings={props.handleSaveSettings}
+                syncWithSystemTheme={props.syncWithSystemTheme}
+                setSyncWithSystemTheme={props.setSyncWithSystemTheme}
+                theme={props.theme}
+                currentUser={props.currentUser}
+                handleTestNotification={props.handleTestNotification}
+                triggerSync={props.appState.triggerSync}
+              />
             );
           case 'kanban':
             return (
               <KanbanView
-                appState={appState}
-                switchView={setCurrentView}
-                setFocusDay={setFocusDay}
+                appState={props.appState}
+                switchView={props.setCurrentView}
+                setFocusDay={props.setFocusDay}
               />
             );
           case 'focus':
             return (
               <FocusView
-                appState={appState}
-                focusDay={focusDay}
-                setFocusDay={setFocusDay}
+                appState={props.appState}
+                focusDay={props.focusDay}
+                setFocusDay={props.setFocusDay}
               />
             );
           case 'labs':
             return (
               <DevOpsSandboxView 
-                appState={appState} 
+                appState={props.appState} 
                 sandboxSection="labs"
-                setSandboxSection={setSandboxSection}
+                setSandboxSection={props.setSandboxSection}
               />
             );
           case 'jobs':
-            return <JobsView appState={appState} />;
+            return <JobsView appState={props.appState} />;
           case 'qbank':
-            return <QbankView appState={appState} />;
+            return <QbankView appState={props.appState} />;
           case 'stats':
-            return <StatsView appState={appState} />;
+            return <StatsView appState={props.appState} />;
           case 'dashboard':
-            return <DashboardView appState={appState} switchView={setCurrentView} />;
+            return <DashboardView appState={props.appState} switchView={props.setCurrentView} />;
           case 'pipeline-ref':
             return <PipelineReferenceView />;
           case 'chaos-sim':
             return <ChaosSimulatorView />;
           case 'weekly':
-            return <WeeklyView appState={appState} />;
+            return <WeeklyView appState={props.appState} />;
           case 'projects':
-            return <ProjectsView appState={appState} switchView={setCurrentView} />;
+            return <ProjectsView appState={props.appState} switchView={props.setCurrentView} />;
           case 'roadmap-v4':
             return (
-              <RoadmapV4View appState={appState} />
+              <RoadmapV4View appState={props.appState} />
             );
           case 'github-rewriter':
             return (
               <ErrorBoundary name="GitHub Rewriter">
-                <GithubRewriterView appState={appState} />
+                <GithubRewriterView appState={props.appState} />
               </ErrorBoundary>
             );
           case 'resume':
             return (
               <ErrorBoundary name="Resume Scorer">
-                <ResumeView appState={appState} />
+                <ResumeView appState={props.appState} />
               </ErrorBoundary>
             );
           case 'mock':
             return (
               <ErrorBoundary name="Mock Interview">
-                <MockInterviewView appState={appState} switchView={setCurrentView} />
+                <MockInterviewView appState={props.appState} switchView={props.setCurrentView} />
               </ErrorBoundary>
             );
           case 'skillgap':
             return (
               <ErrorBoundary name="Skill Gap Analyser">
                 <SkillGapView
-                  appState={appState}
-                  setFocusDay={setFocusDay}
-                  switchView={setCurrentView}
+                  appState={props.appState}
+                  setFocusDay={props.setFocusDay}
+                  switchView={props.setCurrentView}
                 />
               </ErrorBoundary>
             );
           case 'buildlog':
-            return <BuildLogView appState={appState} />;
+            return <BuildLogView appState={props.appState} />;
           case 'linkedin':
             return (
               <ErrorBoundary name="LinkedIn Post Generator">
-                <LinkedInView appState={appState} />
+                <LinkedInView appState={props.appState} />
               </ErrorBoundary>
             );
           case 'readiness':
-            return <ReadinessView appState={appState} />;
+            return <ReadinessView appState={props.appState} />;
           case 'notes':
-            return <NotesView appState={appState} />;
+            return <NotesView appState={props.appState} />;
           case 'sandbox':
             return (
               <DevOpsSandboxView 
-                appState={appState} 
-                sandboxSection={sandboxSection}
-                setSandboxSection={setSandboxSection}
+                appState={props.appState} 
+                sandboxSection={props.sandboxSection}
+                setSandboxSection={props.setSandboxSection}
               />
             );
           case 'diagram':
             return <DiagramBuilderView appState={appState} theme={theme} />;
           case 'devops-flows':
             return <DevOpsFlowsView appState={appState} switchView={setCurrentView} />;
+          case 'tracker':
+            return (
+              <ErrorBoundary name="DevOps Tracker">
+                <DevOpsTracker onBack={() => setCurrentView('dashboard')} />
+              </ErrorBoundary>
+            );
+          case 'learning-system':
+            return (
+              <ErrorBoundary name="Learning System">
+                <LearningSystemView switchView={setCurrentView} />
+              </ErrorBoundary>
+            );
           default:
             return (
               <RoadmapView
