@@ -42,6 +42,7 @@ export const App: React.FC = () => {
   const appState = useAppState();
   const {
     state,
+    recordToday,
     incrementPomoSessions,
     studyHours,
     currentUser,
@@ -233,6 +234,9 @@ export const App: React.FC = () => {
 
   // Theme the native status bar on launch
   useEffect(() => {
+    // Record login for the streak
+    recordToday(Object.keys(state.completedTasks || {}).length);
+
     if (Capacitor.isNativePlatform()) {
       StatusBar.setStyle({ style: Style.Dark }).catch(() => {});
       StatusBar.setBackgroundColor({ color: '#07090f' }).catch(() => {});
