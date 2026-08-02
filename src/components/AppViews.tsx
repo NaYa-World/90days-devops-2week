@@ -53,7 +53,6 @@ interface AppViewsProps {
   syncWithSystemTheme?: any;
   setSyncWithSystemTheme?: any;
   currentUser?: any;
-  handleTestNotification?: any;
 }
 
 export const AppViews: React.FC<AppViewsProps> = (props) => {
@@ -85,7 +84,6 @@ export const AppViews: React.FC<AppViewsProps> = (props) => {
                 setSyncWithSystemTheme={props.setSyncWithSystemTheme}
                 theme={props.theme}
                 currentUser={props.currentUser}
-                handleTestNotification={props.handleTestNotification}
                 triggerSync={props.appState.triggerSync}
               />
             );

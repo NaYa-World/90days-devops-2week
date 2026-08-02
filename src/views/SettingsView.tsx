@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { AIProvider } from '../components/AIService';
-import { Capacitor } from '@capacitor/core';
 import { GitHubSyncService } from '../components/GitHubSyncService';
 
 interface SettingsViewProps {
@@ -21,7 +20,6 @@ interface SettingsViewProps {
   setSyncWithSystemTheme: (sync: boolean) => void;
   theme: 'dark' | 'light';
   currentUser: string | null;
-  handleTestNotification?: () => void;
   triggerSync?: () => Promise<boolean>;
 }
 
@@ -43,7 +41,6 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   setSyncWithSystemTheme,
   theme,
   currentUser,
-  handleTestNotification,
   triggerSync
 }) => {
   const [syncing, setSyncing] = useState(false);

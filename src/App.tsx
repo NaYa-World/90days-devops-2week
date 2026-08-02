@@ -734,13 +734,6 @@ export const App: React.FC = () => {
               syncWithSystemTheme={syncWithSystemTheme}
               setSyncWithSystemTheme={setSyncWithSystemTheme}
               currentUser={currentUser}
-              handleTestNotification={() => {
-                if (Capacitor.isNativePlatform()) {
-                  NotificationService.testFireNow();
-                } else {
-                  alert('Test notifications are only supported on native devices.');
-                }
-              }}
             /></ErrorBoundary>
           </Suspense>
         </main>
