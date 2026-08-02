@@ -28,6 +28,7 @@ const ChaosSimulatorView = React.lazy(() => import('../views/ChaosSimulatorView'
 const SettingsView = React.lazy(() => import('../views/SettingsView').then(m => ({ default: m.SettingsView })));
 const DevOpsTracker = React.lazy(() => import('../views/DevOpsTracker'));
 const LearningSystemView = React.lazy(() => import('../views/LearningSystemView').then(m => ({ default: m.LearningSystemView })));
+const MaterialView = React.lazy(() => import('../views/MaterialView').then(m => ({ default: m.MaterialView })));
 interface AppViewsProps {
   currentView: string;
   setCurrentView: (view: string) => void;
@@ -187,6 +188,12 @@ export const AppViews: React.FC<AppViewsProps> = (props) => {
             return (
               <ErrorBoundary name="DevOps Tracker">
                 <DevOpsTracker onBack={() => setCurrentView('dashboard')} />
+              </ErrorBoundary>
+            );
+          case 'material':
+            return (
+              <ErrorBoundary name="Material">
+                <MaterialView />
               </ErrorBoundary>
             );
           case 'learning-system':

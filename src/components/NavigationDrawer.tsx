@@ -121,11 +121,10 @@ export const NavigationDrawer: React.FC<NavigationDrawerProps> = ({
                 <span className="ham-ico">❓</span>Q-Bank
               </button>
               <button
-                className={`ham-item ${currentView === 'notes' ? 'active' : ''}`}
-                onClick={() => handleNavItemClick('notes')}
+                className={`ham-item ${currentView === 'material' ? 'active' : ''}`}
+                onClick={() => handleNavItemClick('material')}
               >
-                <span className="ham-ico">📝</span>Notes
-                <span className="ham-badge hot">new</span>
+                <span className="ham-ico">📚</span>Knowledge Library
               </button>
               <button
                 className={`ham-item ${currentView === 'sandbox' && sandboxSection === 'labs' ? 'active' : ''}`}

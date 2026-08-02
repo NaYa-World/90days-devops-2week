@@ -540,7 +540,7 @@ export const App: React.FC = () => {
         { view: 'dashboard', icon: <LayoutGrid size={18} strokeWidth={1.5} />, label: 'Overview' },
         { view: 'focus', icon: <Clock size={18} strokeWidth={1.5} />, label: "Today's Lesson" },
         { view: 'roadmap-v4', icon: <Compass size={18} strokeWidth={1.5} />, label: 'Explore a Topic' },
-        { view: 'notes', icon: <Library size={18} strokeWidth={1.5} />, label: 'Knowledge Library' },
+        { view: 'material', icon: <Library size={18} strokeWidth={1.5} />, label: 'Knowledge Library' },
       ],
     },
     {
