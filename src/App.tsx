@@ -708,10 +708,16 @@ export const App: React.FC = () => {
         <main style={{
           flex: 1,
           overflowY: 'auto',
-          padding: '32px 24px 80px',
         }}>
-          <Suspense fallback={<div style={{display:'flex',justifyContent:'center',padding:'60px 0'}}><div className="ai-spinner"/></div>}>
-            <ErrorBoundary name="Main App Routing">
+          <div style={{
+            maxWidth: '1180px',
+            margin: '0 auto',
+            width: '100%',
+            padding: '32px 40px 80px',
+            boxSizing: 'border-box'
+          }}>
+            <Suspense fallback={<div style={{display:'flex',justifyContent:'center',padding:'60px 0'}}><div className="ai-spinner"/></div>}>
+              <ErrorBoundary name="Main App Routing">
               <AppViews
               currentView={currentView}
               setCurrentView={setCurrentView}
@@ -738,8 +744,10 @@ export const App: React.FC = () => {
               syncWithSystemTheme={syncWithSystemTheme}
               setSyncWithSystemTheme={setSyncWithSystemTheme}
               currentUser={currentUser}
-            /></ErrorBoundary>
-          </Suspense>
+            />
+          </ErrorBoundary>
+            </Suspense>
+          </div>
         </main>
       </div>
 
