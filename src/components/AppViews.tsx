@@ -181,13 +181,13 @@ export const AppViews: React.FC<AppViewsProps> = (props) => {
               />
             );
           case 'diagram':
-            return <DiagramBuilderView appState={appState} theme={theme} />;
+            return <DiagramBuilderView appState={props.appState} theme={props.theme} />;
           case 'devops-flows':
-            return <DevOpsFlowsView appState={appState} switchView={setCurrentView} />;
+            return <DevOpsFlowsView appState={props.appState} switchView={props.setCurrentView} />;
           case 'tracker':
             return (
               <ErrorBoundary name="DevOps Tracker">
-                <DevOpsTracker onBack={() => setCurrentView('dashboard')} />
+                <DevOpsTracker onBack={() => props.setCurrentView('dashboard')} />
               </ErrorBoundary>
             );
           case 'material':
@@ -199,14 +199,14 @@ export const AppViews: React.FC<AppViewsProps> = (props) => {
           case 'learning-system':
             return (
               <ErrorBoundary name="Learning System">
-                <LearningSystemView switchView={setCurrentView} />
+                <LearningSystemView switchView={props.setCurrentView} />
               </ErrorBoundary>
             );
           default:
             return (
               <RoadmapView
-                appState={appState}
-                switchView={setCurrentView}
+                appState={props.appState}
+                switchView={props.setCurrentView}
               />
             );
         }
