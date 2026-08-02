@@ -37,6 +37,7 @@ import {
 import { AppViews } from './components/AppViews';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { Analytics } from "@vercel/analytics/react";
+import { useRouter } from './hooks/useRouter';
 
 export const App: React.FC = () => {
   const appState = useAppState();
@@ -53,7 +54,7 @@ export const App: React.FC = () => {
     markNotificationsRead
   } = appState;
 
-  const [currentView, setCurrentView] = useState<string>('dashboard');
+  const [currentView, setCurrentView] = useRouter('dashboard');
   const [focusDay, setFocusDay] = useState<string>('0_0');
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const [showAnim, setShowAnim] = useState<boolean>(true);

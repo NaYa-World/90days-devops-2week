@@ -3,6 +3,10 @@
     {
       "source": "/github-oauth/:path*",
       "destination": "https://github.com/:path*"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
   ],
   "headers": [
