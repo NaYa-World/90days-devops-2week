@@ -153,7 +153,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   };
 
   return (
-    <div style={{ padding: '40px', maxWidth: '800px', margin: '0 auto', color: '#fff', width: '100%', boxSizing: 'border-box' }}>
+    <div style={{ padding: '40px 60px', maxWidth: '1200px', margin: '0 auto', color: '#fff', width: '100%', boxSizing: 'border-box' }}>
       <div style={{ marginBottom: '40px' }}>
         <div style={{ fontSize: '11px', letterSpacing: '0.1em', color: '#888', marginBottom: '8px', textTransform: 'uppercase' }}>SETTINGS</div>
         <h1 style={{ fontSize: '32px', fontWeight: 600, margin: '0 0 8px 0', color: '#fff' }}>Settings</h1>

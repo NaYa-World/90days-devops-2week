@@ -564,12 +564,12 @@ export const App: React.FC = () => {
 
   return (
     <div
+      className="os-app-shell"
       style={{
         display: 'flex',
         flexDirection: 'row',
         width: '100vw',
         height: '100vh',
-        background: '#0a0a0b',
         color: '#f4f4f5',
         overflow: 'hidden',
         position: 'relative',
