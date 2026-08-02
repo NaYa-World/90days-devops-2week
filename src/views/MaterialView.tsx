@@ -499,7 +499,7 @@ export const MaterialView: React.FC = () => {
   // Detail View
   if (selectedModule) {
     return (
-      <>
+      <React.Fragment>
       <div style={{
         flex: 1, overflowY: 'auto', padding: '40px 60px', color: '#fff', boxSizing: 'border-box'
       }}>
@@ -660,6 +660,7 @@ export const MaterialView: React.FC = () => {
             </div>
         </div>
       </div>
+      </div>
       
       {/* HTML Guide Modal */}
       {selectedGuideUrl && (
@@ -709,7 +710,7 @@ export const MaterialView: React.FC = () => {
           />
         </div>
       )}
-      </>
+      </React.Fragment>
     );
   }
 
