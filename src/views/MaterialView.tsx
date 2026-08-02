@@ -14,7 +14,7 @@ interface ModuleData {
   title: string;
   description: string;
   lessons: number;
-  topics: { title: string; subtitle?: string }[];
+  topics: { title: string; subtitle?: string; anchor?: string }[];
   labs: string[];
   resources: Resource[];
   authored: number;
@@ -499,6 +499,7 @@ export const MaterialView: React.FC = () => {
   // Detail View
   if (selectedModule) {
     return (
+      <>
       <div style={{
         flex: 1, overflowY: 'auto', padding: '40px 60px', color: '#fff', boxSizing: 'border-box'
       }}>
@@ -708,6 +709,7 @@ export const MaterialView: React.FC = () => {
           />
         </div>
       )}
+      </>
     );
   }
 
@@ -804,8 +806,6 @@ export const MaterialView: React.FC = () => {
               </div>
             </div>
           ))}
-        </div>
-      </div>
         </div>
       </div>
     </div>
