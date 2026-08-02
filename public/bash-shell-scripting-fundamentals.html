@@ -1,0 +1,3160 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bash Shell Scripting Fundamentals — 90-Day DevOps Mastery</title>
+  <meta name="description" content="Production-grade Bash shell scripting fundamentals for DevOps engineers. Learn variables, conditionals, loops, functions, error handling, and real-world automation scripts.">
+  <style>
+    :root {
+      --bg: #0f1117;
+      --sb: #0b0e18;
+      --surface: #181c27;
+      --surface2: #1e2336;
+      --border: #2a3050;
+      --text: #e2e8f0;
+      --text2: #c8d3e8;
+      --muted: #7a85a3;
+      --dim: #3a4568;
+      --blue: #4f8ef7;
+      --green: #22c55e;
+      --amber: #f59e0b;
+      --red: #ef4444;
+      --purple: #b060e8;
+      --teal: #20c0a0;
+      --orange: #f07020;
+      --cyan: #40c0e0;
+      --mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+      --sans: 'Inter', system-ui, -apple-system, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      display: flex;
+      min-height: 100vh;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    /* ── SIDEBAR ── */
+    .sidebar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 264px;
+      height: 100vh;
+      overflow-y: auto;
+      background: var(--sb);
+      border-right: 1px solid var(--border);
+      z-index: 100;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border) transparent;
+    }
+
+    .sidebar::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    .sidebar::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 2px;
+    }
+
+    .sb-brand {
+      padding: 18px 16px 12px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 6px;
+    }
+
+    .sb-badge {
+      display: inline-block;
+      background: #0a2d22;
+      border: 1px solid #0f7c5c;
+      color: #13a87a;
+      font-size: 9px;
+      font-family: var(--mono);
+      padding: 2px 8px;
+      border-radius: 10px;
+      letter-spacing: .1em;
+      margin-bottom: 7px;
+    }
+
+    .sb-brand h2 {
+      font-size: 12.5px;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.3;
+    }
+
+    .sb-label {
+      font-size: 9px;
+      font-family: var(--mono);
+      letter-spacing: .14em;
+      color: var(--dim);
+      text-transform: uppercase;
+      padding: 10px 16px 3px;
+    }
+
+    .sidebar a {
+      display: block;
+      padding: 4px 16px 4px 22px;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 11.5px;
+      line-height: 1.4;
+      border-left: 2px solid transparent;
+      transition: all .13s;
+    }
+
+    .sidebar a:hover,
+    .sidebar a.active {
+      color: var(--text);
+      border-left-color: var(--blue);
+      background: rgba(79, 142, 247, .06);
+    }
+
+    /* ── MOBILE MENU ── */
+    .mobile-toggle {
+      display: none;
+      position: fixed;
+      top: 12px;
+      left: 12px;
+      z-index: 200;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 8px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    /* ── LAYOUT ── */
+    .content {
+      margin-left: 264px;
+      flex: 1;
+      padding: 0 48px 80px;
+      max-width: 1060px;
+      width: 100%;
+    }
+
+    /* ── PROGRESS TRACKING HEADER ── */
+    .progress-header {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px 24px;
+      margin: 24px 0 8px;
+    }
+
+    .progress-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .pg-item {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 12px;
+      text-align: center;
+    }
+
+    .pg-item .pg-label {
+      font-size: 9px;
+      font-family: var(--mono);
+      color: var(--muted);
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .pg-item .pg-value {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .pg-item .pg-value.lesson {
+      color: var(--blue);
+    }
+
+    .pg-item .pg-value.module {
+      color: var(--purple);
+    }
+
+    .pg-item .pg-value.progress {
+      color: var(--green);
+    }
+
+    .pg-item .pg-value.skill {
+      color: var(--amber);
+    }
+
+    .pg-item .pg-value.time {
+      color: var(--cyan);
+    }
+
+    .pg-item .pg-value.difficulty {
+      color: var(--orange);
+    }
+
+    .pg-item .pg-value.prereq {
+      color: var(--teal);
+    }
+
+    .progress-bar-wrap {
+      background: #0d1020;
+      border-radius: 6px;
+      overflow: hidden;
+      height: 8px;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      border-radius: 6px;
+      background: linear-gradient(90deg, var(--blue), var(--teal), var(--green));
+      transition: width .6s ease;
+    }
+
+    .progress-text {
+      display: flex;
+      justify-content: space-between;
+      font-size: 10px;
+      font-family: var(--mono);
+      color: var(--muted);
+      margin-top: 6px;
+    }
+
+    /* ── PAGE HEADER ── */
+    .page-header {
+      padding: 44px 0 28px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 36px;
+    }
+
+    .ph-badge {
+      display: inline-block;
+      background: #0a2d22;
+      border: 1px solid #0f7c5c;
+      color: #13a87a;
+      font-size: 11px;
+      font-family: var(--mono);
+      padding: 4px 14px;
+      border-radius: 20px;
+      letter-spacing: .08em;
+      margin-bottom: 12px;
+    }
+
+    .page-header h1 {
+      font-size: 30px;
+      font-weight: 700;
+      letter-spacing: -.5px;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+
+    .page-header p {
+      color: var(--muted);
+      font-size: 13px;
+      max-width: 600px;
+    }
+
+    .page-meta {
+      display: flex;
+      gap: 18px;
+      margin-top: 14px;
+      flex-wrap: wrap;
+    }
+
+    .meta-item {
+      font-size: 11px;
+      color: var(--muted);
+      font-family: var(--mono);
+    }
+
+    .meta-item b {
+      color: var(--text);
+    }
+
+    /* ── LEARNING OBJECTIVES ── */
+    .objectives {
+      background: linear-gradient(135deg, #0a1a30 0%, #0d1428 100%);
+      border: 1px solid #1a3060;
+      border-radius: 12px;
+      padding: 20px 24px;
+      margin: 24px 0;
+    }
+
+    .objectives h3 {
+      font-size: 14px;
+      font-family: var(--mono);
+      color: var(--blue);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .obj-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .obj-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      font-size: 12.5px;
+      color: var(--text2);
+      padding: 4px 0;
+    }
+
+    .obj-item::before {
+      content: '◆';
+      color: var(--blue);
+      font-size: 8px;
+      margin-top: 4px;
+      flex-shrink: 0;
+    }
+
+    /* ── SECTIONS ── */
+    .section {
+      margin-bottom: 52px;
+      scroll-margin-top: 20px;
+    }
+
+    .section-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text);
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .st-num {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 30px;
+      height: 30px;
+      background: var(--blue);
+      color: #fff;
+      border-radius: 7px;
+      font-size: 12px;
+      font-weight: 800;
+      font-family: var(--mono);
+      flex-shrink: 0;
+    }
+
+    .sub-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+      margin: 22px 0 10px;
+      padding-left: 11px;
+      border-left: 3px solid var(--blue);
+    }
+
+    .sub-sub {
+      font-size: 13px;
+      font-weight: 600;
+      color: #c0d0f0;
+      margin: 14px 0 7px;
+    }
+
+    p {
+      margin-bottom: 12px;
+      color: var(--text2);
+      line-height: 1.75;
+    }
+
+    /* ── BOXES ── */
+    .box {
+      border-radius: 8px;
+      padding: 12px 15px;
+      margin: 14px 0;
+      font-size: 12.5px;
+      line-height: 1.7;
+    }
+
+    .box-title {
+      font-family: var(--mono);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      display: block;
+      margin-bottom: 5px;
+    }
+
+    .box-note {
+      background: #0a1428;
+      border: 1px solid #1a3060;
+      border-left: 4px solid var(--blue);
+      color: #b8d0f8;
+    }
+
+    .box-note .box-title {
+      color: var(--blue);
+    }
+
+    .box-warn {
+      background: #1a0f0f;
+      border: 1px solid #5a1a1a;
+      border-left: 4px solid var(--red);
+      color: #fca5a5;
+    }
+
+    .box-warn .box-title {
+      color: var(--red);
+    }
+
+    .box-tip {
+      background: #0a1a0a;
+      border: 1px solid #1a4a1a;
+      border-left: 4px solid var(--green);
+      color: #bbf7d0;
+    }
+
+    .box-tip .box-title {
+      color: var(--green);
+    }
+
+    .box-interview {
+      background: #1a1400;
+      border: 1px solid #604a00;
+      border-left: 4px solid var(--amber);
+      color: #fde68a;
+    }
+
+    .box-interview .box-title {
+      color: var(--amber);
+    }
+
+    .box-production {
+      background: #081a18;
+      border: 1px solid #105040;
+      border-left: 4px solid var(--teal);
+      color: #99f0de;
+    }
+
+    .box-production .box-title {
+      color: var(--teal);
+    }
+
+    .box-best {
+      background: #140a1e;
+      border: 1px solid #4a1880;
+      border-left: 4px solid var(--purple);
+      color: #e0b0ff;
+    }
+
+    .box-best .box-title {
+      color: var(--purple);
+    }
+
+    .box-troubleshoot {
+      background: #1a0e00;
+      border: 1px solid #5a3000;
+      border-left: 4px solid var(--orange);
+      color: #fdc080;
+    }
+
+    .box-troubleshoot .box-title {
+      color: var(--orange);
+    }
+
+    .box-scenario {
+      background: #081820;
+      border: 1px solid #104060;
+      border-left: 4px solid var(--cyan);
+      color: #a0e8f8;
+    }
+
+    .box-scenario .box-title {
+      color: var(--cyan);
+    }
+
+    .box-mistake {
+      background: #1a0a0a;
+      border: 1px solid #6a1a1a;
+      border-left: 4px solid #ff6060;
+      color: #ffb0b0;
+    }
+
+    .box-mistake .box-title {
+      color: #ff6060;
+    }
+
+    .box-challenge {
+      background: #0f0a20;
+      border: 1px solid #3a1880;
+      border-left: 4px solid #9060e8;
+      color: #d8c0ff;
+    }
+
+    .box-challenge .box-title {
+      color: #9060e8;
+    }
+
+    /* ── CODE BLOCKS ── */
+    .code-block {
+      background: #0a0d14;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0;
+      font-family: var(--mono);
+      font-size: 12px;
+      line-height: 1.8;
+      overflow-x: auto;
+      margin: 12px 0;
+      color: #a9b8d8;
+      position: relative;
+    }
+
+    .cb-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 16px;
+      background: #0d1020;
+      border-bottom: 1px solid var(--border);
+      border-radius: 8px 8px 0 0;
+    }
+
+    .cb-label {
+      font-size: 9px;
+      color: var(--muted);
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      font-family: var(--sans);
+    }
+
+    .cb-lang {
+      font-size: 9px;
+      font-family: var(--mono);
+      color: var(--teal);
+      background: #0a1a18;
+      border: 1px solid #105040;
+      padding: 2px 8px;
+      border-radius: 4px;
+      letter-spacing: .08em;
+    }
+
+    .cb-copy {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 10px;
+      font-family: var(--mono);
+      padding: 3px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all .15s;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .cb-copy:hover {
+      color: var(--text);
+      border-color: var(--blue);
+      background: rgba(79, 142, 247, .1);
+    }
+
+    .cb-copy.copied {
+      color: var(--green);
+      border-color: var(--green);
+    }
+
+    .cb-body {
+      padding: 14px 16px;
+      overflow-x: auto;
+      white-space: pre;
+    }
+
+    .cb-body.with-lines {
+      padding-left: 0;
+      display: flex;
+    }
+
+    .line-numbers {
+      padding: 14px 0;
+      text-align: right;
+      user-select: none;
+      border-right: 1px solid var(--border);
+      padding-right: 12px;
+      padding-left: 12px;
+      color: var(--dim);
+      font-size: 11px;
+      min-width: 40px;
+      flex-shrink: 0;
+    }
+
+    .line-numbers span {
+      display: block;
+      line-height: 1.8;
+    }
+
+    .code-content {
+      padding: 14px 16px;
+      overflow-x: auto;
+      white-space: pre;
+      flex: 1;
+    }
+
+    .cb-explanation {
+      padding: 10px 16px;
+      background: #0d1020;
+      border-top: 1px solid var(--border);
+      font-size: 11.5px;
+      color: var(--muted);
+      font-family: var(--sans);
+      line-height: 1.6;
+      border-radius: 0 0 8px 8px;
+    }
+
+    .cm { color: #3a4568; }
+    .ck { color: #4f8ef7; }
+    .cv { color: #22c55e; }
+    .co { color: #f59e0b; }
+    .cs { color: #b060e8; }
+    .ce { color: #ef4444; }
+    .cn { color: #20c0a0; }
+
+    code {
+      font-family: var(--mono);
+      font-size: 12px;
+      background: #0a0d14;
+      border: 1px solid var(--border);
+      padding: 1px 6px;
+      border-radius: 3px;
+      color: var(--blue);
+    }
+
+    /* ── TABLES ── */
+    .tbl-wrap {
+      overflow-x: auto;
+      margin: 12px 0;
+    }
+
+    table.tbl {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12.5px;
+    }
+
+    table.tbl th {
+      text-align: left;
+      padding: 8px 12px;
+      background: #0d1020;
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: .08em;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+
+    table.tbl td {
+      padding: 8px 12px;
+      border-bottom: 1px solid #1a2040;
+      vertical-align: top;
+      line-height: 1.5;
+      color: var(--text2);
+    }
+
+    table.tbl td:first-child {
+      font-family: var(--mono);
+      color: var(--blue);
+      font-size: 11.5px;
+      white-space: nowrap;
+    }
+
+    table.tbl tr:last-child td {
+      border-bottom: none;
+    }
+
+    table.tbl tr:hover td {
+      background: #101828;
+    }
+
+    /* ── COLLAPSIBLE ── */
+    .collapsible {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      margin: 14px 0;
+      overflow: hidden;
+    }
+
+    .collapsible-header {
+      padding: 12px 16px;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      user-select: none;
+      transition: background .15s;
+    }
+
+    .collapsible-header:hover {
+      background: var(--surface2);
+    }
+
+    .collapsible-header h4 {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .collapsible-arrow {
+      color: var(--muted);
+      font-size: 12px;
+      transition: transform .2s;
+    }
+
+    .collapsible.open .collapsible-arrow {
+      transform: rotate(90deg);
+    }
+
+    .collapsible-body {
+      display: none;
+      padding: 0 16px 16px;
+      font-size: 12.5px;
+      line-height: 1.7;
+      color: var(--text2);
+    }
+
+    .collapsible.open .collapsible-body {
+      display: block;
+    }
+
+    /* ── EXERCISE CARD ── */
+    .exercise-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      margin: 16px 0;
+      overflow: hidden;
+    }
+
+    .ex-header {
+      padding: 14px 18px;
+      background: linear-gradient(135deg, #101830 0%, #0d1428 100%);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .ex-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .ex-diff {
+      font-size: 10px;
+      font-family: var(--mono);
+      padding: 3px 10px;
+      border-radius: 12px;
+      font-weight: 600;
+    }
+
+    .ex-diff.easy {
+      background: #0a2210;
+      border: 1px solid #1a5a20;
+      color: var(--green);
+    }
+
+    .ex-diff.medium {
+      background: #1a1400;
+      border: 1px solid #604a00;
+      color: var(--amber);
+    }
+
+    .ex-diff.hard {
+      background: #1a0a0a;
+      border: 1px solid #5a1a1a;
+      color: var(--red);
+    }
+
+    .ex-body {
+      padding: 16px 18px;
+    }
+
+    .ex-field {
+      margin-bottom: 12px;
+    }
+
+    .ex-field-label {
+      font-size: 10px;
+      font-family: var(--mono);
+      color: var(--muted);
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .ex-field-value {
+      font-size: 12.5px;
+      color: var(--text2);
+      line-height: 1.6;
+    }
+
+    /* ── SKILL MATRIX ── */
+    .skill-matrix {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px 24px;
+      margin: 20px 0;
+    }
+
+    .skill-matrix h3 {
+      font-size: 14px;
+      font-family: var(--mono);
+      color: var(--text);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .skill-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 8px;
+    }
+
+    .skill-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 12px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+    }
+
+    .skill-name {
+      font-size: 12px;
+      color: var(--text2);
+    }
+
+    .skill-level {
+      font-size: 9px;
+      font-family: var(--mono);
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-weight: 600;
+      letter-spacing: .08em;
+    }
+
+    .skill-level.beginner {
+      background: #0a2210;
+      border: 1px solid #1a5a20;
+      color: var(--green);
+    }
+
+    .skill-level.intermediate {
+      background: #1a1400;
+      border: 1px solid #604a00;
+      color: var(--amber);
+    }
+
+    .skill-level.proficient {
+      background: #0a1428;
+      border: 1px solid #1a3060;
+      color: var(--blue);
+    }
+
+    .skill-level.not-started {
+      background: #1a1018;
+      border: 1px solid #3a2040;
+      color: var(--dim);
+    }
+
+    /* ── FLOW DIAGRAMS ── */
+    .flow {
+      background: #0a0d14;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+      font-family: var(--mono);
+      font-size: 11.5px;
+      color: #a9b8d8;
+      line-height: 1.9;
+      overflow-x: auto;
+      white-space: pre;
+      margin: 12px 0;
+    }
+
+    /* ── INTERVIEW CARD ── */
+    .interview-card {
+      background: var(--surface);
+      border: 1px solid #604a00;
+      border-radius: 12px;
+      margin: 16px 0;
+      overflow: hidden;
+    }
+
+    .int-header {
+      padding: 14px 18px;
+      background: #1a1400;
+      border-bottom: 1px solid #604a00;
+    }
+
+    .int-header h4 {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--amber);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .int-body {
+      padding: 16px 18px;
+    }
+
+    .int-scenario {
+      font-size: 12.5px;
+      color: var(--text2);
+      line-height: 1.7;
+      margin-bottom: 12px;
+      padding: 10px 14px;
+      background: #1a1200;
+      border-radius: 6px;
+      border-left: 3px solid var(--amber);
+    }
+
+    .int-question {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+      margin: 10px 0 6px;
+    }
+
+    .int-answer-area {
+      background: #0a0d14;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 12px;
+      min-height: 60px;
+      font-size: 12px;
+      color: var(--muted);
+      font-style: italic;
+      margin-bottom: 10px;
+    }
+
+    /* ── Q&A ── */
+    .qa-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      margin-bottom: 10px;
+      overflow: hidden;
+    }
+
+    .qa-q {
+      padding: 11px 15px;
+      background: #0f1424;
+      font-weight: 600;
+      font-size: 13px;
+      color: var(--text);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      cursor: pointer;
+    }
+
+    .qa-q .qnum {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--amber);
+      background: #1a1400;
+      border: 1px solid #604a00;
+      padding: 2px 7px;
+      border-radius: 4px;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .qa-a {
+      padding: 11px 15px;
+      font-size: 12.5px;
+      line-height: 1.7;
+      color: #c8d3e8;
+      display: none;
+    }
+
+    .qa-item.open .qa-a {
+      display: block;
+    }
+
+    /* ── TWO COLUMN ── */
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin: 12px 0;
+    }
+
+    /* ── CARDS GRID ── */
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 14px;
+      margin: 14px 0;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+      transition: border-color .15s, transform .15s;
+    }
+
+    .card:hover {
+      border-color: var(--blue);
+      transform: translateY(-2px);
+    }
+
+    .card h4 {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .card p {
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 0;
+    }
+
+    /* ── CHEAT SHEET ── */
+    .cheat-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+      gap: 12px;
+      margin: 14px 0;
+    }
+
+    .cheat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px;
+    }
+
+    .cheat-card h4 {
+      font-size: 10px;
+      font-family: var(--mono);
+      color: var(--muted);
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      margin-bottom: 7px;
+      padding-bottom: 5px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .cc-line {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--blue);
+      padding: 3px 0;
+      display: block;
+    }
+
+    .cc-line span {
+      color: var(--muted);
+      font-size: 10px;
+      margin-left: 6px;
+    }
+
+    /* ── CHECKLIST ── */
+    .checklist {
+      list-style: none;
+      margin: 8px 0;
+    }
+
+    .checklist li {
+      padding: 5px 0;
+      font-size: 13px;
+      color: var(--text2);
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      border-bottom: 1px solid #1a2040;
+    }
+
+    .checklist li:last-child {
+      border-bottom: none;
+    }
+
+    .checklist li::before {
+      content: '✓';
+      color: var(--green);
+      font-family: var(--mono);
+      font-size: 12px;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    /* ── FOOTER ── */
+    .lesson-footer {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      margin-top: 40px;
+    }
+
+    .footer-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    .footer-section h4 {
+      font-size: 12px;
+      font-family: var(--mono);
+      color: var(--muted);
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    .footer-section p {
+      font-size: 12.5px;
+      color: var(--text2);
+    }
+
+    .next-lesson-preview {
+      background: linear-gradient(135deg, #101830 0%, #0d1428 100%);
+      border: 1px solid var(--blue);
+      border-radius: 10px;
+      padding: 16px 20px;
+      margin-top: 16px;
+    }
+
+    .next-lesson-preview h4 {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--blue);
+      margin-bottom: 6px;
+    }
+
+    .next-lesson-preview p {
+      font-size: 12px;
+      color: var(--muted);
+      margin: 0;
+    }
+
+    .divider {
+      height: 1px;
+      background: var(--border);
+      margin: 28px 0;
+    }
+
+    /* ── SCORING ── */
+    .score-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 40px;
+      height: 24px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-family: var(--mono);
+      font-weight: 700;
+    }
+
+    /* ── RESPONSIVE ── */
+    @media(max-width:900px) {
+      .sidebar {
+        width: 220px;
+      }
+
+      .content {
+        margin-left: 220px;
+        padding: 0 24px 80px;
+      }
+
+      .two-col,
+      .obj-grid,
+      .footer-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media(max-width:640px) {
+      .sidebar {
+        display: none;
+        position: fixed;
+        width: 260px;
+      }
+
+      .sidebar.show {
+        display: block;
+      }
+
+      .mobile-toggle {
+        display: block;
+      }
+
+      .content {
+        margin-left: 0;
+        padding: 0 16px 80px;
+      }
+
+      .progress-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .page-header h1 {
+        font-size: 22px;
+      }
+    }
+
+    /* ── ANIMATIONS ── */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .section {
+      animation: fadeIn .4s ease-out;
+    }
+
+    /* ── SCROLLBAR ── */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 3px;
+    }
+  </style>
+</head>
+
+<body>
+  <button class="mobile-toggle" onclick="document.querySelector('.sidebar').classList.toggle('show')">☰ Menu</button>
+
+  <!-- ═══════════════ SIDEBAR ═══════════════ -->
+  <nav class="sidebar">
+    <div class="sb-brand">
+      <div class="sb-badge">MODULE 04</div>
+      <h2>Bash Shell Scripting<br><span style="color:var(--muted);font-weight:400;">DevOps Fundamentals</span></h2>
+    </div>
+    <div class="sb-label">Foundations</div>
+    <a href="#objectives">🎯 Learning Objectives</a>
+    <a href="#concept">1. What is Shell Scripting?</a>
+    <a href="#internals">2. Internal Working</a>
+    <a href="#syntax">3. Script Syntax & Structure</a>
+    <a href="#variables">4. Variables & Data Types</a>
+    <div class="sb-label">Control Flow</div>
+    <a href="#conditionals">5. Conditionals</a>
+    <a href="#loops">6. Loops</a>
+    <a href="#functions">7. Functions</a>
+    <div class="sb-label">Production Skills</div>
+    <a href="#input-output">8. Input/Output & Redirection</a>
+    <a href="#error-handling">9. Error Handling</a>
+    <a href="#use-cases">10. Production Use Cases</a>
+    <div class="sb-label">Examples</div>
+    <a href="#beginner-examples">11. Beginner Examples</a>
+    <a href="#intermediate-examples">12. Intermediate Examples</a>
+    <a href="#production-examples">13. Production Examples</a>
+    <div class="sb-label">Visual Diagrams</div>
+    <a href="#flow-diagrams">14. Visual Flow Diagrams</a>
+    <div class="sb-label">Practice</div>
+    <a href="#exercises">15. Exercises</a>
+    <a href="#easy-challenge">16. Easy Challenge</a>
+    <a href="#medium-challenge">17. Medium Challenge</a>
+    <a href="#hard-challenge">18. Hard Challenge</a>
+    <div class="sb-label">Interview & Review</div>
+    <a href="#interview-questions">19. Interview Questions</a>
+    <a href="#interview-mode">20. Interview Mode</a>
+    <a href="#common-mistakes">21. Common Mistakes</a>
+    <a href="#best-practices">22. Best Practices</a>
+    <div class="sb-label">Reference</div>
+    <a href="#skill-matrix">23. Skill Matrix</a>
+    <a href="#summary">24. Summary & Key Takeaways</a>
+    <a href="#next-lesson">25. Next Lesson Preview</a>
+  </nav>
+
+  <!-- ═══════════════ CONTENT ═══════════════ -->
+  <main class="content">
+
+    <!-- ── PROGRESS TRACKING ── -->
+    <div class="progress-header">
+      <div class="progress-grid">
+        <div class="pg-item">
+          <span class="pg-label">Lesson</span>
+          <span class="pg-value lesson">#04</span>
+        </div>
+        <div class="pg-item">
+          <span class="pg-label">Module</span>
+          <span class="pg-value module">04 — Bash Scripting</span>
+        </div>
+        <div class="pg-item">
+          <span class="pg-label">Progress</span>
+          <span class="pg-value progress">Lesson 04</span>
+        </div>
+        <div class="pg-item">
+          <span class="pg-label">Skill Level</span>
+          <span class="pg-value skill">Beginner → Intermediate</span>
+        </div>
+        <div class="pg-item">
+          <span class="pg-label">Est. Time</span>
+          <span class="pg-value time">3–4 Hours</span>
+        </div>
+        <div class="pg-item">
+          <span class="pg-label">Difficulty</span>
+          <span class="pg-value difficulty">★★★☆☆</span>
+        </div>
+        <div class="pg-item">
+          <span class="pg-label">Prerequisites</span>
+          <span class="pg-value prereq">Linux CLI Basics</span>
+        </div>
+      </div>
+      <div class="progress-bar-wrap">
+        <div class="progress-bar-fill" style="width: 100%;"></div>
+      </div>
+      <div class="progress-text">
+        <span>Module 04 — Bash Shell Scripting</span>
+        <span>3 modules completed prior</span>
+      </div>
+    </div>
+
+    <!-- ── PAGE HEADER ── -->
+    <div class="page-header" id="top">
+      <div class="ph-badge">PHASE 01 — LINUX FUNDAMENTALS · MODULE 04</div>
+      <h1>Bash Shell Scripting Fundamentals</h1>
+      <p>Master the art of automation with Bash. From your first script to production-grade deployment automation — every concept a DevOps engineer needs.</p>
+      <div class="page-meta">
+        <div class="meta-item"><b>Scope:</b> Bash 4+/5+ on Linux</div>
+        <div class="meta-item"><b>Level:</b> Beginner → Intermediate</div>
+        <div class="meta-item"><b>Commands Covered:</b> 50+</div>
+        <div class="meta-item"><b>Exercises:</b> 12</div>
+      </div>
+    </div>
+
+    <!-- ── LEARNING OBJECTIVES ── -->
+    <div class="objectives" id="objectives">
+      <h3>🎯 Learning Objectives</h3>
+      <div class="obj-grid">
+        <div class="obj-item">Understand what Bash shell scripting is and why DevOps engineers need it</div>
+        <div class="obj-item">Write, execute, and debug Bash scripts from scratch</div>
+        <div class="obj-item">Master variables, quoting, and parameter expansion</div>
+        <div class="obj-item">Implement conditionals (if/elif/else, case) for decision-making</div>
+        <div class="obj-item">Use loops (for, while, until) for repetitive tasks</div>
+        <div class="obj-item">Create reusable functions with arguments and return values</div>
+        <div class="obj-item">Handle errors with exit codes, trap, and set options</div>
+        <div class="obj-item">Build production-grade automation scripts for DevOps workflows</div>
+      </div>
+    </div>
+
+    <!-- ═══════════════ SECTION 1: CONCEPT ═══════════════ -->
+    <section class="section" id="concept">
+      <div class="section-title"><span class="st-num">1</span>What is Shell Scripting?</div>
+
+      <p>A <strong>shell script</strong> is a text file containing a sequence of commands that the shell interprets and executes line by line. Instead of typing commands one at a time in a terminal, you write them in a file, make it executable, and run it — automating everything from server provisioning to deployment pipelines.</p>
+
+      <p><strong>Bash</strong> (Bourne Again SHell) is the default shell on most Linux distributions and the standard for DevOps scripting. It extends the original Bourne shell (<code>sh</code>) with features like arrays, arithmetic, and advanced string manipulation.</p>
+
+      <div class="cards-grid">
+        <div class="card">
+          <h4>🔧 Automation</h4>
+          <p>Automate repetitive tasks: deployments, log rotation, backups, monitoring checks, and infrastructure provisioning.</p>
+        </div>
+        <div class="card">
+          <h4>⚡ Glue Language</h4>
+          <p>Bash connects tools together — pipe grep into awk, feed curl output to jq, chain commands with &&. It's the glue of DevOps.</p>
+        </div>
+        <div class="card">
+          <h4>🏗️ Infrastructure as Code</h4>
+          <p>Before Terraform and Ansible, Bash scripts built entire infrastructures. They still power bootstrap scripts, user-data, and init scripts.</p>
+        </div>
+        <div class="card">
+          <h4>🔍 Debugging & Ops</h4>
+          <p>Incident response scripts, health checks, and diagnostic tools are almost always Bash. Every SRE/DevOps team has a scripts/ directory.</p>
+        </div>
+      </div>
+
+      <div class="box box-interview"><span class="box-title">🎯 Interview Context</span>
+        "Shell scripting is the Swiss Army knife of DevOps. It's the first tool you reach for when automating a task, the language of CI/CD pipeline steps, and the foundation of every cloud init script. A DevOps engineer who can't write Bash is like a carpenter who can't use a hammer."
+      </div>
+
+      <div class="sub-title">Shell vs. Scripting Language</div>
+      <div class="tbl-wrap">
+        <table class="tbl">
+          <thead>
+            <tr>
+              <th>Aspect</th>
+              <th>Bash</th>
+              <th>Python</th>
+              <th>When to Use Bash</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>System commands</td>
+              <td>Native — <code>ls</code>, <code>grep</code>, <code>awk</code></td>
+              <td>Via subprocess/os module</td>
+              <td>When you're chaining CLI tools</td>
+            </tr>
+            <tr>
+              <td>Complexity</td>
+              <td>Best for &lt;100 lines</td>
+              <td>Better for complex logic</td>
+              <td>Quick automation, glue scripts</td>
+            </tr>
+            <tr>
+              <td>Availability</td>
+              <td>Pre-installed on every Linux</td>
+              <td>May need installation</td>
+              <td>Minimal containers, rescue mode</td>
+            </tr>
+            <tr>
+              <td>Error handling</td>
+              <td>Exit codes + trap</td>
+              <td>try/except</td>
+              <td>Simple success/fail pipelines</td>
+            </tr>
+            <tr>
+              <td>Data structures</td>
+              <td>Arrays, strings</td>
+              <td>Lists, dicts, objects</td>
+              <td>When data is text-based</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ═══════════════ SECTION 2: INTERNALS ═══════════════ -->
+    <section class="section" id="internals">
+      <div class="section-title"><span class="st-num">2</span>Internal Working</div>
+
+      <p>When you execute a Bash script, here's exactly what happens under the hood:</p>
+
+      <div class="flow">
+$ ./deploy.sh                        <span class="cm"># User executes the script</span>
+        │
+        ▼
+┌─────────────────────────────────┐
+│  1. KERNEL CHECKS               │
+│  • Is the file executable?       │  <span class="cm"># chmod +x — checks x permission</span>
+│  • Read shebang line (#!)        │  <span class="cm"># #!/bin/bash → fork + exec /bin/bash</span>
+└──────────┬──────────────────────┘
+           │
+           ▼
+┌─────────────────────────────────┐
+│  2. NEW BASH PROCESS             │
+│  • fork() — create child process │
+│  • Inherits parent environment   │  <span class="cm"># exported vars, PATH, HOME, etc.</span>
+│  • Opens script file for reading │
+└──────────┬──────────────────────┘
+           │
+           ▼
+┌─────────────────────────────────┐
+│  3. PARSING (Line by Line)       │
+│  • Tokenization                  │  <span class="cm"># break into words</span>
+│  • Variable expansion            │  <span class="cm"># $VAR → value</span>
+│  • Command substitution          │  <span class="cm"># $(cmd) → output</span>
+│  • Glob expansion                │  <span class="cm"># *.log → file1.log file2.log</span>
+│  • Quote removal                 │
+└──────────┬──────────────────────┘
+           │
+           ▼
+┌─────────────────────────────────┐
+│  4. EXECUTION                    │
+│  • Builtins: execute directly    │  <span class="cm"># cd, echo, export, read</span>
+│  • External: fork+exec          │  <span class="cm"># ls, grep, awk → new process</span>
+│  • Pipelines: fork each stage   │  <span class="cm"># cmd1 | cmd2 → 2 processes</span>
+└──────────┬──────────────────────┘
+           │
+           ▼
+┌─────────────────────────────────┐
+│  5. EXIT                         │
+│  • Return exit code (0–255)      │  <span class="cm"># 0 = success, non-zero = failure</span>
+│  • Run EXIT traps if any         │
+│  • Child process terminates      │
+└─────────────────────────────────┘</div>
+
+      <div class="box box-note"><span class="box-title">📘 Key Insight</span>
+        Each external command in a script runs in its own child process (fork+exec). This means <code>cd</code> in a subprocess won't change the parent's directory — which is why <code>cd</code> is a shell builtin, not an external command. Understanding this process model is critical for writing efficient scripts.
+      </div>
+
+      <div class="box box-production"><span class="box-title">🏭 Production Relevance</span>
+        In CI/CD pipelines (Jenkins, GitHub Actions), each <code>run:</code> step spawns a new shell. Variables set in one step don't persist to the next unless you export them to <code>$GITHUB_ENV</code> or use artifacts. This is the fork model in action.
+      </div>
+    </section>
+
+    <!-- ═══════════════ SECTION 3: SYNTAX ═══════════════ -->
+    <section class="section" id="syntax">
+      <div class="section-title"><span class="st-num">3</span>Script Syntax & Structure</div>
+
+      <div class="sub-title">The Shebang Line</div>
+      <p>Every script starts with a <strong>shebang</strong> (<code>#!</code>) — it tells the kernel which interpreter to use.</p>
+
+      <div class="code-block">
+        <div class="cb-header">
+          <div><span class="cb-label">Shebang Options</span> <span class="cb-lang">BASH</span></div>
+          <button class="cb-copy" onclick="copyCode(this)">📋 Copy</button>
+        </div>
+        <div class="cb-body with-lines">
+          <div class="line-numbers"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span></div>
+          <div class="code-content"><span class="cm">#!/bin/bash</span>           <span class="cm"># Most common — hardcoded path to bash</span>
+<span class="cm">#!/usr/bin/env bash</span>    <span class="cm"># Portable — finds bash in PATH (recommended)</span>
+<span class="cm">#!/bin/sh</span>              <span class="cm"># POSIX shell — most portable, fewest features</span>
+<span class="cm">#!/usr/bin/env python3</span> <span class="cm"># Not Bash — but shebangs work for any interpreter</span>
+
+<span class="cm"># WHY #!/usr/bin/env bash?</span>
+<span class="cm"># On macOS:  /bin/bash is v3.2 (2007!), but brew installs bash 5 to /usr/local/bin/bash</span>
+<span class="cm"># env finds the FIRST bash in PATH — which is the modern one if you installed it</span></div>
+        </div>
+        <div class="cb-explanation">Always use <code>#!/usr/bin/env bash</code> for portability across Linux distros and macOS. It resolves the interpreter via PATH rather than hardcoding a location.</div>
+      </div>
+
+      <div class="sub-title">Your First Script</div>
+
+      <div class="code-block">
+        <div class="cb-header">
+          <div><span class="cb-label">hello.sh — Your First Bash Script</span> <span class="cb-lang">BASH</span></div>
+          <button class="cb-copy" onclick="copyCode(this)">📋 Copy</button>
+        </div>
+        <div class="cb-body with-lines">
+          <div class="line-numbers"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span><span>10</span><span>11</span><span>12</span><span>13</span></div>
+          <div class="code-content"><span class="cm">#!/usr/bin/env bash</span>
+<span class="cm"># ──────────────────────────────────────</span>
+<span class="cm"># Script:  hello.sh</span>
+<span class="cm"># Purpose: First Bash script — print system info</span>
+<span class="cm"># Author:  DevOps Student</span>
+<span class="cm"># Date:    2026-07-21</span>
+<span class="cm"># ──────────────────────────────────────</span>
+
+<span class="ck">echo</span> <span class="cv">"Hello, DevOps Engineer!"</span>
+<span class="ck">echo</span> <span class="cv">"Hostname: </span><span class="cs">$(hostname)</span><span class="cv">"</span>
+<span class="ck">echo</span> <span class="cv">"Date:     </span><span class="cs">$(date '+%Y-%m-%d %H:%M:%S')</span><span class="cv">"</span>
+<span class="ck">echo</span> <span class="cv">"Uptime:   </span><span class="cs">$(uptime -p 2>/dev/null || uptime)</span><span class="cv">"</span>
+<span class="ck">echo</span> <span class="cv">"Kernel:   </span><span class="cs">$(uname -r)</span><span class="cv">"</span></div>
+        </div>
+        <div class="cb-explanation">This script uses command substitution <code>$(command)</code> to embed live system data into the output. The <code>2>/dev/null || uptime</code> pattern gracefully handles macOS where <code>-p</code> flag may not exist.</div>
+      </div>
+
+      <div class="sub-title">Making it Executable</div>
+
+      <div class="code-block">
+        <div class="cb-header">
+          <div><span class="cb-label">Execute a Script — Three Methods</span> <span class="cb-lang">BASH</span></div>
+          <button class="cb-copy" onclick="copyCode(this)">📋 Copy</button>
+        </div>
+        <div class="cb-body with-lines">
+          <div class="line-numbers"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span><span>10</span><span>11</span></div>
+          <div class="code-content"><span class="cm"># Method 1: Make executable + run (RECOMMENDED)</span>
+<span class="ck">chmod</span> <span class="co">+x</span> hello.sh
+./hello.sh
+
+<span class="cm"># Method 2: Explicitly call the interpreter</span>
+<span class="ck">bash</span> hello.sh
+
+<span class="cm"># Method 3: Source it (runs in CURRENT shell — variables persist!)</span>
+<span class="ck">source</span> hello.sh
+<span class="cm"># or equivalently:</span>
+<span class="ck">.</span> hello.sh</div>
+        </div>
+        <div class="cb-explanation"><strong>Method 1</strong> is the standard. <strong>Method 3</strong> (source) is special — it runs the script in your current shell, so any variables or <code>cd</code> commands affect your session. This is how <code>.bashrc</code> works.</div>
+      </div>
+
+      <div class="box box-warn"><span class="box-title">⚠️ Warning</span>
+        Never run <code>source</code> on untrusted scripts! Since it executes in your current shell, it can modify your environment, overwrite variables, or even <code>exit</code> your terminal session.
+      </div>
+    </section>
+
+    <!-- ═══════════════ SECTION 4: VARIABLES ═══════════════ -->
+    <section class="section" id="variables">
+      <div class="section-title"><span class="st-num">4</span>Variables & Data Types</div>
+
+      <p>Bash variables are <strong>untyped by default</strong> — everything is a string. There are no integers, floats, or booleans. Bash interprets context to decide if a value is a number or text.</p>
+
+      <div class="sub-title">Variable Assignment</div>
+
+      <div class="code-block">
+        <div class="cb-header">
+          <div><span class="cb-label">Variable Basics</span> <span class="cb-lang">BASH</span></div>
+          <button class="cb-copy" onclick="copyCode(this)">📋 Copy</button>
+        </div>
+        <div class="cb-body with-lines">
+          <div class="line-numbers"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span><span>10</span><span>11</span><span>12</span><span>13</span><span>14</span><span>15</span><span>16</span><span>17</span><span>18</span><span>19</span><span>20</span><span>21</span></div>
+          <div class="code-content"><span class="cm">#!/usr/bin/env bash</span>
+
+<span class="cm"># ── ASSIGNMENT (NO spaces around =) ──</span>
+<span class="cs">NAME</span>=<span class="cv">"deploy-server"</span>       <span class="cm"># ✅ Correct</span>
+<span class="cs">PORT</span>=<span class="cv">8080</span>                   <span class="cm"># ✅ Still a string internally</span>
+<span class="cs">NAME</span> = <span class="cv">"deploy-server"</span>     <span class="cm"># ❌ WRONG — bash sees NAME as a command</span>
+
+<span class="cm"># ── READING VARIABLES ──</span>
+<span class="ck">echo</span> <span class="cv">"Server: </span><span class="cs">$NAME</span><span class="cv">"</span>        <span class="cm"># Simple expansion</span>
+<span class="ck">echo</span> <span class="cv">"Server: </span><span class="cs">${NAME}</span><span class="cv">"</span>      <span class="cm"># Braces — safer, explicit</span>
+<span class="ck">echo</span> <span class="cv">"Port:   </span><span class="cs">${PORT}</span><span class="cv">"</span>
+
+<span class="cm"># ── WHY BRACES MATTER ──</span>
+<span class="cs">FILE</span>=<span class="cv">"report"</span>
+<span class="ck">echo</span> <span class="cv">"</span><span class="cs">$FILE</span><span class="cv">_final.txt"</span>      <span class="cm"># ❌ Bash looks for $FILE_final (undefined)</span>
+<span class="ck">echo</span> <span class="cv">"</span><span class="cs">${FILE}</span><span class="cv">_final.txt"</span>    <span class="cm"># ✅ Correctly prints: report_final.txt</span>
+
+<span class="cm"># ── READONLY VARIABLES ──</span>
+<span class="ck">readonly</span> <span class="cs">APP_VERSION</span>=<span class="cv">"2.4.1"</span>
+<span class="cs">APP_VERSION</span>=<span class="cv">"3.0"</span>           <span class="cm"># ❌ ERROR — cannot modify readonly variable</span></div>
+        </div>
+        <div class="cb-explanation">The <code>#1 beginner mistake</code> is putting spaces around <code>=</code>. In Bash, <code>NAME = value</code> tries to run <code>NAME</code> as a command with <code>=</code> and <code>value</code> as arguments.</div>
+      </div>
+
+      <div class="sub-title">Quoting Rules</div>
+
+      <div class="tbl-wrap">
+        <table class="tbl">
+          <thead>
+            <tr>
+              <th>Quote Type</th>
+              <th>Syntax</th>
+              <th>Expansion?</th>
+              <th>Example</th>
+              <th>Output</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Double quotes</td>
+              <td>"..."</td>
+              <td>✅ Variables + commands expanded</td>
+              <td>"Hello $USER"</td>
+              <td>Hello karthik</td>
+            </tr>
+            <tr>
+              <td>Single quotes</td>
+              <td>'...'</td>
+              <td>❌ Nothing expanded (literal)</td>
+              <td>'Hello $USER'</td>
+              <td>Hello $USER</td>
+            </tr>
+            <tr>
+              <td>Backticks</td>
+              <td>`...`</td>
+              <td>✅ Command substitution (legacy)</td>
+              <td>`date`</td>
+              <td>Mon Jul 21...</td>
+            </tr>
+            <tr>
+              <td>$(...)</td>
+              <td>$(...)</td>
+              <td>✅ Command substitution (modern)</td>
+              <td>$(date)</td>
+              <td>Mon Jul 21...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="box box-best"><span class="box-title">★ Best Practice</span>
+        Always use <code>$(...)</code> over backticks for command substitution. Backticks don't nest, are hard to read, and look like single quotes in some fonts. <code>$(command)</code> nests cleanly: <code>$(echo $(date))</code>.
+      </div>
+
+      <div class="sub-title">Special Variables</div>
+
+      <div class="tbl-wrap">
+        <table class="tbl">
+          <thead>
+            <tr>
+              <th>Variable</th>
+              <th>Meaning</th>
+              <th>Example Context</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>$0</td><td>Script name</td><td>./deploy.sh → deploy.sh</td></tr>
+            <tr><td>$1, $2…$9</td><td>Positional arguments</td><td>./deploy.sh prod → $1=prod</td></tr>
+            <tr><td>${10}</td><td>10th+ argument (braces required)</td><td>Beyond 9 args</td></tr>
+            <tr><td>$#</td><td>Number of arguments</td><td>Validate input count</td></tr>
+            <tr><td>$@</td><td>All arguments (individually quoted)</td><td>Pass args to another command</td></tr>
+            <tr><td>$*</td><td>All arguments (single string)</td><td>Rarely used — prefer $@</td></tr>
+            <tr><td>$?</td><td>Exit code of last command</td><td>0 = success, non-zero = failure</td></tr>
+            <tr><td>$$</td><td>Current script's PID</td><td>Unique temp file: /tmp/script.$$</td></tr>
+            <tr><td>$!</td><td>PID of last background process</td><td>Track background jobs</td></tr>
+            <tr><td>$_</td><td>Last argument of previous command</td><td>Quick reference</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="sub-title">Parameter Expansion</div>
+
+      <div class="code-block">
+        <div class="cb-header">
+          <div><span class="cb-label">Advanced Parameter Expansion</span> <span class="cb-lang">BASH</span></div>
+          <button class="cb-copy" onclick="copyCode(this)">📋 Copy</button>
+        </div>
+        <div class="cb-body with-lines">
+          <div class="line-numbers"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span><span>10</span><span>11</span><span>12</span><span>13</span><span>14</span><span>15</span><span>16</span><span>17</span></div>
+          <div class="code-content"><span class="cs">FILENAME</span>=<span class="cv">"backup-2026-07-21.tar.gz"</span>
+
+<span class="cm"># Default values</span>
+<span class="ck">echo</span> <span class="cv">"</span><span class="cs">${ENV:-production}</span><span class="cv">"</span>     <span class="cm"># Use "production" if $ENV is unset/empty</span>
+<span class="ck">echo</span> <span class="cv">"</span><span class="cs">${ENV:=production}</span><span class="cv">"</span>     <span class="cm"># Same + ASSIGN "production" to $ENV</span>
+
+<span class="cm"># String manipulation</span>
+<span class="ck">echo</span> <span class="cv">"</span><span class="cs">${FILENAME%.tar.gz}</span><span class="cv">"</span>    <span class="cm"># Remove shortest suffix: backup-2026-07-21</span>
+<span class="ck">echo</span> <span class="cv">"</span><span class="cs">${FILENAME%%.*}</span><span class="cv">"</span>        <span class="cm"># Remove longest suffix:  backup-2026-07-21</span>
+<span class="ck">echo</span> <span class="cv">"</span><span class="cs">${FILENAME#*-}</span><span class="cv">"</span>         <span class="cm"># Remove shortest prefix: 2026-07-21.tar.gz</span>
+<span class="ck">echo</span> <span class="cv">"</span><span class="cs">${FILENAME##*-}</span><span class="cv">"</span>        <span class="cm"># Remove longest prefix:  21.tar.gz</span>
+
+<span class="cm"># Length and substring</span>
+<span class="ck">echo</span> <span class="cv">"</span><span class="cs">${#FILENAME}</span><span class="cv">"</span>           <span class="cm"># String length: 26</span>
+<span class="ck">echo</span> <span class="cv">"</span><span class="cs">${FILENAME:0:6}</span><span class="cv">"</span>        <span class="cm"># Substring (offset:length): backup</span>
+<span class="ck">echo</span> <span class="cv">"</span><span class="cs">${FILENAME/backup/archive}</span><span class="cv">"</span> <span class="cm"># Replace first: archive-2026-07-21.tar.gz</span>
+<span class="ck">echo</span> <span class="cv">"</span><span class="cs">${FILENAME^^}</span><span class="cv">"</span>           <span class="cm"># Uppercase: BACKUP-2026-07-21.TAR.GZ</span></div>
+        </div>
+        <div class="cb-explanation">Parameter expansion replaces the need for external tools like <code>sed</code>, <code>cut</code>, and <code>basename</code> for simple string operations, making scripts faster (no fork overhead).</div>
+      </div>
+    </section>
+
+    <!-- ═══════════════ SECTION 5: CONDITIONALS ═══════════════ -->
+    <section class="section" id="conditionals">
+      <div class="section-title"><span class="st-num">5</span>Conditionals</div>
+
+      <div class="sub-title">if / elif / else</div>
+
+      <div class="code-block">
+        <div class="cb-header">
+          <div><span class="cb-label">Conditional Syntax</span> <span class="cb-lang">BASH</span></div>
+          <button class="cb-copy" onclick="copyCode(this)">📋 Copy</button>
+        </div>
+        <div class="cb-body with-lines">
+          <div class="line-numbers"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span><span>10</span><span>11</span><span>12</span><span>13</span><span>14</span><span>15</span><span>16</span><span>17</span><span>18</span><span>19</span><span>20</span><span>21</span></div>
+          <div class="code-content"><span class="cm">#!/usr/bin/env bash</span>
+<span class="cm"># Health check script for a web service</span>
+
+<span class="cs">SERVICE_URL</span>=<span class="cv">"http://localhost:8080/health"</span>
+<span class="cs">HTTP_CODE</span>=$(<span class="ck">curl</span> <span class="co">-s -o</span> /dev/null <span class="co">-w</span> <span class="cv">"%{http_code}"</span> <span class="cs">"$SERVICE_URL"</span>)
+
+<span class="ck">if</span> [[ <span class="cs">"$HTTP_CODE"</span> <span class="co">-eq</span> 200 ]]; <span class="ck">then</span>
+    <span class="ck">echo</span> <span class="cv">"✅ Service is healthy (HTTP $HTTP_CODE)"</span>
+<span class="ck">elif</span> [[ <span class="cs">"$HTTP_CODE"</span> <span class="co">-eq</span> 503 ]]; <span class="ck">then</span>
+    <span class="ck">echo</span> <span class="cv">"⚠️  Service unavailable (HTTP $HTTP_CODE) — restarting..."</span>
+    <span class="ck">sudo</span> systemctl restart myapp
+<span class="ck">elif</span> [[ <span class="cs">"$HTTP_CODE"</span> <span class="co">-eq</span> 000 ]]; <span class="ck">then</span>
+    <span class="ck">echo</span> <span class="cv">"❌ Connection refused — service might be down"</span>
+    <span class="ck">sudo</span> systemctl start myapp
+<span class="ck">else</span>
+    <span class="ck">echo</span> <span class="cv">"⚠️  Unexpected response: HTTP $HTTP_CODE"</span>
+<span class="ck">fi</span>
+
+<span class="cm"># Exit with non-zero if unhealthy (for CI/CD pipelines)</span>
+[[ <span class="cs">"$HTTP_CODE"</span> <span class="co">-eq</span> 200 ]] || <span class="ck">exit</span> 1</div>
+        </div>
+        <div class="cb-explanation">Use <code>[[ ]]</code> (double brackets) instead of <code>[ ]</code> — it's a Bash builtin that supports regex, pattern matching, and doesn't require quoting variables to prevent word splitting.</div>
+      </div>
+
+      <div class="sub-title">Test Operators Reference</div>
+
+      <div class="two-col">
+        <div>
+          <div class="sub-sub">String Comparisons</div>
+          <div class="tbl-wrap">
+            <table class="tbl">
+              <thead><tr><th>Operator</th><th>Meaning</th></tr></thead>
+              <tbody>
+                <tr><td>== or =</td><td>Equal</td></tr>
+                <tr><td>!=</td><td>Not equal</td></tr>
+                <tr><td>-z "$var"</td><td>String is empty</td></tr>
+                <tr><td>-n "$var"</td><td>String is not empty</td></tr>
+                <tr><td>=~</td><td>Regex match (in [[ ]])</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div>
+          <div class="sub-sub">Numeric Comparisons</div>
+          <div class="tbl-wrap">
+            <table class="tbl">
+              <thead><tr><th>Operator</th><th>Meaning</th></tr></thead>
+              <tbody>
+                <tr><td>-eq</td><td>Equal</td></tr>
+                <tr><td>-ne</td><td>Not equal</td></tr>
+                <tr><td>-gt</td><td>Greater than</td></tr>
+                <tr><td>-ge</td><td>Greater or equal</td></tr>
+                <tr><td>-lt</td><td>Less than</td></tr>
+                <tr><td>-le</td><td>Less or equal</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="sub-sub">File Test Operators</div>
+      <div class="tbl-wrap">
+        <table class="tbl">
+          <thead><tr><th>Operator</th><th>Meaning</th><th>DevOps Use Case</th></tr></thead>
+          <tbody>
+            <tr><td>-f file</td><td>Is a regular file</td><td>Check if config exists before parsing</td></tr>
+            <tr><td>-d dir</td><td>Is a directory</td><td>Verify log directory exists before writing</td></tr>
+            <tr><td>-e path</td><td>Exists (any type)</td><td>Check if a socket or PID file exists</td></tr>
+            <tr><td>-r file</td><td>Is readable</td><td>Validate permissions before reading secrets</td></tr>
+            <tr><td>-w file</td><td>Is writable</td><td>Check if log directory is writable</td></tr>
+            <tr><td>-x file</td><td>Is executable</td><td>Verify binary exists before calling</td></tr>
+            <tr><td>-s file</td><td>Has size > 0</td><td>Check if log file has content</td></tr>
+            <tr><td>-L file</td><td>Is a symlink</td><td>Detect symlink before overwriting</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="sub-title">case Statement</div>
+
+      <div class="code-block">
+        <div class="cb-header">
+          <div><span class="cb-label">case — Pattern Matching (like switch)</span> <span class="cb-lang">BASH</span></div>
+          <button class="cb-copy" onclick="copyCode(this)">📋 Copy</button>
+        </div>
+        <div class="cb-body with-lines">
+          <div class="line-numbers"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span><span>10</span><span>11</span><span>12</span><span>13</span><span>14</span><span>15</span><span>16</span><span>17</span><span>18</span><span>19</span><span>20</span></div>
+          <div class="code-content"><span class="cm">#!/usr/bin/env bash</span>
+<span class="cm"># Deployment environment selector</span>
+
+<span class="cs">ENV</span>=<span class="cv">"</span><span class="cs">${1:-dev}</span><span class="cv">"</span>  <span class="cm"># Default to "dev" if no argument</span>
+
+<span class="ck">case</span> <span class="cs">"$ENV"</span> <span class="ck">in</span>
+    dev|development)
+        <span class="cs">API_URL</span>=<span class="cv">"http://localhost:3000"</span>
+        <span class="cs">DB_HOST</span>=<span class="cv">"localhost"</span>
+        ;;
+    staging|stg)
+        <span class="cs">API_URL</span>=<span class="cv">"https://staging-api.example.com"</span>
+        <span class="cs">DB_HOST</span>=<span class="cv">"staging-db.internal"</span>
+        ;;
+    prod|production)
+        <span class="cs">API_URL</span>=<span class="cv">"https://api.example.com"</span>
+        <span class="cs">DB_HOST</span>=<span class="cv">"prod-db.internal"</span>
+        ;;
+    *) <span class="ck">echo</span> <span class="ce">"Unknown env: $ENV. Use dev|staging|prod"</span> >&amp;2; <span class="ck">exit</span> 1 ;;
+<span class="ck">esac</span></div>
+        </div>
+        <div class="cb-explanation"><code>case</code> supports glob patterns (<code>*</code>, <code>?</code>) and pipe-separated alternatives (<code>dev|development</code>). The <code>*)</code> default pattern catches invalid inputs — always include it.</div>
+      </div>
+    </section>
+
+    <!-- ═══════════════ SECTION 6: LOOPS ═══════════════ -->
+    <section class="section" id="loops">
+      <div class="section-title"><span class="st-num">6</span>Loops</div>
+
+      <div class="sub-title">for Loop</div>
+
+      <div class="code-block">
+        <div class="cb-header">
+          <div><span class="cb-label">for Loop — Iterate Over Items</span> <span class="cb-lang">BASH</span></div>
+          <button class="cb-copy" onclick="copyCode(this)">📋 Copy</button>
+        </div>
+        <div class="cb-body with-lines">
+          <div class="line-numbers"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span><span>10</span><span>11</span><span>12</span><span>13</span><span>14</span><span>15</span><span>16</span><span>17</span><span>18</span><span>19</span><span>20</span><span>21</span><span>22</span><span>23</span></div>
+          <div class="code-content"><span class="cm">#!/usr/bin/env bash</span>
+
+<span class="cm"># ── Iterate over a list ──</span>
+<span class="ck">for</span> server <span class="ck">in</span> web-01 web-02 api-01 db-01; <span class="ck">do</span>
+    <span class="ck">echo</span> <span class="cv">"Deploying to </span><span class="cs">$server</span><span class="cv">..."</span>
+    <span class="cm"># ssh "$server" 'sudo systemctl restart app'</span>
+<span class="ck">done</span>
+
+<span class="cm"># ── Iterate over files ──</span>
+<span class="ck">for</span> logfile <span class="ck">in</span> /var/log/app/*.log; <span class="ck">do</span>
+    <span class="ck">echo</span> <span class="cv">"Compressing: </span><span class="cs">$logfile</span><span class="cv">"</span>
+    <span class="ck">gzip</span> <span class="cv">"</span><span class="cs">$logfile</span><span class="cv">"</span>
+<span class="ck">done</span>
+
+<span class="cm"># ── C-style for loop (counters) ──</span>
+<span class="ck">for</span> (( i=1; i<=5; i++ )); <span class="ck">do</span>
+    <span class="ck">echo</span> <span class="cv">"Attempt </span><span class="cs">$i</span><span class="cv"> of 5"</span>
+<span class="ck">done</span>
+
+<span class="cm"># ── Iterate over command output ──</span>
+<span class="ck">for</span> user <span class="ck">in</span> $(<span class="ck">awk</span> <span class="co">-F:</span> <span class="cv">'$3 >= 1000 {print $1}'</span> /etc/passwd); <span class="ck">do</span>
+    <span class="ck">echo</span> <span class="cv">"Human user: </span><span class="cs">$user</span><span class="cv">"</span>
+<span class="ck">done</span></div>
+        </div>
+        <div class="cb-explanation">Always quote variables in loops: <code>"$logfile"</code> not <code>$logfile</code>. Files with spaces in names will break unquoted loops. Use <code>glob</code> patterns over <code>ls</code> output — parsing <code>ls</code> is fragile.</div>
+      </div>
+
+      <div class="sub-title">while Loop</div>
+
+      <div class="code-block">
+        <div class="cb-header">
+          <div><span class="cb-label">while Loop — Retry Until Success</span> <span class="cb-lang">BASH</span></div>
+          <button class="cb-copy" onclick="copyCode(this)">📋 Copy</button>
+        </div>
+        <div class="cb-body with-lines">
+          <div class="line-numbers"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span><span>10</span><span>11</span><span>12</span><span>13</span><span>14</span><span>15</span><span>16</span><span>17</span><span>18</span></div>
+          <div class="code-content"><span class="cm">#!/usr/bin/env bash</span>
+<span class="cm"># Wait for a service to become ready (common in Docker/K8s)</span>
+
+<span class="cs">MAX_RETRIES</span>=30
+<span class="cs">RETRY_INTERVAL</span>=2
+<span class="cs">attempt</span>=0
+
+<span class="ck">while</span> [[ <span class="cs">$attempt</span> <span class="co">-lt</span> <span class="cs">$MAX_RETRIES</span> ]]; <span class="ck">do</span>
+    <span class="ck">if</span> <span class="ck">curl</span> <span class="co">-sf</span> http://localhost:5432/health &gt;/dev/null 2&gt;&amp;1; <span class="ck">then</span>
+        <span class="ck">echo</span> <span class="cv">"✅ Database is ready! (attempt </span><span class="cs">$((attempt+1))</span><span class="cv">)"</span>
+        <span class="ck">exit</span> 0
+    <span class="ck">fi</span>
+    <span class="ck">echo</span> <span class="cv">"⏳ Waiting for database... (attempt </span><span class="cs">$((attempt+1))</span><span class="cv">/</span><span class="cs">$MAX_RETRIES</span><span class="cv">)"</span>
+    <span class="ck">sleep</span> <span class="cs">"$RETRY_INTERVAL"</span>
+    (( attempt++ ))
+<span class="ck">done</span>
+
+<span class="ck">echo</span> <span class="ce">"❌ Database failed to start after $MAX_RETRIES attempts"</span> &gt;&amp;2; <span class="ck">exit</span> 1</div>
+        </div>
+        <div class="cb-explanation">This is the standard "wait-for-it" pattern used in Docker entrypoint scripts and Kubernetes init containers. It retries a health check with exponential backoff until the dependency is ready.</div>
+      </div>
+
+      <div class="box box-production"><span class="box-title">🏭 Production Pattern</span>
+        This exact retry pattern powers tools like <code>wait-for-it.sh</code> and <code>dockerize</code>. In production, add exponential backoff: <code>sleep $((RETRY_INTERVAL * attempt))</code> instead of a fixed interval to avoid hammering the target service.
+      </div>
+    </section>
+
+    <!-- ═══════════════ SECTION 7: FUNCTIONS ═══════════════ -->
+    <section class="section" id="functions">
+      <div class="section-title"><span class="st-num">7</span>Functions</div>
+
+      <div class="code-block">
+        <div class="cb-header">
+          <div><span class="cb-label">Function Syntax & Patterns</span> <span class="cb-lang">BASH</span></div>
+          <button class="cb-copy" onclick="copyCode(this)">📋 Copy</button>
+        </div>
+        <div class="cb-body with-lines">
+          <div class="line-numbers"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span><span>10</span><span>11</span><span>12</span><span>13</span><span>14</span><span>15</span><span>16</span><span>17</span><span>18</span><span>19</span><span>20</span><span>21</span><span>22</span><span>23</span><span>24</span><span>25</span><span>26</span><span>27</span><span>28</span><span>29</span><span>30</span><span>31</span><span>32</span></div>
+          <div class="code-content"><span class="cm">#!/usr/bin/env bash</span>
+
+<span class="cm"># ── LOGGING FUNCTION (used in every production script) ──</span>
+log() {
+    <span class="ck">local</span> <span class="cs">level</span>=<span class="cv">"</span><span class="cs">$1</span><span class="cv">"</span>; <span class="ck">shift</span>
+    <span class="ck">local</span> <span class="cs">message</span>=<span class="cv">"</span><span class="cs">$*</span><span class="cv">"</span>
+    <span class="ck">local</span> <span class="cs">timestamp</span>=$(<span class="ck">date</span> <span class="cv">'+%Y-%m-%d %H:%M:%S'</span>)
+    <span class="ck">echo</span> <span class="cv">"[</span><span class="cs">$timestamp</span><span class="cv">] [</span><span class="cs">${level^^}</span><span class="cv">] </span><span class="cs">$message</span><span class="cv">"</span>
+}
+
+<span class="cm"># ── USAGE ──</span>
+log info <span class="cv">"Deployment started"</span>
+log warn <span class="cv">"Disk usage at 85%"</span>
+log error <span class="cv">"Connection to database failed"</span>
+
+<span class="cm"># ── FUNCTION WITH RETURN VALUE ──</span>
+is_port_open() {
+    <span class="ck">local</span> <span class="cs">host</span>=<span class="cv">"</span><span class="cs">$1</span><span class="cv">"</span>
+    <span class="ck">local</span> <span class="cs">port</span>=<span class="cv">"</span><span class="cs">$2</span><span class="cv">"</span>
+    <span class="ck">nc</span> <span class="co">-z -w3</span> <span class="cv">"</span><span class="cs">$host</span><span class="cv">"</span> <span class="cv">"</span><span class="cs">$port</span><span class="cv">"</span> 2&gt;/dev/null
+    <span class="ck">return</span> <span class="cs">$?</span>   <span class="cm"># Return nc's exit code (0=open, 1=closed)</span>
+}
+
+<span class="cm"># ── USAGE ──</span>
+<span class="ck">if</span> is_port_open <span class="cv">"db.internal"</span> 5432; <span class="ck">then</span>
+    log info <span class="cv">"PostgreSQL is reachable"</span>
+<span class="ck">else</span>
+    log error <span class="cv">"PostgreSQL is NOT reachable on port 5432"</span>
+    <span class="ck">exit</span> 1
+<span class="ck">fi</span>
+
+<span class="cm"># Output: [2026-07-21 23:45:12] [INFO] PostgreSQL is reachable</span></div>
+        </div>
+        <div class="cb-explanation"><code>local</code> makes variables scoped to the function — without it, variables leak into the global scope. Always use <code>local</code> for function variables. The <code>${level^^}</code> syntax converts to uppercase.</div>
+      </div>
+
+      <div class="box box-tip"><span class="box-title">💡 Tip</span>
+        Bash functions don't truly "return" values like other languages. <code>return</code> sets the exit code (0-255). To return strings, use <code>echo</code> and capture with <code>$(function_name)</code>. For example: <code>result=$(get_hostname)</code>.
+      </div>
+    </section>
+
+    <!-- ═══════════════ SECTION 8: INPUT/OUTPUT ═══════════════ -->
+    <section class="section" id="input-output">
+      <div class="section-title"><span class="st-num">8</span>Input/Output & Redirection</div>
+
+      <div class="tbl-wrap">
+        <table class="tbl">
+          <thead>
+            <tr><th>Syntax</th><th>Meaning</th><th>Example</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>></td><td>Redirect stdout (overwrite)</td><td>echo "data" > file.txt</td></tr>
+            <tr><td>>></td><td>Redirect stdout (append)</td><td>echo "log line" >> app.log</td></tr>
+            <tr><td>2></td><td>Redirect stderr</td><td>cmd 2> errors.log</td></tr>
+            <tr><td>&amp;></td><td>Redirect both stdout+stderr</td><td>cmd &amp;> all.log</td></tr>
+            <tr><td>2>&amp;1</td><td>Redirect stderr to stdout</td><td>cmd > out.log 2>&amp;1</td></tr>
+            <tr><td><</td><td>Redirect stdin from file</td><td>wc -l < data.txt</td></tr>
+            <tr><td>|</td><td>Pipe stdout to next command</td><td>cat log | grep ERROR</td></tr>
+            <tr><td>|&amp;</td><td>Pipe stdout+stderr</td><td>cmd |&amp; tee log.txt</td></tr>
+            <tr><td>/dev/null</td><td>Discard output (black hole)</td><td>cmd > /dev/null 2>&amp;1</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="code-block">
+        <div class="cb-header">
+          <div><span class="cb-label">Here Document (Heredoc) — Multi-line Input</span> <span class="cb-lang">BASH</span></div>
+          <button class="cb-copy" onclick="copyCode(this)">📋 Copy</button>
+        </div>
+        <div class="cb-body with-lines">
+          <div class="line-numbers"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span><span>10</span><span>11</span><span>12</span></div>
+          <div class="code-content"><span class="cm">#!/usr/bin/env bash</span>
+<span class="cm"># Generate an nginx config dynamically</span>
+
+<span class="cs">DOMAIN</span>=<span class="cv">"api.example.com"</span>
+<span class="cs">PORT</span>=<span class="cv">3000</span>
+
+<span class="ck">cat</span> &lt;&lt; <span class="cv">EOF</span> > /etc/nginx/conf.d/<span class="cs">${DOMAIN}</span>.conf
+server {
+    listen 80;
+    server_name <span class="cs">${DOMAIN}</span>;
+    location / { proxy_pass http://127.0.0.1:<span class="cs">${PORT}</span>; }
+}
+<span class="cv">EOF</span></div>
+        </div>
+        <div class="cb-explanation">Heredocs (<code>&lt;&lt; EOF</code>) let you embed multi-line text with variable expansion. Use <code>&lt;&lt; 'EOF'</code> (quoted) to prevent expansion — useful for scripts that should contain literal <code>$variables</code>.</div>
+      </div>
+    </section>
+
+    <!-- ═══════════════ SECTION 9: ERROR HANDLING ═══════════════ -->
+    <section class="section" id="error-handling">
+      <div class="section-title"><span class="st-num">9</span>Error Handling</div>
+
+      <div class="code-block">
+        <div class="cb-header">
+          <div><span class="cb-label">The Holy Trinity of Safe Bash</span> <span class="cb-lang">BASH</span></div>
+          <button class="cb-copy" onclick="copyCode(this)">📋 Copy</button>
+        </div>
+        <div class="cb-body with-lines">
+          <div class="line-numbers"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span><span>10</span><span>11</span><span>12</span><span>13</span><span>14</span><span>15</span><span>16</span><span>17</span><span>18</span></div>
+          <div class="code-content"><span class="cm">#!/usr/bin/env bash</span>
+<span class="ck">set</span> <span class="co">-euo</span> pipefail   <span class="cm"># ← PUT THIS IN EVERY PRODUCTION SCRIPT</span>
+
+<span class="cm"># What each flag does:</span>
+<span class="cm"># -e  (errexit)    → Exit immediately if any command fails (non-zero exit)</span>
+<span class="cm"># -u  (nounset)    → Exit if an undefined variable is used</span>
+<span class="cm"># -o pipefail      → Pipeline fails if ANY command in pipe fails</span>
+<span class="cm">#                     (normally only the LAST command's exit code matters)</span>
+
+<span class="cm"># ── WITHOUT pipefail (DANGEROUS) ──</span>
+<span class="cm"># curl http://bad-url | grep "OK"   → exit code 0 (grep succeeds on empty input)</span>
+
+<span class="cm"># ── WITH pipefail (SAFE) ──</span>
+<span class="cm"># curl http://bad-url | grep "OK"   → exit code 7 (curl's failure propagates)</span>
+
+<span class="cm"># Optional: Debug mode</span>
+<span class="cm"># set -x            → Print each command before executing (noisy but useful)</span>
+<span class="cm"># set -euxo pipefail → Full debug + safety mode</span></div>
+        </div>
+        <div class="cb-explanation"><code>set -euo pipefail</code> is the most important line in production Bash. Without it, scripts silently continue after failures, which can cause data loss, partial deployments, or security breaches.</div>
+      </div>
+
+      <div class="sub-title">trap — Cleanup on Exit</div>
+
+      <div class="code-block">
+        <div class="cb-header">
+          <div><span class="cb-label">trap — Guaranteed Cleanup</span> <span class="cb-lang">BASH</span></div>
+          <button class="cb-copy" onclick="copyCode(this)">📋 Copy</button>
+        </div>
+        <div class="cb-body with-lines">
+          <div class="line-numbers"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span><span>10</span><span>11</span><span>12</span><span>13</span><span>14</span><span>15</span><span>16</span><span>17</span><span>18</span><span>19</span></div>
+          <div class="code-content"><span class="cm">#!/usr/bin/env bash</span>
+<span class="ck">set</span> <span class="co">-euo</span> pipefail
+
+<span class="cm"># Create a temp directory — GUARANTEED to be cleaned up</span>
+<span class="cs">TMPDIR</span>=$(<span class="ck">mktemp</span> <span class="co">-d</span>)
+
+cleanup() {
+    <span class="ck">echo</span> <span class="cv">"🧹 Cleaning up temp dir: </span><span class="cs">$TMPDIR</span><span class="cv">"</span>
+    <span class="ck">rm</span> <span class="co">-rf</span> <span class="cv">"</span><span class="cs">$TMPDIR</span><span class="cv">"</span>
+}
+
+<span class="cm"># trap runs cleanup on: normal exit, Ctrl+C, kill, or error</span>
+<span class="ck">trap</span> cleanup EXIT
+
+<span class="cm"># ── Do work in temp dir ──</span>
+<span class="ck">cd</span> <span class="cv">"</span><span class="cs">$TMPDIR</span><span class="cv">"</span>
+<span class="ck">curl</span> <span class="co">-sLO</span> <span class="cv">"https://releases.example.com/v2.0/binary.tar.gz"</span>
+<span class="ck">tar</span> <span class="co">xzf</span> binary.tar.gz
+<span class="ck">sudo</span> <span class="ck">mv</span> binary /usr/local/bin/
+<span class="cm"># cleanup() runs automatically — even if tar or mv fails!</span></div>
+        </div>
+        <div class="cb-explanation"><code>trap cleanup EXIT</code> ensures your cleanup function runs no matter how the script exits — success, failure, Ctrl+C, or <code>kill</code>. This prevents temp file leaks on production servers.</div>
+      </div>
+
+      <div class="box box-warn"><span class="box-title">⚠️ Warning</span>
+        Never use <code>/tmp/myfile</code> with a predictable name in production scripts — it's a security vulnerability (symlink attacks). Always use <code>mktemp</code> which generates random names like <code>/tmp/tmp.a3xK9Bn2</code>.
+      </div>
+    </section>
+
+    <!-- ═══════════════ SECTION 10: USE CASES ═══════════════ -->
+    <section class="section" id="use-cases">
+      <div class="section-title"><span class="st-num">10</span>Production Use Cases</div>
+
+      <div class="cards-grid">
+        <div class="card">
+          <h4>📦 Deployment Scripts</h4>
+          <p>Pull code, build, run tests, swap symlinks, restart services, verify health — all automated in a single Bash script.</p>
+        </div>
+        <div class="card">
+          <h4>🔄 CI/CD Pipelines</h4>
+          <p>GitHub Actions, Jenkins, GitLab CI — their pipeline steps are Bash scripts. Build, test, package, deploy, notify.</p>
+        </div>
+        <div class="card">
+          <h4>📊 Monitoring & Alerting</h4>
+          <p>Cron-based health checks: disk usage, memory, service status, certificate expiry. Alert via Slack webhook on failure.</p>
+        </div>
+        <div class="card">
+          <h4>🗄️ Backup & Rotation</h4>
+          <p>Database dumps, log rotation, S3 uploads, retention policies — Bash + cron handles 90% of backup automation.</p>
+        </div>
+        <div class="card">
+          <h4>🏗️ Server Bootstrap</h4>
+          <p>EC2 user-data scripts, cloud-init, Vagrantfile provisioners — new servers are configured by Bash on first boot.</p>
+        </div>
+        <div class="card">
+          <h4>🐳 Docker Entrypoints</h4>
+          <p>Container entrypoint.sh scripts: wait for dependencies, run migrations, configure environment, then exec the app.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════ SECTION 11: BEGINNER EXAMPLES ═══════════════ -->
+    <section class="section" id="beginner-examples">
+      <div class="section-title"><span class="st-num">11</span>Beginner Examples</div>
+
+      <div class="code-block">
+        <div class="cb-header">
+          <div><span class="cb-label">Example 1: System Info Report</span> <span class="cb-lang">BASH</span></div>
+          <button class="cb-copy" onclick="copyCode(this)">📋 Copy</button>
+        </div>
+        <div class="cb-body with-lines">
+          <div class="line-numbers"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span><span>10</span><span>11</span><span>12</span><span>13</span><span>14</span><span>15</span></div>
+          <div class="code-content"><span class="cm">#!/usr/bin/env bash</span>
+<span class="cm"># sysinfo.sh — Basic system information report</span>
+
+<span class="ck">echo</span> <span class="cv">"═══════════════════════════════════"</span>
+<span class="ck">echo</span> <span class="cv">"       SYSTEM INFORMATION          "</span>
+<span class="ck">echo</span> <span class="cv">"═══════════════════════════════════"</span>
+<span class="ck">echo</span> <span class="cv">"Hostname:     </span><span class="cs">$(hostname)</span><span class="cv">"</span>
+<span class="ck">echo</span> <span class="cv">"OS:           </span><span class="cs">$(cat /etc/os-release 2>/dev/null | grep PRETTY_NAME | cut -d= -f2 | tr -d '"')</span><span class="cv">"</span>
+<span class="ck">echo</span> <span class="cv">"Kernel:       </span><span class="cs">$(uname -r)</span><span class="cv">"</span>
+<span class="ck">echo</span> <span class="cv">"CPU Cores:    </span><span class="cs">$(nproc 2>/dev/null || sysctl -n hw.ncpu)</span><span class="cv">"</span>
+<span class="ck">echo</span> <span class="cv">"Memory:       </span><span class="cs">$(free -h 2>/dev/null | awk '/Mem:/{print $2}' || echo 'N/A')</span><span class="cv">"</span>
+<span class="ck">echo</span> <span class="cv">"Disk Usage:   </span><span class="cs">$(df -h / | awk 'NR==2{print $5 " used of " $2}')</span><span class="cv">"</span>
+<span class="ck">echo</span> <span class="cv">"Logged Users: </span><span class="cs">$(who | wc -l)</span><span class="cv">"</span>
+<span class="ck">echo</span> <span class="cv">"Uptime:       </span><span class="cs">$(uptime -p 2>/dev/null || uptime)</span><span class="cv">"</span>
+<span class="ck">echo</span> <span class="cv">"═══════════════════════════════════"</span></div>
+        </div>
+        <div class="cb-explanation">This script demonstrates command substitution, piping, and graceful fallbacks (<code>2>/dev/null || alternative</code>) for cross-platform compatibility between Linux and macOS.</div>
+      </div>
+
+      <div class="code-block">
+        <div class="cb-header">
+          <div><span class="cb-label">Example 2: Argument Validator</span> <span class="cb-lang">BASH</span></div>
+          <button class="cb-copy" onclick="copyCode(this)">📋 Copy</button>
+        </div>
+        <div class="cb-body with-lines">
+          <div class="line-numbers"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span><span>10</span><span>11</span><span>12</span><span>13</span><span>14</span><span>15</span><span>16</span></div>
+          <div class="code-content"><span class="cm">#!/usr/bin/env bash</span>
+<span class="cm"># greet.sh — Demonstrates argument handling</span>
+
+<span class="ck">if</span> [[ <span class="cs">$#</span> <span class="co">-eq</span> 0 ]]; <span class="ck">then</span>
+    <span class="ck">echo</span> <span class="ce">"Usage: $0 &lt;name&gt; [greeting]"</span> &gt;&amp;2
+    <span class="ck">exit</span> 1
+<span class="ck">fi</span>
+
+<span class="cs">NAME</span>=<span class="cv">"</span><span class="cs">$1</span><span class="cv">"</span>
+<span class="cs">GREETING</span>=<span class="cv">"</span><span class="cs">${2:-Hello}</span><span class="cv">"</span>  <span class="cm"># Default to "Hello" if not provided</span>
+
+<span class="ck">echo</span> <span class="cv">"</span><span class="cs">$GREETING</span><span class="cv">, </span><span class="cs">$NAME</span><span class="cv">! Welcome to DevOps."</span>
+
+<span class="cm"># Usage:</span>
+<span class="cm"># ./greet.sh Karthik          → Hello, Karthik! Welcome to DevOps.</span>
+<span class="cm"># ./greet.sh Karthik "Hey"    → Hey, Karthik! Welcome to DevOps.</span></div>
+        </div>
+        <div class="cb-explanation">Always validate arguments at the top of your script. Print usage to stderr (<code>>&amp;2</code>) and exit with code 1. The <code>${2:-default}</code> pattern provides fallback values elegantly.</div>
+      </div>
+    </section>
+
+    <!-- ═══════════════ SECTION 12: INTERMEDIATE EXAMPLES ═══════════════ -->
+    <section class="section" id="intermediate-examples">
+      <div class="section-title"><span class="st-num">12</span>Intermediate Examples</div>
+
+      <div class="code-block">
+        <div class="cb-header">
+          <div><span class="cb-label">Disk Usage Alert Script</span> <span class="cb-lang">BASH</span></div>
+          <button class="cb-copy" onclick="copyCode(this)">📋 Copy</button>
+        </div>
+        <div class="cb-body with-lines">
+          <div class="line-numbers"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span><span>10</span><span>11</span><span>12</span><span>13</span><span>14</span><span>15</span><span>16</span><span>17</span><span>18</span><span>19</span><span>20</span><span>21</span><span>22</span><span>23</span><span>24</span><span>25</span><span>26</span><span>27</span><span>28</span><span>29</span></div>
+          <div class="code-content"><span class="cm">#!/usr/bin/env bash</span>
+<span class="ck">set</span> <span class="co">-euo</span> pipefail
+
+<span class="cs">THRESHOLD</span>=<span class="cv">80</span>
+<span class="cs">LOG_FILE</span>=<span class="cv">"/var/log/disk-alert.log"</span>
+
+log() {
+    <span class="ck">echo</span> <span class="cv">"[</span><span class="cs">$(date '+%Y-%m-%d %H:%M:%S')</span><span class="cv">] </span><span class="cs">$*</span><span class="cv">"</span> | <span class="ck">tee</span> <span class="co">-a</span> <span class="cv">"</span><span class="cs">$LOG_FILE</span><span class="cv">"</span>
+}
+
+<span class="cs">alert_sent</span>=<span class="cv">false</span>
+
+<span class="ck">while</span> <span class="ck">IFS=</span> <span class="ck">read</span> <span class="co">-r</span> line; <span class="ck">do</span>
+    <span class="cs">usage</span>=$(<span class="ck">echo</span> <span class="cv">"</span><span class="cs">$line</span><span class="cv">"</span> | <span class="ck">awk</span> <span class="cv">'{print $5}'</span> | <span class="ck">tr</span> <span class="co">-d</span> <span class="cv">'%'</span>)
+    <span class="cs">mount</span>=$(<span class="ck">echo</span> <span class="cv">"</span><span class="cs">$line</span><span class="cv">"</span> | <span class="ck">awk</span> <span class="cv">'{print $6}'</span>)
+    
+    <span class="ck">if</span> [[ <span class="cs">"$usage"</span> <span class="co">-ge</span> <span class="cs">"$THRESHOLD"</span> ]]; <span class="ck">then</span>
+        log <span class="cv">"⚠️  WARNING: </span><span class="cs">$mount</span><span class="cv"> is at </span><span class="cs">${usage}</span><span class="cv">% (threshold: </span><span class="cs">${THRESHOLD}</span><span class="cv">%)"</span>
+        <span class="cs">alert_sent</span>=<span class="cv">true</span>
+    <span class="ck">fi</span>
+<span class="ck">done</span> &lt; &lt;(<span class="ck">df</span> <span class="co">-h</span> | <span class="ck">awk</span> <span class="cv">'NR>1 && $5+0 > 0'</span>)
+
+<span class="ck">if</span> [[ <span class="cv">"</span><span class="cs">$alert_sent</span><span class="cv">"</span> == <span class="cv">"true"</span> ]]; <span class="ck">then</span>
+    log <span class="cv">"📧 Sending alert notification..."</span>
+    <span class="cm"># curl -X POST "$SLACK_WEBHOOK" -d '{"text":"Disk usage alert!"}'</span>
+<span class="ck">else</span>
+    log <span class="cv">"✅ All filesystems below </span><span class="cs">${THRESHOLD}</span><span class="cv">% — healthy"</span>
+<span class="ck">fi</span></div>
+        </div>
+        <div class="cb-explanation">Uses process substitution (<code>&lt; &lt;(command)</code>) to feed <code>df</code> output into a while loop without spawning a subshell. This pattern preserves variable changes (like <code>alert_sent</code>) across iterations.</div>
+      </div>
+    </section>
+
+    <!-- ═══════════════ SECTION 13: PRODUCTION EXAMPLES ═══════════════ -->
+    <section class="section" id="production-examples">
+      <div class="section-title"><span class="st-num">13</span>Production Examples</div>
+
+      <div class="code-block">
+        <div class="cb-header">
+          <div><span class="cb-label">Production Deploy Script</span> <span class="cb-lang">BASH</span></div>
+          <button class="cb-copy" onclick="copyCode(this)">📋 Copy</button>
+        </div>
+        <div class="cb-body with-lines">
+          <div class="line-numbers"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span><span>10</span><span>11</span><span>12</span><span>13</span><span>14</span><span>15</span><span>16</span><span>17</span><span>18</span><span>19</span><span>20</span><span>21</span><span>22</span><span>23</span><span>24</span><span>25</span><span>26</span><span>27</span><span>28</span><span>29</span><span>30</span><span>31</span><span>32</span><span>33</span><span>34</span><span>35</span><span>36</span><span>37</span><span>38</span><span>39</span><span>40</span><span>41</span><span>42</span><span>43</span><span>44</span><span>45</span><span>46</span><span>47</span><span>48</span><span>49</span><span>50</span><span>51</span><span>52</span><span>53</span><span>54</span><span>55</span><span>56</span><span>57</span><span>58</span><span>59</span><span>60</span></div>
+          <div class="code-content"><span class="cm">#!/usr/bin/env bash</span>
+<span class="cm"># ──────────────────────────────────────────────────────────</span>
+<span class="cm"># deploy.sh — Zero-downtime deployment with rollback</span>
+<span class="cm"># Usage: ./deploy.sh &lt;version&gt; [environment]</span>
+<span class="cm"># ──────────────────────────────────────────────────────────</span>
+<span class="ck">set</span> <span class="co">-euo</span> pipefail
+
+<span class="cm"># ── Configuration ──</span>
+<span class="ck">readonly</span> <span class="cs">APP_NAME</span>=<span class="cv">"myapp"</span>
+<span class="ck">readonly</span> <span class="cs">DEPLOY_DIR</span>=<span class="cv">"/opt/</span><span class="cs">${APP_NAME}</span><span class="cv">"</span>
+<span class="ck">readonly</span> <span class="cs">RELEASES_DIR</span>=<span class="cv">"</span><span class="cs">${DEPLOY_DIR}</span><span class="cv">/releases"</span>
+<span class="ck">readonly</span> <span class="cs">CURRENT_LINK</span>=<span class="cv">"</span><span class="cs">${DEPLOY_DIR}</span><span class="cv">/current"</span>
+<span class="ck">readonly</span> <span class="cs">VERSION</span>=<span class="cv">"</span><span class="cs">${1:?Usage: $0 <version> [env]}</span><span class="cv">"</span>
+<span class="ck">readonly</span> <span class="cs">ENV</span>=<span class="cv">"</span><span class="cs">${2:-production}</span><span class="cv">"</span>
+<span class="ck">readonly</span> <span class="cs">RELEASE_PATH</span>=<span class="cv">"</span><span class="cs">${RELEASES_DIR}</span><span class="cv">/</span><span class="cs">${VERSION}</span><span class="cv">"</span>
+
+<span class="cm"># ── Logging ──</span>
+log()   { <span class="ck">echo</span> <span class="cv">"[</span><span class="cs">$(date -u '+%Y-%m-%dT%H:%M:%SZ')</span><span class="cv">] [</span><span class="cs">${1^^}</span><span class="cv">] </span><span class="cs">${*:2}</span><span class="cv">"</span>; }
+info()  { log info <span class="cv">"</span><span class="cs">$@</span><span class="cv">"</span>; }
+error() { log error <span class="cv">"</span><span class="cs">$@</span><span class="cv">"</span> &gt;&amp;2; }
+
+<span class="cm"># ── Cleanup ──</span>
+<span class="ck">trap</span> <span class="cv">'error "Deploy FAILED at line $LINENO"; rollback'</span> ERR
+
+rollback() {
+    <span class="ck">if</span> [[ <span class="co">-L</span> <span class="cv">"</span><span class="cs">${CURRENT_LINK}</span><span class="cv">.previous"</span> ]]; <span class="ck">then</span>
+        info <span class="cv">"Rolling back to previous release..."</span>
+        <span class="ck">ln</span> <span class="co">-sfn</span> <span class="cv">"</span><span class="cs">$(readlink "${CURRENT_LINK}.previous")</span><span class="cv">"</span> <span class="cv">"</span><span class="cs">"${CURRENT_LINK}</span><span class="cv">"</span>
+        <span class="ck">sudo</span> systemctl restart <span class="cs">"$APP_NAME"</span>
+        info <span class="cv">"Rollback complete"</span>
+    <span class="ck">fi</span>
+}
+
+<span class="cm"># ── Validate ──</span>
+info <span class="cv">"Starting deploy: v</span><span class="cs">$VERSION</span><span class="cv"> → </span><span class="cs">$ENV</span><span class="cv">"</span>
+[[ <span class="co">-d</span> <span class="cv">"</span><span class="cs">$RELEASES_DIR</span><span class="cv">"</span> ]] || <span class="ck">mkdir</span> <span class="co">-p</span> <span class="cv">"</span><span class="cs">$RELEASES_DIR</span><span class="cv">"</span>
+
+<span class="cm"># ── Download & Extract ──</span>
+info <span class="cv">"Downloading release artifact..."</span>
+<span class="ck">mkdir</span> <span class="co">-p</span> <span class="cv">"</span><span class="cs">$RELEASE_PATH</span><span class="cv">"</span>
+<span class="ck">curl</span> <span class="co">-sfL</span> <span class="cv">"https://releases.example.com/</span><span class="cs">$APP_NAME</span><span class="cv">/</span><span class="cs">$VERSION</span><span class="cv">.tar.gz"</span> | <span class="ck">tar</span> <span class="co">xzf</span> - <span class="co">-C</span> <span class="cv">"</span><span class="cs">$RELEASE_PATH</span><span class="cv">"</span>
+
+<span class="cm"># ── Save current release for rollback ──</span>
+<span class="ck">if</span> [[ <span class="co">-L</span> <span class="cv">"</span><span class="cs">$CURRENT_LINK</span><span class="cv">"</span> ]]; <span class="ck">then</span>
+    <span class="ck">cp</span> <span class="co">-P</span> <span class="cv">"</span><span class="cs">$CURRENT_LINK</span><span class="cv">"</span> <span class="cv">"</span><span class="cs">${CURRENT_LINK}</span><span class="cv">.previous"</span>
+<span class="ck">fi</span>
+
+<span class="cm"># ── Atomic symlink switch (zero downtime) ──</span>
+info <span class="cv">"Switching symlink..."</span>
+<span class="ck">ln</span> <span class="co">-sfn</span> <span class="cv">"</span><span class="cs">$RELEASE_PATH</span><span class="cv">"</span> <span class="cv">"</span><span class="cs">$CURRENT_LINK</span><span class="cv">"</span>
+
+<span class="cm"># ── Restart & Health Check ──</span>
+<span class="ck">sudo</span> systemctl restart <span class="cv">"</span><span class="cs">$APP_NAME</span><span class="cv">"</span>
+<span class="ck">sleep</span> 3
+
+<span class="ck">if</span> <span class="ck">curl</span> <span class="co">-sf</span> http://localhost:8080/health &gt;/dev/null; <span class="ck">then</span>
+    info <span class="cv">"✅ Deploy successful: v</span><span class="cs">$VERSION</span><span class="cv"> is live!"</span>
+<span class="ck">else</span>
+    error <span class="cv">"Health check failed — triggering rollback"</span>
+    rollback
+    <span class="ck">exit</span> 1
+<span class="ck">fi</span></div>
+        </div>
+        <div class="cb-explanation">This script demonstrates real production patterns: atomic symlink deployment (no downtime), automatic rollback on failure, structured logging, <code>trap ERR</code> for error handling, and health check verification after deploy.</div>
+      </div>
+
+      <div class="box box-best"><span class="box-title">★ Production Pattern: Symlink Deploy</span>
+        The <code>ln -sfn $NEW_RELEASE /opt/app/current</code> pattern is how Capistrano, Deployer, and many deployment tools work. The symlink switch is atomic — there's no moment where the app is "between" versions. This is the gold standard for zero-downtime deployments.
+      </div>
+    </section>
+
+    <!-- ═══════════════ SECTION 14: FLOW DIAGRAMS ═══════════════ -->
+    <section class="section" id="flow-diagrams">
+      <div class="section-title"><span class="st-num">14</span>Visual Flow Diagrams</div>
+
+      <div class="sub-title">Script Execution Flow</div>
+      <div class="flow">
+┌─────────────┐     ┌──────────────┐     ┌──────────────┐     ┌──────────────┐
+│  Write       │────▶│  chmod +x    │────▶│  ./script.sh │────▶│   Output     │
+│  script.sh   │     │  (make exec) │     │  (execute)   │     │   + exit $?  │
+└─────────────┘     └──────────────┘     └──────┬───────┘     └──────────────┘
+                                                │
+                               ┌────────────────┼────────────────┐
+                               ▼                ▼                ▼
+                        ┌────────────┐   ┌────────────┐   ┌────────────┐
+                        │  Variables  │   │  Conditon  │   │   Loops    │
+                        │  $VAR=val   │   │  if/case   │   │  for/while │
+                        └────────────┘   └────────────┘   └────────────┘</div>
+
+      <div class="sub-title">Error Handling Flow</div>
+      <div class="flow">
+Command Execution
+        │
+        ├── exit code = 0 ──────────────▶ ✅ SUCCESS → continue
+        │
+        ├── exit code ≠ 0 (with set -e) ──▶ ❌ FAIL
+        │                                      │
+        │                           ┌──────────┴──────────┐
+        │                           ▼                     ▼
+        │                    trap ERR defined?      No trap?
+        │                           │                     │
+        │                    Run error handler       Script exits
+        │                    (e.g., rollback)        immediately
+        │
+        └── exit code ≠ 0 (without set -e) ──▶ ⚠️  Silent continue
+                                                   (DANGEROUS!)</div>
+
+      <div class="sub-title">Variable Scope Flow</div>
+      <div class="flow">
+┌─────────────────────── PARENT SHELL ────────────────────────┐
+│                                                              │
+│  GLOBAL_VAR="visible everywhere"                             │
+│  export EXPORTED="passed to child processes"                 │
+│                                                              │
+│  ┌────────────── ./child_script.sh ──────────────────┐      │
+│  │  Can see: $EXPORTED, $PATH, $HOME                  │      │
+│  │  Cannot see: $GLOBAL_VAR (not exported)            │      │
+│  │  Cannot modify parent's variables                  │      │
+│  └────────────────────────────────────────────────────┘      │
+│                                                              │
+│  ┌────────────── source child.sh ────────────────────┐      │
+│  │  Runs IN parent shell                              │      │
+│  │  Can see AND modify ALL parent variables           │      │
+│  │  Can cd, export, alias — affects parent            │      │
+│  └────────────────────────────────────────────────────┘      │
+└──────────────────────────────────────────────────────────────┘</div>
+    </section>
+
+    <!-- ═══════════════ SECTION 15: EXERCISES ═══════════════ -->
+    <section class="section" id="exercises">
+      <div class="section-title"><span class="st-num">15</span>Exercises</div>
+
+      <!-- Exercise 1 -->
+      <div class="exercise-card">
+        <div class="ex-header">
+          <div class="ex-title">📝 Exercise 1: Server Health Dashboard</div>
+          <span class="ex-diff easy">EASY</span>
+        </div>
+        <div class="ex-body">
+          <div class="ex-field">
+            <div class="ex-field-label">Objective</div>
+            <div class="ex-field-value">Write a script that displays hostname, IP address, disk usage, memory usage, and number of running processes in a formatted output.</div>
+          </div>
+          <div class="ex-field">
+            <div class="ex-field-label">Expected Output</div>
+            <div class="ex-field-value">
+              <code>═══ SERVER HEALTH ═══</code><br>
+              <code>Host: web-01 | IP: 10.0.1.5 | Disk: 45% | Memory: 62% | Procs: 128</code>
+            </div>
+          </div>
+          <div class="ex-field">
+            <div class="ex-field-label">Hints</div>
+            <div class="ex-field-value">Use <code>hostname</code>, <code>hostname -I</code>, <code>df -h /</code>, <code>free</code>, and <code>ps aux | wc -l</code></div>
+          </div>
+          <div class="collapsible">
+            <div class="collapsible-header" onclick="this.parentElement.classList.toggle('open')">
+              <h4>🔓 Solution</h4>
+              <span class="collapsible-arrow">▶</span>
+            </div>
+            <div class="collapsible-body">
+              <div class="code-block">
+                <div class="cb-header">
+                  <div><span class="cb-label">health-dashboard.sh</span> <span class="cb-lang">BASH</span></div>
+                  <button class="cb-copy" onclick="copyCode(this)">📋 Copy</button>
+                </div>
+                <div class="cb-body"><span class="cm">#!/usr/bin/env bash</span>
+<span class="cs">HOST</span>=$(<span class="ck">hostname</span>)
+<span class="cs">IP</span>=$(<span class="ck">hostname</span> <span class="co">-I</span> 2>/dev/null | <span class="ck">awk</span> <span class="cv">'{print $1}'</span> || <span class="ck">echo</span> <span class="cv">"N/A"</span>)
+<span class="cs">DISK</span>=$(<span class="ck">df</span> <span class="co">-h</span> / | <span class="ck">awk</span> <span class="cv">'NR==2{print $5}'</span>)
+<span class="cs">MEM</span>=$(<span class="ck">free</span> 2>/dev/null | <span class="ck">awk</span> <span class="cv">'/Mem:/{printf "%.0f%%", $3/$2*100}'</span> || <span class="ck">echo</span> <span class="cv">"N/A"</span>)
+<span class="cs">PROCS</span>=$(<span class="ck">ps</span> aux | <span class="ck">wc</span> <span class="co">-l</span>)
+
+<span class="ck">echo</span> <span class="cv">"═══ SERVER HEALTH ═══"</span>
+<span class="ck">echo</span> <span class="cv">"Host: </span><span class="cs">$HOST</span><span class="cv"> | IP: </span><span class="cs">$IP</span><span class="cv"> | Disk: </span><span class="cs">$DISK</span><span class="cv"> | Memory: </span><span class="cs">$MEM</span><span class="cv"> | Procs: </span><span class="cs">$PROCS</span><span class="cv">"</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="box box-mistake"><span class="box-title">❌ Common Mistake</span>
+            Using <code>ifconfig</code> instead of <code>hostname -I</code> — ifconfig is deprecated on modern distros and not installed by default.
+          </div>
+          <div class="box box-production"><span class="box-title">🏭 Production Alternative</span>
+            In production, use monitoring tools like Prometheus node_exporter, Datadog agent, or CloudWatch for continuous system metrics instead of one-off scripts.
+          </div>
+        </div>
+      </div>
+
+      <!-- Exercise 2 -->
+      <div class="exercise-card">
+        <div class="ex-header">
+          <div class="ex-title">📝 Exercise 2: Log Analyzer</div>
+          <span class="ex-diff medium">MEDIUM</span>
+        </div>
+        <div class="ex-body">
+          <div class="ex-field">
+            <div class="ex-field-label">Objective</div>
+            <div class="ex-field-value">Write a script that reads an Nginx access log, counts requests per HTTP status code, and displays the top 5 most requested URLs.</div>
+          </div>
+          <div class="ex-field">
+            <div class="ex-field-label">Expected Output</div>
+            <div class="ex-field-value">
+              <code>── Status Codes ──</code><br>
+              <code>200: 15230 requests</code><br>
+              <code>404:   342 requests</code><br>
+              <code>── Top 5 URLs ──</code><br>
+              <code>  1. /api/users (4521 hits)</code>
+            </div>
+          </div>
+          <div class="ex-field">
+            <div class="ex-field-label">Hints</div>
+            <div class="ex-field-value">Use <code>awk</code> to extract status codes (field $9) and URLs (field $7). Pipe to <code>sort | uniq -c | sort -rn</code></div>
+          </div>
+          <div class="collapsible">
+            <div class="collapsible-header" onclick="this.parentElement.classList.toggle('open')">
+              <h4>🔓 Solution</h4>
+              <span class="collapsible-arrow">▶</span>
+            </div>
+            <div class="collapsible-body">
+              <div class="code-block">
+                <div class="cb-header">
+                  <div><span class="cb-label">log-analyzer.sh</span> <span class="cb-lang">BASH</span></div>
+                  <button class="cb-copy" onclick="copyCode(this)">📋 Copy</button>
+                </div>
+                <div class="cb-body"><span class="cm">#!/usr/bin/env bash</span>
+<span class="ck">set</span> <span class="co">-euo</span> pipefail
+<span class="cs">LOG</span>=<span class="cv">"</span><span class="cs">${1:?Usage: $0 &lt;access.log&gt;}</span><span class="cv">"</span>
+[[ <span class="co">-f</span> <span class="cv">"</span><span class="cs">$LOG</span><span class="cv">"</span> ]] || { <span class="ck">echo</span> <span class="ce">"File not found: $LOG"</span> &gt;&amp;2; <span class="ck">exit</span> 1; }
+
+<span class="ck">echo</span> <span class="cv">"── Status Codes ──"</span>
+<span class="ck">awk</span> <span class="cv">'{print $9}'</span> <span class="cv">"</span><span class="cs">$LOG</span><span class="cv">"</span> | <span class="ck">sort</span> | <span class="ck">uniq</span> <span class="co">-c</span> | <span class="ck">sort</span> <span class="co">-rn</span> | \
+  <span class="ck">while</span> <span class="ck">read</span> count code; <span class="ck">do</span>
+    <span class="ck">printf</span> <span class="cv">"  %s: %s requests\n"</span> <span class="cv">"</span><span class="cs">$code</span><span class="cv">"</span> <span class="cv">"</span><span class="cs">$count</span><span class="cv">"</span>
+  <span class="ck">done</span>
+
+<span class="ck">echo</span> <span class="cv">"── Top 5 URLs ──"</span>
+<span class="ck">awk</span> <span class="cv">'{print $7}'</span> <span class="cv">"</span><span class="cs">$LOG</span><span class="cv">"</span> | <span class="ck">sort</span> | <span class="ck">uniq</span> <span class="co">-c</span> | <span class="ck">sort</span> <span class="co">-rn</span> | <span class="ck">head</span> <span class="co">-5</span> | \
+  <span class="ck">while</span> <span class="ck">read</span> count url; <span class="ck">do</span>
+    <span class="ck">printf</span> <span class="cv">"  %s (%s hits)\n"</span> <span class="cv">"</span><span class="cs">$url</span><span class="cv">"</span> <span class="cv">"</span><span class="cs">$count</span><span class="cv">"</span>
+  <span class="ck">done</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════ SECTION 16: EASY CHALLENGE ═══════════════ -->
+    <section class="section" id="easy-challenge">
+      <div class="section-title"><span class="st-num">16</span>Easy Challenge</div>
+
+      <div class="exercise-card">
+        <div class="ex-header">
+          <div class="ex-title">🏆 Challenge: Backup Script</div>
+          <span class="ex-diff easy">EASY</span>
+        </div>
+        <div class="ex-body">
+          <div class="ex-field">
+            <div class="ex-field-label">Objective</div>
+            <div class="ex-field-value">Write a script that takes a directory path as an argument, creates a timestamped tar.gz backup of that directory in <code>/tmp/backups/</code>, and prints the backup filename and size.</div>
+          </div>
+          <div class="ex-field">
+            <div class="ex-field-label">Requirements</div>
+            <div class="ex-field-value">
+              • Validate that the directory exists<br>
+              • Create the backup directory if it doesn't exist<br>
+              • Name format: <code>backup-dirname-YYYYMMDD-HHMMSS.tar.gz</code><br>
+              • Print the backup file size after creation
+            </div>
+          </div>
+          <div class="collapsible">
+            <div class="collapsible-header" onclick="this.parentElement.classList.toggle('open')">
+              <h4>🔓 Solution</h4>
+              <span class="collapsible-arrow">▶</span>
+            </div>
+            <div class="collapsible-body">
+              <div class="code-block">
+                <div class="cb-header">
+                  <div><span class="cb-label">backup.sh</span> <span class="cb-lang">BASH</span></div>
+                  <button class="cb-copy" onclick="copyCode(this)">📋 Copy</button>
+                </div>
+                <div class="cb-body"><span class="cm">#!/usr/bin/env bash</span>
+<span class="ck">set</span> <span class="co">-euo</span> pipefail
+
+<span class="cs">TARGET</span>=<span class="cv">"</span><span class="cs">${1:?Usage: $0 &lt;directory&gt;}</span><span class="cv">"</span>
+<span class="cs">BACKUP_DIR</span>=<span class="cv">"/tmp/backups"</span>
+
+[[ <span class="co">-d</span> <span class="cv">"</span><span class="cs">$TARGET</span><span class="cv">"</span> ]] || { <span class="ck">echo</span> <span class="ce">"Error: '$TARGET' is not a directory"</span> &gt;&amp;2; <span class="ck">exit</span> 1; }
+
+<span class="ck">mkdir</span> <span class="co">-p</span> <span class="cv">"</span><span class="cs">$BACKUP_DIR</span><span class="cv">"</span>
+
+<span class="cs">DIRNAME</span>=$(<span class="ck">basename</span> <span class="cv">"</span><span class="cs">$TARGET</span><span class="cv">"</span>)
+<span class="cs">TIMESTAMP</span>=$(<span class="ck">date</span> <span class="cv">'+%Y%m%d-%H%M%S'</span>)
+<span class="cs">BACKUP_FILE</span>=<span class="cv">"</span><span class="cs">${BACKUP_DIR}</span><span class="cv">/backup-</span><span class="cs">${DIRNAME}</span><span class="cv">-</span><span class="cs">${TIMESTAMP}</span><span class="cv">.tar.gz"</span>
+
+<span class="ck">tar</span> <span class="co">czf</span> <span class="cv">"</span><span class="cs">$BACKUP_FILE</span><span class="cv">"</span> <span class="co">-C</span> <span class="cv">"</span><span class="cs">$(dirname "$TARGET")</span><span class="cv">"</span> <span class="cv">"</span><span class="cs">$DIRNAME</span><span class="cv">"</span>
+
+<span class="cs">SIZE</span>=$(<span class="ck">du</span> <span class="co">-h</span> <span class="cv">"</span><span class="cs">$BACKUP_FILE</span><span class="cv">"</span> | <span class="ck">awk</span> <span class="cv">'{print $1}'</span>)
+<span class="ck">echo</span> <span class="cv">"✅ Backup created: </span><span class="cs">$BACKUP_FILE</span><span class="cv"> (</span><span class="cs">$SIZE</span><span class="cv">)"</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════ SECTION 17: MEDIUM CHALLENGE ═══════════════ -->
+    <section class="section" id="medium-challenge">
+      <div class="section-title"><span class="st-num">17</span>Medium Challenge</div>
+
+      <div class="exercise-card">
+        <div class="ex-header">
+          <div class="ex-title">🏆 Challenge: Service Monitor</div>
+          <span class="ex-diff medium">MEDIUM</span>
+        </div>
+        <div class="ex-body">
+          <div class="ex-field">
+            <div class="ex-field-label">Objective</div>
+            <div class="ex-field-value">Write a monitoring script that checks if a list of services (nginx, docker, sshd) are running. If any are stopped, attempt to restart them and log the result. Include a summary report at the end.</div>
+          </div>
+          <div class="ex-field">
+            <div class="ex-field-label">Requirements</div>
+            <div class="ex-field-value">
+              • Accept a comma-separated list of services as an argument<br>
+              • Use functions for checking and restarting<br>
+              • Log all actions with timestamps<br>
+              • Exit with code 1 if any service failed to restart<br>
+              • Include a summary: running / stopped / restarted counts
+            </div>
+          </div>
+          <div class="collapsible">
+            <div class="collapsible-header" onclick="this.parentElement.classList.toggle('open')">
+              <h4>🔓 Solution</h4>
+              <span class="collapsible-arrow">▶</span>
+            </div>
+            <div class="collapsible-body">
+              <div class="code-block">
+                <div class="cb-header">
+                  <div><span class="cb-label">service-monitor.sh</span> <span class="cb-lang">BASH</span></div>
+                  <button class="cb-copy" onclick="copyCode(this)">📋 Copy</button>
+                </div>
+                <div class="cb-body"><span class="cm">#!/usr/bin/env bash</span>
+<span class="ck">set</span> <span class="co">-uo</span> pipefail  <span class="cm"># No -e: we handle errors ourselves</span>
+
+<span class="cs">SERVICES</span>=<span class="cv">"</span><span class="cs">${1:-nginx,docker,sshd}</span><span class="cv">"</span>
+<span class="cs">IFS</span>=<span class="cv">','</span> <span class="ck">read</span> <span class="co">-ra</span> SVC_LIST &lt;&lt;&lt; <span class="cv">"</span><span class="cs">$SERVICES</span><span class="cv">"</span>
+
+<span class="cs">running</span>=0; <span class="cs">stopped</span>=0; <span class="cs">restarted</span>=0; <span class="cs">failed</span>=0
+
+log() { <span class="ck">echo</span> <span class="cv">"[</span><span class="cs">$(date '+%H:%M:%S')</span><span class="cv">] </span><span class="cs">$*</span><span class="cv">"</span>; }
+
+check_service() {
+    <span class="ck">systemctl</span> is-active <span class="co">--quiet</span> <span class="cv">"</span><span class="cs">$1</span><span class="cv">"</span> 2>/dev/null
+}
+
+<span class="ck">for</span> svc <span class="ck">in</span> <span class="cv">"</span><span class="cs">${SVC_LIST[@]}</span><span class="cv">"</span>; <span class="ck">do</span>
+    <span class="ck">if</span> check_service <span class="cv">"</span><span class="cs">$svc</span><span class="cv">"</span>; <span class="ck">then</span>
+        log <span class="cv">"✅ </span><span class="cs">$svc</span><span class="cv"> is running"</span>
+        (( running++ ))
+    <span class="ck">else</span>
+        log <span class="cv">"❌ </span><span class="cs">$svc</span><span class="cv"> is stopped — attempting restart..."</span>
+        (( stopped++ ))
+        <span class="ck">if</span> <span class="ck">sudo</span> systemctl start <span class="cv">"</span><span class="cs">$svc</span><span class="cv">"</span> 2>/dev/null; <span class="ck">then</span>
+            log <span class="cv">"🔄 </span><span class="cs">$svc</span><span class="cv"> restarted successfully"</span>
+            (( restarted++ ))
+        <span class="ck">else</span>
+            log <span class="cv">"💀 FAILED to restart </span><span class="cs">$svc</span><span class="cv">"</span>
+            (( failed++ ))
+        <span class="ck">fi</span>
+    <span class="ck">fi</span>
+<span class="ck">done</span>
+
+<span class="ck">echo</span> <span class="cv">"── Summary: Running=</span><span class="cs">$running</span><span class="cv"> Stopped=</span><span class="cs">$stopped</span><span class="cv"> Restarted=</span><span class="cs">$restarted</span><span class="cv"> Failed=</span><span class="cs">$failed</span><span class="cv">"</span>
+[[ <span class="cs">$failed</span> <span class="co">-eq</span> 0 ]] || <span class="ck">exit</span> 1</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════ SECTION 18: HARD CHALLENGE ═══════════════ -->
+    <section class="section" id="hard-challenge">
+      <div class="section-title"><span class="st-num">18</span>Hard Challenge</div>
+
+      <div class="exercise-card">
+        <div class="ex-header">
+          <div class="ex-title">🏆 Challenge: Automated Server Provisioner</div>
+          <span class="ex-diff hard">HARD</span>
+        </div>
+        <div class="ex-body">
+          <div class="ex-field">
+            <div class="ex-field-label">Objective</div>
+            <div class="ex-field-value">Write a comprehensive server provisioning script that automates the setup of a new Linux server: create users, install packages, configure firewall rules, set up SSH hardening, enable services, and generate a final audit report.</div>
+          </div>
+          <div class="ex-field">
+            <div class="ex-field-label">Requirements</div>
+            <div class="ex-field-value">
+              • Read a configuration from a JSON or CSV file (user list, packages, ports)<br>
+              • Create system users with proper groups and SSH keys<br>
+              • Install specified packages with retry logic<br>
+              • Configure firewall (ufw/firewalld) with specified ports<br>
+              • Harden SSH: disable root login, password auth, change port<br>
+              • Use functions for each task<br>
+              • Full error handling with <code>set -euo pipefail</code> and <code>trap</code><br>
+              • Generate an HTML audit report at the end<br>
+              • Support <code>--dry-run</code> mode
+            </div>
+          </div>
+          <div class="collapsible">
+            <div class="collapsible-header" onclick="this.parentElement.classList.toggle('open')">
+              <h4>💡 Hints</h4>
+              <span class="collapsible-arrow">▶</span>
+            </div>
+            <div class="collapsible-body">
+              <p>1. Parse CSV with <code>while IFS=',' read -r ...</code></p>
+              <p>2. Use <code>getopt</code> or manual argument parsing for <code>--dry-run</code></p>
+              <p>3. Wrap critical commands in a function that checks dry-run mode</p>
+              <p>4. Generate the HTML report using heredoc with a timestamp</p>
+            </div>
+          </div>
+          <div class="collapsible">
+            <div class="collapsible-header" onclick="this.parentElement.classList.toggle('open')">
+              <h4>🔓 Solution</h4>
+              <span class="collapsible-arrow">▶</span>
+            </div>
+            <div class="collapsible-body">
+              <div class="code-block">
+                <div class="cb-header">
+                  <div><span class="cb-label">provision.sh — Core Structure</span> <span class="cb-lang">BASH</span></div>
+                  <button class="cb-copy" onclick="copyCode(this)">📋 Copy</button>
+                </div>
+                <div class="cb-body"><span class="cm">#!/usr/bin/env bash</span>
+<span class="ck">set</span> <span class="co">-euo</span> pipefail
+<span class="cs">DRY_RUN</span>=<span class="cv">false</span>
+[[ <span class="cv">"</span><span class="cs">${1:-}</span><span class="cv">"</span> == <span class="cv">"--dry-run"</span> ]] &amp;&amp; <span class="cs">DRY_RUN</span>=<span class="cv">true</span> &amp;&amp; <span class="ck">shift</span>
+
+<span class="cs">CONFIG</span>=<span class="cv">"</span><span class="cs">${1:?Usage: $0 [--dry-run] &lt;config.csv&gt;}</span><span class="cv">"</span>
+<span class="cs">LOG</span>=<span class="cv">"/var/log/provision-</span><span class="cs">$(date +%Y%m%d)</span><span class="cv">.log"</span>
+<span class="cs">REPORT</span>=<span class="cv">"/tmp/provision-report.html"</span>
+
+log()   { <span class="ck">echo</span> <span class="cv">"[</span><span class="cs">$(date -u '+%H:%M:%S')</span><span class="cv">] </span><span class="cs">$*</span><span class="cv">"</span> | <span class="ck">tee</span> <span class="co">-a</span> <span class="cv">"</span><span class="cs">$LOG</span><span class="cv">"</span>; }
+run()   { <span class="ck">if</span> <span class="cs">$DRY_RUN</span>; <span class="ck">then</span> log <span class="cv">"[DRY-RUN] </span><span class="cs">$*</span><span class="cv">"</span>; <span class="ck">else</span> <span class="cv">"</span><span class="cs">$@</span><span class="cv">"</span>; <span class="ck">fi</span>; }
+<span class="ck">trap</span> <span class="cv">'log "❌ FAILED at line $LINENO"'</span> ERR
+
+create_users() {
+    log <span class="cv">"── Creating users ──"</span>
+    <span class="ck">while</span> IFS=<span class="cv">','</span> <span class="ck">read</span> <span class="co">-r</span> username group shell; <span class="ck">do</span>
+        [[ <span class="cv">"</span><span class="cs">$username</span><span class="cv">"</span> == <span class="cv">"username"</span> ]] &amp;&amp; <span class="ck">continue</span>  <span class="cm"># skip header</span>
+        run <span class="ck">sudo</span> useradd <span class="co">-m -g</span> <span class="cv">"</span><span class="cs">$group</span><span class="cv">"</span> <span class="co">-s</span> <span class="cv">"</span><span class="cs">$shell</span><span class="cv">"</span> <span class="cv">"</span><span class="cs">$username</span><span class="cv">"</span> 2>/dev/null || true
+        log <span class="cv">"  Created: </span><span class="cs">$username</span><span class="cv"> (</span><span class="cs">$group</span><span class="cv">)"</span>
+    <span class="ck">done</span> &lt; <span class="cv">"</span><span class="cs">$CONFIG</span><span class="cv">"</span>
+}
+
+harden_ssh() {
+    log <span class="cv">"── Hardening SSH ──"</span>
+    <span class="ck">local</span> sshd_conf=<span class="cv">"/etc/ssh/sshd_config"</span>
+    run <span class="ck">sudo</span> <span class="ck">sed</span> <span class="co">-i</span> <span class="cv">'s/^#*PermitRootLogin.*/PermitRootLogin no/'</span> <span class="cv">"</span><span class="cs">$sshd_conf</span><span class="cv">"</span>
+    run <span class="ck">sudo</span> <span class="ck">sed</span> <span class="co">-i</span> <span class="cv">'s/^#*PasswordAuthentication.*/PasswordAuthentication no/'</span> <span class="cv">"</span><span class="cs">$sshd_conf</span><span class="cv">"</span>
+    run <span class="ck">sudo</span> systemctl restart sshd
+    log <span class="cv">"  SSH hardened: root login disabled, password auth disabled"</span>
+}
+
+<span class="cm"># ── Execute ──</span>
+create_users
+harden_ssh
+log <span class="cv">"✅ Provisioning complete"</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════ SECTION 19: INTERVIEW QUESTIONS ═══════════════ -->
+    <section class="section" id="interview-questions">
+      <div class="section-title"><span class="st-num">19</span>Interview Questions</div>
+
+      <div class="qa-item">
+        <div class="qa-q" onclick="this.parentElement.classList.toggle('open')">
+          <span class="qnum">Q1</span>
+          What does <code>set -euo pipefail</code> do and why is it important?
+        </div>
+        <div class="qa-a">
+          <strong><code>-e</code> (errexit)</strong>: Script exits immediately when any command returns a non-zero exit code, preventing cascading failures.<br><br>
+          <strong><code>-u</code> (nounset)</strong>: Treats unset variables as errors, catching typos like <code>$SEVER</code> instead of <code>$SERVER</code> that would otherwise silently expand to empty string.<br><br>
+          <strong><code>-o pipefail</code></strong>: A pipeline's exit code is the last non-zero code from any command in the pipe, not just the final command. Without this, <code>curl http://bad | grep OK</code> succeeds even when curl fails.<br><br>
+          <strong>Why it matters:</strong> Without these flags, scripts silently continue after failures, which in production can cause partial deployments, data corruption, or security breaches. It's the single most important line in production Bash.
+        </div>
+      </div>
+
+      <div class="qa-item">
+        <div class="qa-q" onclick="this.parentElement.classList.toggle('open')">
+          <span class="qnum">Q2</span>
+          What's the difference between <code>$@</code> and <code>$*</code>?
+        </div>
+        <div class="qa-a">
+          Both expand to all positional parameters, but they behave differently when quoted:<br><br>
+          <strong><code>"$@"</code></strong> → Expands to <code>"$1" "$2" "$3"</code> — each argument remains a separate word. This preserves arguments with spaces correctly.<br><br>
+          <strong><code>"$*"</code></strong> → Expands to <code>"$1 $2 $3"</code> — all arguments merge into a single string separated by the first character of IFS.<br><br>
+          <strong>Rule:</strong> Always use <code>"$@"</code> when passing arguments to other commands. <code>$*</code> is only useful when you deliberately want to join all arguments into one string.
+        </div>
+      </div>
+
+      <div class="qa-item">
+        <div class="qa-q" onclick="this.parentElement.classList.toggle('open')">
+          <span class="qnum">Q3</span>
+          Explain the difference between <code>./script.sh</code> and <code>source script.sh</code>.
+        </div>
+        <div class="qa-a">
+          <strong><code>./script.sh</code></strong>: Creates a new child process (fork+exec). The script runs in a subshell with its own environment. Variables set inside do NOT affect the parent shell. The parent waits for the child to finish and receives its exit code.<br><br>
+          <strong><code>source script.sh</code></strong> (or <code>. script.sh</code>): Executes the script in the CURRENT shell. Every command runs as if you typed it directly. Variables, <code>cd</code> changes, <code>export</code>s, and functions all persist in your session.<br><br>
+          <strong>Use case:</strong> <code>source</code> is used for loading configuration files like <code>.bashrc</code>, <code>.env</code> files, and function libraries. <code>./script.sh</code> is used for running independent scripts.
+        </div>
+      </div>
+
+      <div class="qa-item">
+        <div class="qa-q" onclick="this.parentElement.classList.toggle('open')">
+          <span class="qnum">Q4</span>
+          How would you handle secrets in a Bash script?
+        </div>
+        <div class="qa-a">
+          <strong>Never hardcode secrets.</strong> Production approaches:<br><br>
+          1. <strong>Environment variables:</strong> <code>export DB_PASS=$(aws secretsmanager get-secret-value ...)</code><br>
+          2. <strong>.env files:</strong> <code>source .env</code> with <code>.env</code> in <code>.gitignore</code><br>
+          3. <strong>Secret managers:</strong> AWS Secrets Manager, HashiCorp Vault, GCP Secret Manager<br>
+          4. <strong>Runtime injection:</strong> Kubernetes Secrets mounted as env vars or files<br>
+          5. <strong>Avoid:</strong> command-line arguments (visible in <code>ps aux</code>), scripts committed to Git, environment that persists in logs<br><br>
+          <strong>Key rule:</strong> Secrets should never appear in <code>ps</code> output, shell history, or Git history.
+        </div>
+      </div>
+
+      <div class="qa-item">
+        <div class="qa-q" onclick="this.parentElement.classList.toggle('open')">
+          <span class="qnum">Q5</span>
+          What is a trap in Bash? Give a production example.
+        </div>
+        <div class="qa-a">
+          <code>trap</code> registers a function or command to run when a specific signal is received. Common signals:<br><br>
+          <strong><code>EXIT</code></strong>: Runs on any exit (normal or error) — used for cleanup<br>
+          <strong><code>ERR</code></strong>: Runs when a command fails (with <code>set -e</code>) — used for error logging<br>
+          <strong><code>INT</code></strong>: Runs on Ctrl+C — used for graceful shutdown<br>
+          <strong><code>TERM</code></strong>: Runs on <code>kill</code> — used for cleanup before termination<br><br>
+          <strong>Production example:</strong> A deployment script creates a temp directory, downloads artifacts, and deploys. <code>trap cleanup EXIT</code> ensures the temp directory is always deleted, even if the script crashes mid-deploy — preventing disk space leaks on production servers.
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════ SECTION 20: INTERVIEW MODE ═══════════════ -->
+    <section class="section" id="interview-mode">
+      <div class="section-title"><span class="st-num">20</span>Interview Mode — Scenario Simulation</div>
+
+      <div class="interview-card">
+        <div class="int-header">
+          <h4>🎤 Senior DevOps Interview — Bash Scripting Round</h4>
+        </div>
+        <div class="int-body">
+          <div class="int-scenario">
+            <strong>Scenario:</strong> You're on-call and get a PagerDuty alert at 3 AM: "Production server disk usage at 95% on /var/log". You need to write an emergency script to: identify the largest log files, compress files older than 24 hours, delete compressed files older than 7 days, and send a Slack notification with the space recovered. Walk through your approach.
+          </div>
+
+          <div class="int-question">Q1: What's the first line of your emergency script and why?</div>
+          <div class="int-answer-area">Write your answer here before revealing the model answer...</div>
+
+          <div class="collapsible">
+            <div class="collapsible-header" onclick="this.parentElement.classList.toggle('open')">
+              <h4>📖 Model Answer</h4>
+              <span class="collapsible-arrow">▶</span>
+            </div>
+            <div class="collapsible-body">
+              <p><code>#!/usr/bin/env bash</code> followed by <code>set -euo pipefail</code>. At 3 AM on a production server, you need the script to STOP on errors, not silently continue and potentially delete critical files. Then <code>trap cleanup EXIT</code> to ensure any temp files are cleaned up if the script crashes.</p>
+            </div>
+          </div>
+
+          <div class="int-question">Q2: How do you find the top 10 largest files in /var/log?</div>
+          <div class="int-answer-area">Write your answer here before revealing the model answer...</div>
+
+          <div class="collapsible">
+            <div class="collapsible-header" onclick="this.parentElement.classList.toggle('open')">
+              <h4>📖 Model Answer</h4>
+              <span class="collapsible-arrow">▶</span>
+            </div>
+            <div class="collapsible-body">
+              <p><code>find /var/log -type f -exec du -h {} + | sort -rh | head -10</code></p>
+              <p>Or for just the total per directory: <code>du -sh /var/log/*/ | sort -rh | head -10</code></p>
+              <p>Key insight: Check if the largest file is an <strong>active log being written to</strong> — you can't just delete it, you need to truncate: <code>truncate -s 0 /var/log/huge.log</code> or the disk space won't be freed (open file handle).</p>
+            </div>
+          </div>
+
+          <div class="int-question">Q3: Why can't you just <code>rm</code> a large log file to free space?</div>
+          <div class="int-answer-area">Write your answer here before revealing the model answer...</div>
+
+          <div class="collapsible">
+            <div class="collapsible-header" onclick="this.parentElement.classList.toggle('open')">
+              <h4>📖 Model Answer</h4>
+              <span class="collapsible-arrow">▶</span>
+            </div>
+            <div class="collapsible-body">
+              <p>If a process has the file open (e.g., syslog, nginx), the inode isn't released until the process closes the file descriptor. <code>rm</code> removes the directory entry but the disk blocks remain allocated. You'd see <code>df</code> still showing 95% even after deleting.</p>
+              <p><strong>Solutions:</strong> (1) <code>truncate -s 0 /var/log/file.log</code> empties it without changing the inode, (2) <code>logrotate --force</code> rotates it properly, (3) restart the service that holds the fd open, or (4) <code>lsof | grep deleted</code> to find zombie file handles.</p>
+            </div>
+          </div>
+
+          <div class="sub-title">Scoring Rubric</div>
+          <div class="tbl-wrap">
+            <table class="tbl">
+              <thead><tr><th>Criterion</th><th>Points</th><th>What Interviewers Look For</th></tr></thead>
+              <tbody>
+                <tr><td>set -euo pipefail</td><td>2</td><td>Shows production mindset, understands error handling</td></tr>
+                <tr><td>find + du approach</td><td>2</td><td>Efficient file discovery, knows CLI tools</td></tr>
+                <tr><td>Inode/fd knowledge</td><td>3</td><td>Deep Linux understanding — separates senior from junior</td></tr>
+                <tr><td>Truncate vs. rm</td><td>2</td><td>Real incident response experience</td></tr>
+                <tr><td>Notification/logging</td><td>1</td><td>Operational maturity — alerts, audit trails</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════ SECTION 21: COMMON MISTAKES ═══════════════ -->
+    <section class="section" id="common-mistakes">
+      <div class="section-title"><span class="st-num">21</span>Common Mistakes</div>
+
+      <div class="box box-mistake"><span class="box-title">❌ Mistake 1: Spaces around = in assignment</span>
+        <code>NAME = "server"</code> → Bash tries to run <code>NAME</code> as a command. Fix: <code>NAME="server"</code> (no spaces).
+      </div>
+
+      <div class="box box-mistake"><span class="box-title">❌ Mistake 2: Unquoted variables</span>
+        <code>rm $FILE</code> → If <code>$FILE</code> is empty, this becomes <code>rm</code> (no args). If it has spaces, it splits into multiple files. Fix: <code>rm "$FILE"</code>.
+      </div>
+
+      <div class="box box-mistake"><span class="box-title">❌ Mistake 3: Using [ ] instead of [[ ]]</span>
+        <code>[ $VAR == "test" ]</code> → Fails if <code>$VAR</code> is empty (syntax error). Fix: <code>[[ "$VAR" == "test" ]]</code> — double brackets handle empty vars safely.
+      </div>
+
+      <div class="box box-mistake"><span class="box-title">❌ Mistake 4: Parsing ls output</span>
+        <code>for f in $(ls *.txt)</code> → Breaks on filenames with spaces. Fix: <code>for f in *.txt</code> — globs are safer and faster.
+      </div>
+
+      <div class="box box-mistake"><span class="box-title">❌ Mistake 5: Ignoring exit codes</span>
+        Not checking if <code>curl</code>, <code>tar</code>, or <code>cp</code> succeeded. A deploy script that doesn't check exit codes can deploy broken artifacts. Fix: Use <code>set -e</code> or check <code>$?</code> explicitly.
+      </div>
+
+      <div class="box box-mistake"><span class="box-title">❌ Mistake 6: Using backticks for command substitution</span>
+        <code>VAR=`echo $(date)`</code> → Backticks don't nest well, are hard to read. Fix: <code>VAR=$(echo $(date))</code>.
+      </div>
+    </section>
+
+    <!-- ═══════════════ SECTION 22: BEST PRACTICES ═══════════════ -->
+    <section class="section" id="best-practices">
+      <div class="section-title"><span class="st-num">22</span>Best Practices</div>
+
+      <div class="box box-best"><span class="box-title">★ 1. Always Start With set -euo pipefail</span>
+        This single line prevents 90% of silent failures in production scripts. Make it a muscle memory habit.
+      </div>
+
+      <div class="box box-best"><span class="box-title">★ 2. Quote All Variables</span>
+        <code>"$VAR"</code> not <code>$VAR</code>. The only exception is inside <code>[[ ]]</code> on the left side of <code>==</code>, but even there, quoting doesn't hurt.
+      </div>
+
+      <div class="box box-best"><span class="box-title">★ 3. Use Functions for Reusable Logic</span>
+        Even in scripts under 50 lines, functions improve readability. Name them clearly: <code>validate_input()</code>, <code>deploy_release()</code>, <code>send_notification()</code>.
+      </div>
+
+      <div class="box box-best"><span class="box-title">★ 4. Use local Variables in Functions</span>
+        <code>local var="value"</code> prevents variable leakage. Global state in Bash is the #1 cause of subtle bugs in longer scripts.
+      </div>
+
+      <div class="box box-best"><span class="box-title">★ 5. Log Everything With Timestamps</span>
+        Use a <code>log()</code> function that prepends ISO 8601 timestamps. When debugging a 3 AM incident, timestamps are essential.
+      </div>
+
+      <div class="box box-best"><span class="box-title">★ 6. Use trap EXIT for Cleanup</span>
+        Temp files, lock files, mounted volumes — always clean up. <code>trap cleanup EXIT</code> is your guarantee.
+      </div>
+
+      <div class="box box-best"><span class="box-title">★ 7. Validate All Inputs at the Top</span>
+        Check argument count, file existence, permissions, and required tools BEFORE doing any work. Fail fast, fail clearly.
+      </div>
+
+      <div class="box box-best"><span class="box-title">★ 8. Use shellcheck</span>
+        <code>shellcheck script.sh</code> catches bugs that humans miss. Integrate it into your CI pipeline: <code>shellcheck --severity=warning scripts/*.sh</code>.
+      </div>
+    </section>
+
+    <!-- ═══════════════ SECTION 23: SKILL MATRIX ═══════════════ -->
+    <section class="section" id="skill-matrix">
+      <div class="section-title"><span class="st-num">23</span>Skill Matrix</div>
+
+      <div class="skill-matrix">
+        <h3>📊 DevOps Skill Matrix — Updated After Lesson 04</h3>
+        <div class="skill-grid">
+          <div class="skill-item">
+            <span class="skill-name">Linux User Management</span>
+            <span class="skill-level proficient">PROFICIENT</span>
+          </div>
+          <div class="skill-item">
+            <span class="skill-name">File Permissions</span>
+            <span class="skill-level proficient">PROFICIENT</span>
+          </div>
+          <div class="skill-item">
+            <span class="skill-name">Process Management</span>
+            <span class="skill-level intermediate">INTERMEDIATE</span>
+          </div>
+          <div class="skill-item">
+            <span class="skill-name">Variables & Quoting</span>
+            <span class="skill-level intermediate">INTERMEDIATE</span>
+          </div>
+          <div class="skill-item">
+            <span class="skill-name">Conditionals & Loops</span>
+            <span class="skill-level intermediate">INTERMEDIATE</span>
+          </div>
+          <div class="skill-item">
+            <span class="skill-name">Functions</span>
+            <span class="skill-level beginner">BEGINNER</span>
+          </div>
+          <div class="skill-item">
+            <span class="skill-name">Error Handling</span>
+            <span class="skill-level beginner">BEGINNER</span>
+          </div>
+          <div class="skill-item">
+            <span class="skill-name">Arrays & Data</span>
+            <span class="skill-level not-started">NOT STARTED</span>
+          </div>
+          <div class="skill-item">
+            <span class="skill-name">Regex & Text Processing</span>
+            <span class="skill-level not-started">NOT STARTED</span>
+          </div>
+          <div class="skill-item">
+            <span class="skill-name">AWS CLI Automation</span>
+            <span class="skill-level not-started">NOT STARTED</span>
+          </div>
+          <div class="skill-item">
+            <span class="skill-name">Docker Automation</span>
+            <span class="skill-level not-started">NOT STARTED</span>
+          </div>
+          <div class="skill-item">
+            <span class="skill-name">Kubernetes Automation</span>
+            <span class="skill-level not-started">NOT STARTED</span>
+          </div>
+          <div class="skill-item">
+            <span class="skill-name">CI/CD Pipelines</span>
+            <span class="skill-level not-started">NOT STARTED</span>
+          </div>
+          <div class="skill-item">
+            <span class="skill-name">Networking</span>
+            <span class="skill-level not-started">NOT STARTED</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════ SECTION 24: SUMMARY ═══════════════ -->
+    <section class="section" id="summary">
+      <div class="section-title"><span class="st-num">24</span>Summary & Key Takeaways</div>
+
+      <div class="sub-title">Key Takeaways</div>
+      <ul class="checklist">
+        <li>Bash scripts automate repetitive DevOps tasks — deployments, monitoring, backups, provisioning</li>
+        <li><code>#!/usr/bin/env bash</code> is the portable shebang; <code>set -euo pipefail</code> is mandatory for production</li>
+        <li>Variables have no types — everything is a string; <strong>always quote</strong> variables: <code>"$VAR"</code></li>
+        <li>Use <code>[[ ]]</code> for conditionals, not <code>[ ]</code> — it handles empty variables and supports regex</li>
+        <li>Functions use <code>local</code> for scoped variables and <code>return</code> for exit codes (not values)</li>
+        <li><code>trap cleanup EXIT</code> guarantees cleanup even on crashes — prevents temp file leaks</li>
+        <li>Parameter expansion (<code>${var:-default}</code>, <code>${var%suffix}</code>) replaces external tools for string ops</li>
+        <li>The symlink deployment pattern (<code>ln -sfn</code>) enables zero-downtime releases</li>
+        <li><code>shellcheck</code> is your static analyzer — integrate it into CI for automated code quality</li>
+        <li>When scripts exceed ~200 lines or need complex data structures, consider Python instead</li>
+      </ul>
+    </section>
+
+    <!-- ═══════════════ SECTION 25: NEXT LESSON ═══════════════ -->
+    <section class="section" id="next-lesson">
+      <div class="section-title"><span class="st-num">25</span>Next Lesson Preview</div>
+
+      <div class="next-lesson-preview">
+        <h4>📚 Lesson 05: Advanced Bash — Arrays, Text Processing & Regular Expressions</h4>
+        <p>Deep dive into Bash arrays (indexed and associative), advanced text processing with <code>awk</code>, <code>sed</code>, and <code>grep -P</code>, regular expressions for log parsing, and building production-grade CLI tools with argument parsing (<code>getopts</code>). You'll build a complete log analysis framework.</p>
+      </div>
+    </section>
+
+    <!-- ═══════════════ FOOTER ═══════════════ -->
+    <div class="lesson-footer">
+      <div class="footer-grid">
+        <div class="footer-section">
+          <h4>Lesson Summary</h4>
+          <p>This lesson covered the complete foundation of Bash shell scripting: from writing your first script to production-grade deployment automation. You learned variables, quoting, conditionals, loops, functions, error handling, and the critical <code>set -euo pipefail</code> pattern. You practiced with 6 exercises spanning easy to hard difficulty and answered 5 interview questions.</p>
+        </div>
+        <div class="footer-section">
+          <h4>Completion Stats</h4>
+          <p>
+            <strong>Sections Covered:</strong> 25<br>
+            <strong>Code Examples:</strong> 15+<br>
+            <strong>Exercises:</strong> 3 (Easy + Medium + Hard)<br>
+            <strong>Interview Questions:</strong> 5<br>
+            <strong>Estimated Completion:</strong> 3-4 hours<br>
+            <strong>Module:</strong> 04 of ongoing
+          </p>
+        </div>
+      </div>
+      <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); text-align: center;">
+        <p style="font-size: 11px; color: var(--dim); margin: 0;">
+          90-Day DevOps Mastery · Module 04 — Bash Shell Scripting Fundamentals<br>
+          Generated: 2026-07-21 · Save as: <code>bash-shell-scripting-fundamentals.html</code>
+        </p>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ═══════════════ JAVASCRIPT ═══════════════ -->
+  <script>
+    // ── Copy Code Button ──
+    function copyCode(btn) {
+      const block = btn.closest('.code-block');
+      const codeEl = block.querySelector('.code-content') || block.querySelector('.cb-body');
+      const text = codeEl.innerText;
+
+      navigator.clipboard.writeText(text).then(() => {
+        btn.textContent = '✅ Copied!';
+        btn.classList.add('copied');
+        setTimeout(() => {
+          btn.textContent = '📋 Copy';
+          btn.classList.remove('copied');
+        }, 2000);
+      }).catch(() => {
+        // Fallback for older browsers
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+        btn.textContent = '✅ Copied!';
+        btn.classList.add('copied');
+        setTimeout(() => {
+          btn.textContent = '📋 Copy';
+          btn.classList.remove('copied');
+        }, 2000);
+      });
+    }
+
+    // ── Active Sidebar Link ──
+    const sections = document.querySelectorAll('.section, .objectives, .progress-header');
+    const navLinks = document.querySelectorAll('.sidebar a');
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          navLinks.forEach(link => link.classList.remove('active'));
+          const id = entry.target.id;
+          if (id) {
+            const activeLink = document.querySelector(`.sidebar a[href="#${id}"]`);
+            if (activeLink) activeLink.classList.add('active');
+          }
+        }
+      });
+    }, { rootMargin: '-20% 0px -70% 0px' });
+
+    sections.forEach(section => {
+      if (section.id) observer.observe(section);
+    });
+
+    // ── Smooth scroll for mobile menu ──
+    document.querySelectorAll('.sidebar a').forEach(link => {
+      link.addEventListener('click', () => {
+        if (window.innerWidth <= 640) {
+          document.querySelector('.sidebar').classList.remove('show');
+        }
+      });
+    });
+
+    // ── Progress bar animation on load ──
+    window.addEventListener('load', () => {
+      const bar = document.querySelector('.progress-bar-fill');
+      bar.style.width = '0%';
+      setTimeout(() => { bar.style.width = '100%'; }, 300);
+    });
+  </script>
+</body>
+
+</html>

@@ -47,9 +47,9 @@ const NODES: NodeDef[] = [
   },
   {
     id: 3, label: 'Maven', sublabel: 'Module 04', deps: [2],
-    x: COL_W * 3, y: ROW2_Y, lessons: 7,
-    topics: ['Maven vs Gradle','Maven Installation & Setup','Understanding pom.xml','Maven Build Lifecycle','Dependencies Management','Build Profiles','Jenkins–Maven Integration'],
-    labs: ['Lab A: Clone Java Spring Boot project, run mvn clean package','Lab B: Add dependencies to pom.xml','Lab C: Integrate Maven into Jenkins pipeline','Lab D: Create Dev/Prod profiles'],
+    x: COL_W * 3, y: ROW2_Y, lessons: 12,
+    topics: ['What is Maven?','Installation & Setup','POM — Project Object Model','Build Lifecycle','Dependency Management','Plugins & Goals','Repositories','Profiles','Multi-Module Projects','Properties & Filtering','Test Management','CI/CD Integration'],
+    labs: ['Easy Challenge: Add Guava Dependency','Medium Challenge: Create Multi-Module Project','Hard Challenge: Jenkins Pipeline + Maven'],
   },
   {
     id: 4, label: 'Jenkins', sublabel: 'Module 05', deps: [3],

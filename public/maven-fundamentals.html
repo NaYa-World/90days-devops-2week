@@ -1,0 +1,3059 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maven Fundamentals — 90-Day DevOps Mastery</title>
+    <meta name="description"
+        content="Production-grade Maven build automation for DevOps engineers. Learn POM, lifecycle, plugins, dependency management, multi-module projects, and CI integration.">
+    <style>
+        :root {
+            --bg: #0f1117;
+            --sb: #0b0e18;
+            --surface: #181c27;
+            --surface2: #1e2336;
+            --border: #2a3050;
+            --text: #e2e8f0;
+            --text2: #c8d3e8;
+            --muted: #7a85a3;
+            --dim: #3a4568;
+            --blue: #4f8ef7;
+            --green: #22c55e;
+            --amber: #f59e0b;
+            --red: #ef4444;
+            --purple: #b060e8;
+            --teal: #20c0a0;
+            --orange: #f07020;
+            --cyan: #40c0e0;
+            --mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+            --sans: 'Inter', system-ui, -apple-system, sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0
+        }
+
+        html {
+            scroll-behavior: smooth
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--sans);
+            display: flex;
+            min-height: 100vh;
+            font-size: 14px;
+            line-height: 1.6
+        }
+
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 264px;
+            height: 100vh;
+            overflow-y: auto;
+            background: var(--sb);
+            border-right: 1px solid var(--border);
+            z-index: 100;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border) transparent
+        }
+
+        .sidebar::-webkit-scrollbar {
+            width: 4px
+        }
+
+        .sidebar::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 2px
+        }
+
+        .sb-brand {
+            padding: 18px 16px 12px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 6px
+        }
+
+        .sb-badge {
+            display: inline-block;
+            background: #0a2d22;
+            border: 1px solid #0f7c5c;
+            color: #13a87a;
+            font-size: 9px;
+            font-family: var(--mono);
+            padding: 2px 8px;
+            border-radius: 10px;
+            letter-spacing: .1em;
+            margin-bottom: 7px
+        }
+
+        .sb-brand h2 {
+            font-size: 12.5px;
+            font-weight: 700;
+            color: var(--text);
+            line-height: 1.3
+        }
+
+        .sb-label {
+            font-size: 9px;
+            font-family: var(--mono);
+            letter-spacing: .14em;
+            color: var(--dim);
+            text-transform: uppercase;
+            padding: 10px 16px 3px
+        }
+
+        .sidebar a {
+            display: block;
+            padding: 4px 16px 4px 22px;
+            color: var(--muted);
+            text-decoration: none;
+            font-size: 11.5px;
+            line-height: 1.4;
+            border-left: 2px solid transparent;
+            transition: all .13s
+        }
+
+        .sidebar a:hover,
+        .sidebar a.active {
+            color: var(--text);
+            border-left-color: var(--blue);
+            background: rgba(79, 142, 247, .06)
+        }
+
+        .mobile-toggle {
+            display: none;
+            position: fixed;
+            top: 12px;
+            left: 12px;
+            z-index: 200;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px
+        }
+
+        .content {
+            margin-left: 264px;
+            flex: 1;
+            padding: 0 48px 80px;
+            max-width: 1060px;
+            width: 100%
+        }
+
+        .progress-header {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px 24px;
+            margin: 24px 0 8px
+        }
+
+        .progress-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 12px;
+            margin-bottom: 16px
+        }
+
+        .pg-item {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 10px 12px;
+            text-align: center
+        }
+
+        .pg-item .pg-label {
+            font-size: 9px;
+            font-family: var(--mono);
+            color: var(--muted);
+            letter-spacing: .12em;
+            text-transform: uppercase;
+            display: block;
+            margin-bottom: 4px
+        }
+
+        .pg-item .pg-value {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text)
+        }
+
+        .pg-item .pg-value.lesson {
+            color: var(--blue)
+        }
+
+        .pg-item .pg-value.module {
+            color: var(--purple)
+        }
+
+        .pg-item .pg-value.progress {
+            color: var(--green)
+        }
+
+        .pg-item .pg-value.skill {
+            color: var(--amber)
+        }
+
+        .pg-item .pg-value.time {
+            color: var(--cyan)
+        }
+
+        .pg-item .pg-value.difficulty {
+            color: var(--orange)
+        }
+
+        .pg-item .pg-value.prereq {
+            color: var(--teal)
+        }
+
+        .progress-bar-wrap {
+            background: #0d1020;
+            border-radius: 6px;
+            overflow: hidden;
+            height: 8px
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            border-radius: 6px;
+            background: linear-gradient(90deg, var(--blue), var(--teal), var(--green));
+            transition: width .6s ease
+        }
+
+        .progress-text {
+            display: flex;
+            justify-content: space-between;
+            font-size: 10px;
+            font-family: var(--mono);
+            color: var(--muted);
+            margin-top: 6px
+        }
+
+        .page-header {
+            padding: 44px 0 28px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 36px
+        }
+
+        .ph-badge {
+            display: inline-block;
+            background: #0a2d22;
+            border: 1px solid #0f7c5c;
+            color: #13a87a;
+            font-size: 11px;
+            font-family: var(--mono);
+            padding: 4px 14px;
+            border-radius: 20px;
+            letter-spacing: .08em;
+            margin-bottom: 12px
+        }
+
+        .page-header h1 {
+            font-size: 30px;
+            font-weight: 700;
+            letter-spacing: -.5px;
+            color: var(--text);
+            margin-bottom: 8px
+        }
+
+        .page-header p {
+            color: var(--muted);
+            font-size: 13px;
+            max-width: 600px
+        }
+
+        .page-meta {
+            display: flex;
+            gap: 18px;
+            margin-top: 14px;
+            flex-wrap: wrap
+        }
+
+        .meta-item {
+            font-size: 11px;
+            color: var(--muted);
+            font-family: var(--mono)
+        }
+
+        .meta-item b {
+            color: var(--text)
+        }
+
+        .objectives {
+            background: linear-gradient(135deg, #0a1a30 0%, #0d1428 100%);
+            border: 1px solid #1a3060;
+            border-radius: 12px;
+            padding: 20px 24px;
+            margin: 24px 0
+        }
+
+        .objectives h3 {
+            font-size: 14px;
+            font-family: var(--mono);
+            color: var(--blue);
+            margin-bottom: 12px
+        }
+
+        .obj-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px
+        }
+
+        .obj-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            font-size: 12.5px;
+            color: var(--text2);
+            padding: 4px 0
+        }
+
+        .obj-item::before {
+            content: '◆';
+            color: var(--blue);
+            font-size: 8px;
+            margin-top: 4px;
+            flex-shrink: 0
+        }
+
+        .section {
+            margin-bottom: 52px;
+            scroll-margin-top: 20px;
+            animation: fadeIn .4s ease-out
+        }
+
+        .section-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text);
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 18px;
+            display: flex;
+            align-items: center;
+            gap: 12px
+        }
+
+        .st-num {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 30px;
+            height: 30px;
+            background: var(--blue);
+            color: #fff;
+            border-radius: 7px;
+            font-size: 12px;
+            font-weight: 800;
+            font-family: var(--mono);
+            flex-shrink: 0
+        }
+
+        .sub-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--text);
+            margin: 22px 0 10px;
+            padding-left: 11px;
+            border-left: 3px solid var(--blue)
+        }
+
+        .sub-sub {
+            font-size: 13px;
+            font-weight: 600;
+            color: #c0d0f0;
+            margin: 14px 0 7px
+        }
+
+        p {
+            margin-bottom: 12px;
+            color: var(--text2);
+            line-height: 1.75
+        }
+
+        .box {
+            border-radius: 8px;
+            padding: 12px 15px;
+            margin: 14px 0;
+            font-size: 12.5px;
+            line-height: 1.7
+        }
+
+        .box-title {
+            font-family: var(--mono);
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: .1em;
+            text-transform: uppercase;
+            display: block;
+            margin-bottom: 5px
+        }
+
+        .box-note {
+            background: #0a1428;
+            border: 1px solid #1a3060;
+            border-left: 4px solid var(--blue);
+            color: #b8d0f8
+        }
+
+        .box-note .box-title {
+            color: var(--blue)
+        }
+
+        .box-warn {
+            background: #1a0f0f;
+            border: 1px solid #5a1a1a;
+            border-left: 4px solid var(--red);
+            color: #fca5a5
+        }
+
+        .box-warn .box-title {
+            color: var(--red)
+        }
+
+        .box-tip {
+            background: #0a1a0a;
+            border: 1px solid #1a4a1a;
+            border-left: 4px solid var(--green);
+            color: #bbf7d0
+        }
+
+        .box-tip .box-title {
+            color: var(--green)
+        }
+
+        .box-interview {
+            background: #1a1400;
+            border: 1px solid #604a00;
+            border-left: 4px solid var(--amber);
+            color: #fde68a
+        }
+
+        .box-interview .box-title {
+            color: var(--amber)
+        }
+
+        .box-production {
+            background: #081a18;
+            border: 1px solid #105040;
+            border-left: 4px solid var(--teal);
+            color: #99f0de
+        }
+
+        .box-production .box-title {
+            color: var(--teal)
+        }
+
+        .box-best {
+            background: #140a1e;
+            border: 1px solid #4a1880;
+            border-left: 4px solid var(--purple);
+            color: #e0b0ff
+        }
+
+        .box-best .box-title {
+            color: var(--purple)
+        }
+
+        .box-troubleshoot {
+            background: #1a0e00;
+            border: 1px solid #5a3000;
+            border-left: 4px solid var(--orange);
+            color: #fdc080
+        }
+
+        .box-troubleshoot .box-title {
+            color: var(--orange)
+        }
+
+        .box-scenario {
+            background: #081820;
+            border: 1px solid #104060;
+            border-left: 4px solid var(--cyan);
+            color: #a0e8f8
+        }
+
+        .box-scenario .box-title {
+            color: var(--cyan)
+        }
+
+        .box-mistake {
+            background: #1a0a0a;
+            border: 1px solid #6a1a1a;
+            border-left: 4px solid #ff6060;
+            color: #ffb0b0
+        }
+
+        .box-mistake .box-title {
+            color: #ff6060
+        }
+
+        .code-block {
+            background: #0a0d14;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-family: var(--mono);
+            font-size: 12px;
+            line-height: 1.8;
+            overflow-x: auto;
+            margin: 12px 0;
+            color: #a9b8d8;
+            position: relative
+        }
+
+        .cb-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 16px;
+            background: #0d1020;
+            border-bottom: 1px solid var(--border);
+            border-radius: 8px 8px 0 0
+        }
+
+        .cb-label {
+            font-size: 9px;
+            color: var(--muted);
+            letter-spacing: .1em;
+            text-transform: uppercase;
+            font-family: var(--sans)
+        }
+
+        .cb-lang {
+            font-size: 9px;
+            font-family: var(--mono);
+            color: var(--teal);
+            background: #0a1a18;
+            border: 1px solid #105040;
+            padding: 2px 8px;
+            border-radius: 4px;
+            letter-spacing: .08em
+        }
+
+        .cb-copy {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            color: var(--muted);
+            font-size: 10px;
+            font-family: var(--mono);
+            padding: 3px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all .15s
+        }
+
+        .cb-copy:hover {
+            color: var(--text);
+            border-color: var(--blue);
+            background: rgba(79, 142, 247, .1)
+        }
+
+        .cb-copy.copied {
+            color: var(--green);
+            border-color: var(--green)
+        }
+
+        .cb-body {
+            padding: 14px 16px;
+            overflow-x: auto;
+            white-space: pre
+        }
+
+        .cb-explanation {
+            padding: 10px 16px;
+            background: #0d1020;
+            border-top: 1px solid var(--border);
+            font-size: 11.5px;
+            color: var(--muted);
+            font-family: var(--sans);
+            line-height: 1.6;
+            border-radius: 0 0 8px 8px
+        }
+
+        .cm {
+            color: #3a4568
+        }
+
+        .ck {
+            color: #4f8ef7
+        }
+
+        .cv {
+            color: #22c55e
+        }
+
+        .co {
+            color: #f59e0b
+        }
+
+        .cs {
+            color: #b060e8
+        }
+
+        .ce {
+            color: #ef4444
+        }
+
+        .cn {
+            color: #20c0a0
+        }
+
+        code {
+            font-family: var(--mono);
+            font-size: 12px;
+            background: #0a0d14;
+            border: 1px solid var(--border);
+            padding: 1px 6px;
+            border-radius: 3px;
+            color: var(--blue)
+        }
+
+        .tbl-wrap {
+            overflow-x: auto;
+            margin: 12px 0
+        }
+
+        table.tbl {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12.5px
+        }
+
+        table.tbl th {
+            text-align: left;
+            padding: 8px 12px;
+            background: #0d1020;
+            color: var(--muted);
+            font-family: var(--mono);
+            font-size: 10px;
+            letter-spacing: .08em;
+            border-bottom: 1px solid var(--border);
+            white-space: nowrap
+        }
+
+        table.tbl td {
+            padding: 8px 12px;
+            border-bottom: 1px solid #1a2040;
+            vertical-align: top;
+            line-height: 1.5;
+            color: var(--text2)
+        }
+
+        table.tbl td:first-child {
+            font-family: var(--mono);
+            color: var(--blue);
+            font-size: 11.5px;
+            white-space: nowrap
+        }
+
+        table.tbl tr:last-child td {
+            border-bottom: none
+        }
+
+        table.tbl tr:hover td {
+            background: #101828
+        }
+
+        .collapsible {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            margin: 14px 0;
+            overflow: hidden
+        }
+
+        .collapsible-header {
+            padding: 12px 16px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            user-select: none;
+            transition: background .15s
+        }
+
+        .collapsible-header:hover {
+            background: var(--surface2)
+        }
+
+        .collapsible-header h4 {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            gap: 10px
+        }
+
+        .collapsible-arrow {
+            color: var(--muted);
+            font-size: 12px;
+            transition: transform .2s
+        }
+
+        .collapsible.open .collapsible-arrow {
+            transform: rotate(90deg)
+        }
+
+        .collapsible-body {
+            display: none;
+            padding: 0 16px 16px;
+            font-size: 12.5px;
+            line-height: 1.7;
+            color: var(--text2)
+        }
+
+        .collapsible.open .collapsible-body {
+            display: block
+        }
+
+        .exercise-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            margin: 16px 0;
+            overflow: hidden
+        }
+
+        .ex-header {
+            padding: 14px 18px;
+            background: linear-gradient(135deg, #101830 0%, #0d1428 100%);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center
+        }
+
+        .ex-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            gap: 10px
+        }
+
+        .ex-diff {
+            font-size: 10px;
+            font-family: var(--mono);
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-weight: 600
+        }
+
+        .ex-diff.easy {
+            background: #0a2210;
+            border: 1px solid #1a5a20;
+            color: var(--green)
+        }
+
+        .ex-diff.medium {
+            background: #1a1400;
+            border: 1px solid #604a00;
+            color: var(--amber)
+        }
+
+        .ex-diff.hard {
+            background: #1a0a0a;
+            border: 1px solid #5a1a1a;
+            color: var(--red)
+        }
+
+        .ex-body {
+            padding: 16px 18px
+        }
+
+        .ex-field {
+            margin-bottom: 12px
+        }
+
+        .ex-field-label {
+            font-size: 10px;
+            font-family: var(--mono);
+            color: var(--muted);
+            letter-spacing: .1em;
+            text-transform: uppercase;
+            margin-bottom: 4px
+        }
+
+        .ex-field-value {
+            font-size: 12.5px;
+            color: var(--text2);
+            line-height: 1.6
+        }
+
+        .skill-matrix {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px 24px;
+            margin: 20px 0
+        }
+
+        .skill-matrix h3 {
+            font-size: 14px;
+            font-family: var(--mono);
+            color: var(--text);
+            margin-bottom: 16px
+        }
+
+        .skill-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 8px
+        }
+
+        .skill-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 6px
+        }
+
+        .skill-name {
+            font-size: 12px;
+            color: var(--text2)
+        }
+
+        .skill-level {
+            font-size: 9px;
+            font-family: var(--mono);
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-weight: 600;
+            letter-spacing: .08em
+        }
+
+        .skill-level.beginner {
+            background: #0a2210;
+            border: 1px solid #1a5a20;
+            color: var(--green)
+        }
+
+        .skill-level.intermediate {
+            background: #1a1400;
+            border: 1px solid #604a00;
+            color: var(--amber)
+        }
+
+        .skill-level.proficient {
+            background: #0a1428;
+            border: 1px solid #1a3060;
+            color: var(--blue)
+        }
+
+        .skill-level.not-started {
+            background: #1a1018;
+            border: 1px solid #3a2040;
+            color: var(--dim)
+        }
+
+        .flow {
+            background: #0a0d14;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+            font-family: var(--mono);
+            font-size: 11.5px;
+            color: #a9b8d8;
+            line-height: 1.9;
+            overflow-x: auto;
+            white-space: pre;
+            margin: 12px 0
+        }
+
+        .interview-card {
+            background: var(--surface);
+            border: 1px solid #604a00;
+            border-radius: 12px;
+            margin: 16px 0;
+            overflow: hidden
+        }
+
+        .int-header {
+            padding: 14px 18px;
+            background: #1a1400;
+            border-bottom: 1px solid #604a00
+        }
+
+        .int-header h4 {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--amber);
+            display: flex;
+            align-items: center;
+            gap: 8px
+        }
+
+        .int-body {
+            padding: 16px 18px
+        }
+
+        .int-scenario {
+            font-size: 12.5px;
+            color: var(--text2);
+            line-height: 1.7;
+            margin-bottom: 12px;
+            padding: 10px 14px;
+            background: #1a1200;
+            border-radius: 6px;
+            border-left: 3px solid var(--amber)
+        }
+
+        .int-question {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text);
+            margin: 10px 0 6px
+        }
+
+        .qa-item {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            margin-bottom: 10px;
+            overflow: hidden
+        }
+
+        .qa-q {
+            padding: 11px 15px;
+            background: #0f1424;
+            font-weight: 600;
+            font-size: 13px;
+            color: var(--text);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+            cursor: pointer
+        }
+
+        .qa-q .qnum {
+            font-family: var(--mono);
+            font-size: 10px;
+            color: var(--amber);
+            background: #1a1400;
+            border: 1px solid #604a00;
+            padding: 2px 7px;
+            border-radius: 4px;
+            flex-shrink: 0;
+            margin-top: 1px
+        }
+
+        .qa-a {
+            padding: 11px 15px;
+            font-size: 12.5px;
+            line-height: 1.7;
+            color: #c8d3e8;
+            display: none
+        }
+
+        .qa-item.open .qa-a {
+            display: block
+        }
+
+        .two-col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+            margin: 12px 0
+        }
+
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 14px;
+            margin: 14px 0
+        }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 16px;
+            transition: border-color .15s, transform .15s
+        }
+
+        .card:hover {
+            border-color: var(--blue);
+            transform: translateY(-2px)
+        }
+
+        .card h4 {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px
+        }
+
+        .card p {
+            font-size: 12px;
+            color: var(--muted);
+            margin-bottom: 0
+        }
+
+        .cheat-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+            gap: 12px;
+            margin: 14px 0
+        }
+
+        .cheat-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 12px
+        }
+
+        .cheat-card h4 {
+            font-size: 10px;
+            font-family: var(--mono);
+            color: var(--muted);
+            letter-spacing: .1em;
+            text-transform: uppercase;
+            margin-bottom: 7px;
+            padding-bottom: 5px;
+            border-bottom: 1px solid var(--border)
+        }
+
+        .cc-line {
+            font-family: var(--mono);
+            font-size: 11px;
+            color: var(--blue);
+            padding: 3px 0;
+            display: block
+        }
+
+        .cc-line span {
+            color: var(--muted);
+            font-size: 10px;
+            margin-left: 6px
+        }
+
+        .checklist {
+            list-style: none;
+            margin: 8px 0
+        }
+
+        .checklist li {
+            padding: 5px 0;
+            font-size: 13px;
+            color: var(--text2);
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            border-bottom: 1px solid #1a2040
+        }
+
+        .checklist li:last-child {
+            border-bottom: none
+        }
+
+        .checklist li::before {
+            content: '✓';
+            color: var(--green);
+            font-family: var(--mono);
+            font-size: 12px;
+            flex-shrink: 0;
+            margin-top: 2px
+        }
+
+        .lesson-footer {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            margin-top: 40px
+        }
+
+        .footer-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px
+        }
+
+        .footer-section h4 {
+            font-size: 12px;
+            font-family: var(--mono);
+            color: var(--muted);
+            letter-spacing: .1em;
+            text-transform: uppercase;
+            margin-bottom: 10px
+        }
+
+        .footer-section p {
+            font-size: 12.5px;
+            color: var(--text2)
+        }
+
+        .next-lesson-preview {
+            background: linear-gradient(135deg, #101830 0%, #0d1428 100%);
+            border: 1px solid var(--blue);
+            border-radius: 10px;
+            padding: 16px 20px;
+            margin-top: 16px
+        }
+
+        .next-lesson-preview h4 {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--blue);
+            margin-bottom: 6px
+        }
+
+        .next-lesson-preview p {
+            font-size: 12px;
+            color: var(--muted);
+            margin: 0
+        }
+
+        .divider {
+            height: 1px;
+            background: var(--border);
+            margin: 28px 0
+        }
+
+        @media(max-width:900px) {
+            .sidebar {
+                width: 220px
+            }
+
+            .content {
+                margin-left: 220px;
+                padding: 0 24px 80px
+            }
+
+            .two-col,
+            .obj-grid,
+            .footer-grid {
+                grid-template-columns: 1fr
+            }
+        }
+
+        @media(max-width:640px) {
+            .sidebar {
+                display: none;
+                position: fixed;
+                width: 260px
+            }
+
+            .sidebar.show {
+                display: block
+            }
+
+            .mobile-toggle {
+                display: block
+            }
+
+            .content {
+                margin-left: 0;
+                padding: 0 16px 80px
+            }
+
+            .progress-grid {
+                grid-template-columns: repeat(2, 1fr)
+            }
+
+            .page-header h1 {
+                font-size: 22px
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px)
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0)
+            }
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 3px
+        }
+    </style>
+</head>
+
+<body>
+    <button class="mobile-toggle" onclick="document.querySelector('.sidebar').classList.toggle('show')">☰ Menu</button>
+
+    <nav class="sidebar">
+        <div class="sb-brand">
+            <div class="sb-badge">MODULE 07</div>
+            <h2>Maven Build Tool<br><span style="color:var(--muted);font-weight:400;">DevOps Fundamentals</span></h2>
+        </div>
+        <div class="sb-label">Foundations</div>
+        <a href="#objectives">🎯 Learning Objectives</a>
+        <a href="#concept">1. What is Maven?</a>
+        <a href="#installation">2. Installation & Setup</a>
+        <a href="#pom">3. POM — Project Object Model</a>
+        <a href="#lifecycle">4. Build Lifecycle</a>
+        <div class="sb-label">Core Features</div>
+        <a href="#dependencies">5. Dependency Management</a>
+        <a href="#plugins">6. Plugins & Goals</a>
+        <a href="#repositories">7. Repositories</a>
+        <a href="#profiles">8. Profiles</a>
+        <div class="sb-label">Advanced</div>
+        <a href="#multi-module">9. Multi-Module Projects</a>
+        <a href="#properties">10. Properties & Filtering</a>
+        <a href="#testing">11. Test Management</a>
+        <a href="#ci-integration">12. CI/CD Integration</a>
+        <div class="sb-label">Examples</div>
+        <a href="#beginner-examples">13. Beginner Examples</a>
+        <a href="#intermediate-examples">14. Intermediate Examples</a>
+        <a href="#production-examples">15. Production Examples</a>
+        <div class="sb-label">Visual</div>
+        <a href="#flow-diagrams">16. Flow Diagrams</a>
+        <div class="sb-label">Practice</div>
+        <a href="#exercises">17. Exercises</a>
+        <a href="#easy-challenge">18. Easy Challenge</a>
+        <a href="#medium-challenge">19. Medium Challenge</a>
+        <a href="#hard-challenge">20. Hard Challenge</a>
+        <div class="sb-label">Interview & Review</div>
+        <a href="#interview-questions">21. Interview Questions</a>
+        <a href="#interview-mode">22. Interview Mode</a>
+        <a href="#common-mistakes">23. Common Mistakes</a>
+        <a href="#best-practices">24. Best Practices</a>
+        <div class="sb-label">Reference</div>
+        <a href="#cheatsheet">25. Cheat Sheet</a>
+        <a href="#skill-matrix">26. Skill Matrix</a>
+        <a href="#summary">27. Summary</a>
+        <a href="#next-lesson">28. Next Lesson</a>
+    </nav>
+
+    <main class="content">
+        <div class="progress-header">
+            <div class="progress-grid">
+                <div class="pg-item"><span class="pg-label">Lesson</span><span class="pg-value lesson">#07</span></div>
+                <div class="pg-item"><span class="pg-label">Module</span><span class="pg-value module">07 — Maven</span>
+                </div>
+                <div class="pg-item"><span class="pg-label">Progress</span><span class="pg-value progress">Lesson
+                        07</span></div>
+                <div class="pg-item"><span class="pg-label">Skill Level</span><span class="pg-value skill">Beginner →
+                        Intermediate</span></div>
+                <div class="pg-item"><span class="pg-label">Est. Time</span><span class="pg-value time">4–5 Hours</span>
+                </div>
+                <div class="pg-item"><span class="pg-label">Difficulty</span><span
+                        class="pg-value difficulty">★★★☆☆</span></div>
+                <div class="pg-item"><span class="pg-label">Prerequisites</span><span class="pg-value prereq">Java, Bash
+                        Scripting</span></div>
+            </div>
+            <div class="progress-bar-wrap">
+                <div class="progress-bar-fill" style="width:100%"></div>
+            </div>
+            <div class="progress-text"><span>Module 07 — Maven Build Tool</span><span>6 modules completed prior</span>
+            </div>
+        </div>
+
+        <div class="page-header" id="top">
+            <div class="ph-badge">PHASE 02 — BUILD & PACKAGE · MODULE 07</div>
+            <h1>Maven Build Tool Fundamentals</h1>
+            <p>Master Maven — the standard Java build tool used in 80% of Indian enterprise projects. From POM structure
+                to multi-module builds and CI/CD integration.</p>
+            <div class="page-meta">
+                <div class="meta-item"><b>Scope:</b> Maven 3.8+ on Linux</div>
+                <div class="meta-item"><b>Level:</b> Beginner → Intermediate</div>
+                <div class="meta-item"><b>Commands Covered:</b> 40+</div>
+                <div class="meta-item"><b>Exercises:</b> 10</div>
+            </div>
+        </div>
+
+        <div class="objectives" id="objectives">
+            <h3>🎯 Learning Objectives</h3>
+            <div class="obj-grid">
+                <div class="obj-item">Understand Maven's role in the DevOps build pipeline</div>
+                <div class="obj-item">Read, write, and debug pom.xml files confidently</div>
+                <div class="obj-item">Master the 3 build lifecycles and 23 default phases</div>
+                <div class="obj-item">Manage dependencies, exclusions, and version conflicts</div>
+                <div class="obj-item">Configure plugins for compile, test, package, and deploy</div>
+                <div class="obj-item">Build multi-module Maven projects (parent + children)</div>
+                <div class="obj-item">Integrate Maven with Jenkins CI/CD pipelines</div>
+                <div class="obj-item">Troubleshoot common Maven failures in production builds</div>
+            </div>
+        </div>
+
+        <!-- SECTION 1 -->
+        <section class="section" id="concept">
+            <div class="section-title"><span class="st-num">1</span>What is Maven?</div>
+            <p>Maven is a <strong>build automation and project management tool</strong> for Java projects. It
+                standardises how projects are built, tested, and packaged — eliminating the "works on my machine"
+                problem across development teams.</p>
+            <p>In the Indian IT context, you'll encounter Maven in every Spring Boot, Spring MVC, or Java EE project at
+                Infosys, TCS, Wipro, and in product companies like Razorpay. A DevOps engineer who can't read a pom.xml
+                is blocked from debugging 90% of Java CI pipeline failures.</p>
+            <div class="cards-grid">
+                <div class="card">
+                    <h4>📦 Build Automation</h4>
+                    <p>Compile, test, package, and deploy Java applications with a single command. No more manual javac
+                        chains.</p>
+                </div>
+                <div class="card">
+                    <h4>🔗 Dependency Management</h4>
+                    <p>Declare dependencies in pom.xml; Maven downloads them from central repositories automatically. No
+                        JAR copying.</p>
+                </div>
+                <div class="card">
+                    <h4>🏗️ Convention over Config</h4>
+                    <p>Standard project layout: <code>src/main/java</code>, <code>src/test/java</code>. Every Maven
+                        developer instantly knows where to look.</p>
+                </div>
+                <div class="card">
+                    <h4>🔌 Plugin Ecosystem</h4>
+                    <p>1000+ plugins extend Maven — from code coverage (JaCoCo) to static analysis (Checkstyle,
+                        SpotBugs) to Docker builds.</p>
+                </div>
+                <div class="card">
+                    <h4>🏢 Multi-Module Support</h4>
+                    <p>Parent POM coordinates dozens of child modules — essential for microservices monorepos at scale.
+                    </p>
+                </div>
+                <div class="card">
+                    <h4>🔄 CI/CD Native</h4>
+                    <p>Jenkins, GitHub Actions, and every major CI tool has first-class Maven support.
+                        <code>mvn clean install</code> is universally understood.</p>
+                </div>
+            </div>
+            <div class="box box-note"><span class="box-title">📌 Maven vs Gradle</span>In Indian enterprises: Maven is
+                the default for Spring Boot/Java EE projects built pre-2018. Gradle is common in Android and newer
+                microservice stacks. A Senior DevOps Engineer needs to know both. This module is Maven; Gradle follows
+                in Module 08.</div>
+            <div class="sub-title">Standard Directory Structure</div>
+            <div class="code-block">
+                <div class="cb-header"><span class="cb-label">Maven Project Layout</span><span
+                        class="cb-lang">TREE</span><button class="cb-copy" onclick="copyCode(this)">📋 Copy</button>
+                </div>
+                <div class="cb-body"><span class="cn">my-app/</span>
+                    ├── <span class="co">pom.xml</span> <span class="cm"># Project Object Model — the heart of
+                        Maven</span>
+                    ├── <span class="cn">src/</span>
+                    │ ├── <span class="cv">main/</span>
+                    │ │ ├── java/ <span class="cm"># Production Java source code</span>
+                    │ │ └── resources/ <span class="cm"># application.properties, logback.xml</span>
+                    │ └── <span class="ce">test/</span>
+                    │ ├── java/ <span class="cm"># JUnit/TestNG test classes</span>
+                    │ └── resources/ <span class="cm"># test-specific configs</span>
+                    └── <span class="cs">target/</span> <span class="cm"># BUILD OUTPUT — never commit this to
+                        Git</span>
+                    ├── classes/ <span class="cm"># compiled .class files</span>
+                    ├── my-app-1.0.jar <span class="cm"># packaged artifact</span>
+                    └── surefire-reports/ <span class="cm"># test results XML</span></div>
+                <div class="cb-explanation">⚡ The <code>target/</code> directory is Maven's output. Add it to
+                    <code>.gitignore</code>. Every <code>mvn clean</code> deletes it.</div>
+            </div>
+        </section>
+
+        <!-- SECTION 2 -->
+        <section class="section" id="installation">
+            <div class="section-title"><span class="st-num">2</span>Installation & Setup</div>
+            <div class="code-block">
+                <div class="cb-header"><span class="cb-label">Install Maven on Amazon Linux 2023 / EC2</span><span
+                        class="cb-lang">BASH</span><button class="cb-copy" onclick="copyCode(this)">📋 Copy</button>
+                </div>
+                <div class="cb-body"><span class="cm"># Check if Java is installed first (Maven requires JDK, not
+                        JRE)</span>
+                    java -version
+                    javac -version
+
+                    <span class="cm"># Install Java 17 (LTS) if missing</span>
+                    sudo dnf install java-17-amazon-corretto-devel -y
+
+                    <span class="cm"># Install Maven from dnf (Amazon Linux 2023)</span>
+                    sudo dnf install maven -y
+
+                    <span class="cm"># Verify installation</span>
+                    mvn --version
+                    <span class="cm"># Expected output:</span>
+                    <span class="cv"># Apache Maven 3.8.x ...</span>
+                    <span class="cv"># Java version: 17.x.x</span>
+
+                    <span class="cm"># Check JAVA_HOME is set correctly</span>
+                    echo $JAVA_HOME
+
+                    <span class="cm"># If JAVA_HOME is missing, add to ~/.bashrc:</span>
+                    echo 'export JAVA_HOME=$(dirname $(dirname $(readlink -f $(which javac))))' >> ~/.bashrc
+                    echo 'export PATH=$JAVA_HOME/bin:$PATH' >> ~/.bashrc
+                    source ~/.bashrc
+                </div>
+                <div class="cb-explanation">⚡ Maven needs the <strong>JDK</strong> (Java Development Kit), not just the
+                    JRE. Installing only JRE breaks the compile phase.</div>
+            </div>
+
+            <div class="sub-title">Create Your First Maven Project</div>
+            <div class="code-block">
+                <div class="cb-header"><span class="cb-label">Generate Project from Archetype</span><span
+                        class="cb-lang">BASH</span><button class="cb-copy" onclick="copyCode(this)">📋 Copy</button>
+                </div>
+                <div class="cb-body"><span class="cm"># Generate a basic Java project</span>
+                    mvn archetype:generate \
+                    -DgroupId=com.devops.demo \
+                    -DartifactId=my-app \
+                    -DarchetypeArtifactId=maven-archetype-quickstart \
+                    -DarchetypeVersion=1.4 \
+                    -DinteractiveMode=false
+
+                    <span class="cm"># Navigate into the project</span>
+                    cd my-app
+
+                    <span class="cm"># Build it immediately</span>
+                    mvn clean package
+
+                    <span class="cm"># Run the JAR</span>
+                    java -jar target/my-app-1.0-SNAPSHOT.jar
+                </div>
+            </div>
+
+            <div class="sub-title">Essential Maven Commands</div>
+            <div class="tbl-wrap">
+                <table class="tbl">
+                    <thead>
+                        <tr>
+                            <th>Command</th>
+                            <th>What It Does</th>
+                            <th>When to Use</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>mvn clean</td>
+                            <td>Delete <code>target/</code> directory</td>
+                            <td>Start fresh, fix stale artifacts</td>
+                        </tr>
+                        <tr>
+                            <td>mvn compile</td>
+                            <td>Compile source code only</td>
+                            <td>Check for compilation errors</td>
+                        </tr>
+                        <tr>
+                            <td>mvn test</td>
+                            <td>Run unit tests</td>
+                            <td>Verify business logic</td>
+                        </tr>
+                        <tr>
+                            <td>mvn package</td>
+                            <td>Compile + test + create JAR/WAR</td>
+                            <td>Build artifact locally</td>
+                        </tr>
+                        <tr>
+                            <td>mvn install</td>
+                            <td>package + install to local ~/.m2 repo</td>
+                            <td>Use artifact in other local projects</td>
+                        </tr>
+                        <tr>
+                            <td>mvn deploy</td>
+                            <td>install + push to remote repository (Nexus/Artifactory)</td>
+                            <td>Release artifact to team</td>
+                        </tr>
+                        <tr>
+                            <td>mvn clean install -DskipTests</td>
+                            <td>Build without running tests</td>
+                            <td>Fast build when tests are slow</td>
+                        </tr>
+                        <tr>
+                            <td>mvn dependency:tree</td>
+                            <td>Show full dependency hierarchy</td>
+                            <td>Debug version conflicts</td>
+                        </tr>
+                        <tr>
+                            <td>mvn help:effective-pom</td>
+                            <td>Show merged final POM</td>
+                            <td>Debug inherited settings</td>
+                        </tr>
+                        <tr>
+                            <td>mvn versions:display-dependency-updates</td>
+                            <td>Show available newer versions</td>
+                            <td>Security audits, upgrades</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- SECTION 3: POM -->
+        <section class="section" id="pom">
+            <div class="section-title"><span class="st-num">3</span>POM — Project Object Model</div>
+            <p>The <code>pom.xml</code> is the <strong>single source of truth</strong> for a Maven project. Every Maven
+                action reads from it. A DevOps engineer who can't navigate a pom.xml cannot diagnose CI build failures.
+            </p>
+            <div class="code-block">
+                <div class="cb-header"><span class="cb-label">Production-Grade pom.xml — Annotated</span><span
+                        class="cb-lang">XML</span><button class="cb-copy" onclick="copyCode(this)">📋 Copy</button>
+                </div>
+                <div class="cb-body"><span class="cs">&lt;?xml version="1.0" encoding="UTF-8"?&gt;</span>
+                    <span class="ck">&lt;project</span> xmlns=<span
+                        class="cv">"http://maven.apache.org/POM/4.0.0"</span>
+                    xmlns:xsi=<span class="cv">"http://www.w3.org/2001/XMLSchema-instance"</span>
+                    xsi:schemaLocation=<span class="cv">"http://maven.apache.org/POM/4.0.0
+                        http://maven.apache.org/xsd/maven-4.0.0.xsd"</span><span class="ck">&gt;</span>
+
+                    <span class="ck">&lt;modelVersion&gt;</span><span class="cv">4.0.0</span><span
+                        class="ck">&lt;/modelVersion&gt;</span> <span class="cm">&lt;!-- Always 4.0.0 --&gt;</span>
+
+                    <span class="cm">&lt;!-- ═══ PROJECT COORDINATES ═══ --&gt;</span>
+                    <span class="ck">&lt;groupId&gt;</span><span class="cv">com.company.team</span><span
+                        class="ck">&lt;/groupId&gt;</span> <span class="cm">&lt;!-- reverse-DNS org --&gt;</span>
+                    <span class="ck">&lt;artifactId&gt;</span><span class="cv">payment-service</span><span
+                        class="ck">&lt;/artifactId&gt;</span> <span class="cm">&lt;!-- unique project name --&gt;</span>
+                    <span class="ck">&lt;version&gt;</span><span class="cv">1.2.3-SNAPSHOT</span><span
+                        class="ck">&lt;/version&gt;</span> <span class="cm">&lt;!-- SNAPSHOT=in development
+                        --&gt;</span>
+                    <span class="ck">&lt;packaging&gt;</span><span class="cv">jar</span><span
+                        class="ck">&lt;/packaging&gt;</span> <span class="cm">&lt;!-- jar | war | pom | ear
+                        --&gt;</span>
+
+                    <span class="cm">&lt;!-- ═══ PROPERTIES — centralise versions ═══ --&gt;</span>
+                    <span class="ck">&lt;properties&gt;</span>
+                    <span class="ck">&lt;java.version&gt;</span><span class="cv">17</span><span
+                        class="ck">&lt;/java.version&gt;</span>
+                    <span class="ck">&lt;spring-boot.version&gt;</span><span class="cv">3.2.0</span><span
+                        class="ck">&lt;/spring-boot.version&gt;</span>
+                    <span class="ck">&lt;maven.compiler.source&gt;</span><span class="cv">${java.version}</span><span
+                        class="ck">&lt;/maven.compiler.source&gt;</span>
+                    <span class="ck">&lt;maven.compiler.target&gt;</span><span class="cv">${java.version}</span><span
+                        class="ck">&lt;/maven.compiler.target&gt;</span>
+                    <span class="ck">&lt;project.build.sourceEncoding&gt;</span><span class="cv">UTF-8</span><span
+                        class="ck">&lt;/project.build.sourceEncoding&gt;</span>
+                    <span class="ck">&lt;/properties&gt;</span>
+
+                    <span class="cm">&lt;!-- ═══ DEPENDENCIES ═══ --&gt;</span>
+                    <span class="ck">&lt;dependencies&gt;</span>
+                    <span class="ck">&lt;dependency&gt;</span>
+                    <span class="ck">&lt;groupId&gt;</span><span class="cv">org.springframework.boot</span><span
+                        class="ck">&lt;/groupId&gt;</span>
+                    <span class="ck">&lt;artifactId&gt;</span><span class="cv">spring-boot-starter-web</span><span
+                        class="ck">&lt;/artifactId&gt;</span>
+                    <span class="ck">&lt;version&gt;</span><span class="cv">${spring-boot.version}</span><span
+                        class="ck">&lt;/version&gt;</span>
+                    <span class="ck">&lt;/dependency&gt;</span>
+
+                    <span class="cm">&lt;!-- TEST scope: only available during test phase --&gt;</span>
+                    <span class="ck">&lt;dependency&gt;</span>
+                    <span class="ck">&lt;groupId&gt;</span><span class="cv">org.junit.jupiter</span><span
+                        class="ck">&lt;/groupId&gt;</span>
+                    <span class="ck">&lt;artifactId&gt;</span><span class="cv">junit-jupiter</span><span
+                        class="ck">&lt;/artifactId&gt;</span>
+                    <span class="ck">&lt;version&gt;</span><span class="cv">5.10.0</span><span
+                        class="ck">&lt;/version&gt;</span>
+                    <span class="ck">&lt;scope&gt;</span><span class="co">test</span><span
+                        class="ck">&lt;/scope&gt;</span> <span class="cm">&lt;!-- compile | test | provided | runtime |
+                        system --&gt;</span>
+                    <span class="ck">&lt;/dependency&gt;</span>
+
+                    <span class="cm">&lt;!-- PROVIDED scope: container provides at runtime (Tomcat, etc) --&gt;</span>
+                    <span class="ck">&lt;dependency&gt;</span>
+                    <span class="ck">&lt;groupId&gt;</span><span class="cv">javax.servlet</span><span
+                        class="ck">&lt;/groupId&gt;</span>
+                    <span class="ck">&lt;artifactId&gt;</span><span class="cv">javax.servlet-api</span><span
+                        class="ck">&lt;/artifactId&gt;</span>
+                    <span class="ck">&lt;version&gt;</span><span class="cv">4.0.1</span><span
+                        class="ck">&lt;/version&gt;</span>
+                    <span class="ck">&lt;scope&gt;</span><span class="co">provided</span><span
+                        class="ck">&lt;/scope&gt;</span>
+                    <span class="ck">&lt;/dependency&gt;</span>
+                    <span class="ck">&lt;/dependencies&gt;</span>
+
+                    <span class="cm">&lt;!-- ═══ BUILD PLUGINS ═══ --&gt;</span>
+                    <span class="ck">&lt;build&gt;</span>
+                    <span class="ck">&lt;plugins&gt;</span>
+                    <span class="cm">&lt;!-- Spring Boot fat JAR --&gt;</span>
+                    <span class="ck">&lt;plugin&gt;</span>
+                    <span class="ck">&lt;groupId&gt;</span><span class="cv">org.springframework.boot</span><span
+                        class="ck">&lt;/groupId&gt;</span>
+                    <span class="ck">&lt;artifactId&gt;</span><span class="cv">spring-boot-maven-plugin</span><span
+                        class="ck">&lt;/artifactId&gt;</span>
+                    <span class="ck">&lt;/plugin&gt;</span>
+                    <span class="cm">&lt;!-- Code coverage --&gt;</span>
+                    <span class="ck">&lt;plugin&gt;</span>
+                    <span class="ck">&lt;groupId&gt;</span><span class="cv">org.jacoco</span><span
+                        class="ck">&lt;/groupId&gt;</span>
+                    <span class="ck">&lt;artifactId&gt;</span><span class="cv">jacoco-maven-plugin</span><span
+                        class="ck">&lt;/artifactId&gt;</span>
+                    <span class="ck">&lt;version&gt;</span><span class="cv">0.8.11</span><span
+                        class="ck">&lt;/version&gt;</span>
+                    <span class="ck">&lt;executions&gt;</span>
+                    <span class="ck">&lt;execution&gt;</span>
+                    <span class="ck">&lt;goals&gt;&lt;goal&gt;</span><span class="co">prepare-agent</span><span
+                        class="ck">&lt;/goal&gt;&lt;/goals&gt;</span>
+                    <span class="ck">&lt;/execution&gt;</span>
+                    <span class="ck">&lt;execution&gt;</span>
+                    <span class="ck">&lt;id&gt;</span><span class="cv">report</span><span class="ck">&lt;/id&gt;</span>
+                    <span class="ck">&lt;phase&gt;</span><span class="co">test</span><span
+                        class="ck">&lt;/phase&gt;</span>
+                    <span class="ck">&lt;goals&gt;&lt;goal&gt;</span><span class="co">report</span><span
+                        class="ck">&lt;/goal&gt;&lt;/goals&gt;</span>
+                    <span class="ck">&lt;/execution&gt;</span>
+                    <span class="ck">&lt;/executions&gt;</span>
+                    <span class="ck">&lt;/plugin&gt;</span>
+                    <span class="ck">&lt;/plugins&gt;</span>
+                    <span class="ck">&lt;/build&gt;</span>
+                    <span class="ck">&lt;/project&gt;</span>
+                </div>
+                <div class="cb-explanation">⚡ The GAV coordinates (groupId + artifactId + version) are Maven's
+                    <strong>unique identifier</strong> for every artifact in the universe. Think of them as the package
+                    address.</div>
+            </div>
+
+            <div class="sub-title">Dependency Scopes</div>
+            <div class="tbl-wrap">
+                <table class="tbl">
+                    <thead>
+                        <tr>
+                            <th>Scope</th>
+                            <th>Compile</th>
+                            <th>Test</th>
+                            <th>Runtime</th>
+                            <th>Packed into JAR</th>
+                            <th>Use Case</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>compile (default)</td>
+                            <td>✅</td>
+                            <td>✅</td>
+                            <td>✅</td>
+                            <td>✅</td>
+                            <td>Spring Boot, Lombok, etc.</td>
+                        </tr>
+                        <tr>
+                            <td>test</td>
+                            <td>❌</td>
+                            <td>✅</td>
+                            <td>❌</td>
+                            <td>❌</td>
+                            <td>JUnit, Mockito, AssertJ</td>
+                        </tr>
+                        <tr>
+                            <td>provided</td>
+                            <td>✅</td>
+                            <td>✅</td>
+                            <td>❌</td>
+                            <td>❌</td>
+                            <td>Servlet API (Tomcat provides it)</td>
+                        </tr>
+                        <tr>
+                            <td>runtime</td>
+                            <td>❌</td>
+                            <td>✅</td>
+                            <td>✅</td>
+                            <td>✅</td>
+                            <td>JDBC drivers, logging impl</td>
+                        </tr>
+                        <tr>
+                            <td>system</td>
+                            <td>✅</td>
+                            <td>✅</td>
+                            <td>❌</td>
+                            <td>❌</td>
+                            <td>Local JAR (avoid in prod)</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="box box-interview"><span class="box-title">🎤 Top Interview Trap</span>Interviewers love asking:
+                "What's the difference between <code>provided</code> and <code>test</code>?" The key:
+                <code>provided</code> is available at compile time but not packaged; <code>test</code> is never
+                available in production. Swap them and your servlet-api ends up in your WAR, causing ClassCastException
+                in Tomcat.</div>
+        </section>
+
+        <!-- SECTION 4: LIFECYCLE -->
+        <section class="section" id="lifecycle">
+            <div class="section-title"><span class="st-num">4</span>Build Lifecycle</div>
+            <p>Maven has <strong>3 built-in lifecycles</strong>. Each lifecycle is a sequence of phases. Running a phase
+                runs every phase before it first — this is what trips up beginners.</p>
+            <div class="two-col">
+                <div>
+                    <div class="sub-sub">Default Lifecycle (most important)</div>
+                    <div class="tbl-wrap">
+                        <table class="tbl">
+                            <thead>
+                                <tr>
+                                    <th>Phase</th>
+                                    <th>What Happens</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>validate</td>
+                                    <td>Check POM is correct</td>
+                                </tr>
+                                <tr>
+                                    <td>compile</td>
+                                    <td>Compile src/main/java</td>
+                                </tr>
+                                <tr>
+                                    <td>test-compile</td>
+                                    <td>Compile src/test/java</td>
+                                </tr>
+                                <tr>
+                                    <td>test</td>
+                                    <td>Run unit tests (Surefire)</td>
+                                </tr>
+                                <tr>
+                                    <td>package</td>
+                                    <td>Create JAR/WAR in target/</td>
+                                </tr>
+                                <tr>
+                                    <td>verify</td>
+                                    <td>Run integration tests</td>
+                                </tr>
+                                <tr>
+                                    <td>install</td>
+                                    <td>Copy to ~/.m2/repository</td>
+                                </tr>
+                                <tr>
+                                    <td>deploy</td>
+                                    <td>Push to remote Nexus/Artifactory</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div>
+                    <div class="sub-sub">Clean & Site Lifecycles</div>
+                    <div class="box box-note"><span class="box-title">📌 Clean
+                            Lifecycle</span><code>pre-clean → clean → post-clean</code><br>Run with:
+                        <code>mvn clean</code><br>Deletes <code>target/</code> directory.</div>
+                    <div class="box box-note"><span class="box-title">📌 Site
+                            Lifecycle</span><code>pre-site → site → post-site → site-deploy</code><br>Run with:
+                        <code>mvn site</code><br>Generates project documentation website.</div>
+                    <div class="box box-warn"><span class="box-title">⚠️ Common Mistake</span><code>mvn package</code>
+                        runs compile + test + package. If your test environment is broken, <code>mvn package</code>
+                        fails. Use <code>mvn package -DskipTests</code> to bypass during debugging — never in production
+                        CI.</div>
+                </div>
+            </div>
+
+            <div class="flow"> DEFAULT LIFECYCLE FLOW
+                ══════════════════════════════════════════════════════════════
+
+                mvn package:
+                ┌──────────┐ ┌─────────┐ ┌───────────┐ ┌──────┐ ┌─────────┐
+                │ validate │──▶│ compile │──▶│ test │──▶│verify│──▶│ package │
+                └──────────┘ └─────────┘ └───────────┘ └──────┘ └─────────┘
+                │
+                runs Surefire plugin
+                outputs target/surefire-reports/
+
+                mvn install = package + copy to ~/.m2
+                mvn deploy = install + push to Nexus/Artifactory
+                mvn clean install = clean target/ + then install
+
+                KEY RULE: Running phase N runs ALL phases 1 through N first.
+                ══════════════════════════════════════════════════════════════</div>
+        </section>
+
+        <!-- SECTION 5: DEPENDENCIES -->
+        <section class="section" id="dependencies">
+            <div class="section-title"><span class="st-num">5</span>Dependency Management</div>
+            <div class="sub-title">Version Conflict Resolution</div>
+            <p>When two dependencies pull in different versions of the same library, Maven uses
+                <strong>nearest-wins</strong> strategy — the version closest to your project in the dependency tree
+                wins.</p>
+            <div class="code-block">
+                <div class="cb-header"><span class="cb-label">Dependency Conflict Debugging</span><span
+                        class="cb-lang">BASH</span><button class="cb-copy" onclick="copyCode(this)">📋 Copy</button>
+                </div>
+                <div class="cb-body"><span class="cm"># Show full dependency tree with conflict markers</span>
+                    mvn dependency:tree
+
+                    <span class="cm"># Show only a specific dependency's transitive chain</span>
+                    mvn dependency:tree -Dincludes=com.fasterxml.jackson.core:jackson-databind
+
+                    <span class="cm"># Analyse dependency conflicts</span>
+                    mvn dependency:analyze
+
+                    <span class="cm"># Force a specific version — put in &lt;dependencyManagement&gt;</span>
+                    <span class="cm"># This overrides transitive versions without adding a direct dependency</span>
+                </div>
+            </div>
+
+            <div class="code-block">
+                <div class="cb-header"><span class="cb-label">dependencyManagement — Force Versions</span><span
+                        class="cb-lang">XML</span><button class="cb-copy" onclick="copyCode(this)">📋 Copy</button>
+                </div>
+                <div class="cb-body"><span class="cm">&lt;!-- In parent POM: declare versions WITHOUT adding
+                        dependencies --&gt;</span>
+                    <span class="ck">&lt;dependencyManagement&gt;</span>
+                    <span class="ck">&lt;dependencies&gt;</span>
+                    <span class="ck">&lt;dependency&gt;</span>
+                    <span class="ck">&lt;groupId&gt;</span><span class="cv">com.fasterxml.jackson.core</span><span
+                        class="ck">&lt;/groupId&gt;</span>
+                    <span class="ck">&lt;artifactId&gt;</span><span class="cv">jackson-databind</span><span
+                        class="ck">&lt;/artifactId&gt;</span>
+                    <span class="ck">&lt;version&gt;</span><span class="cv">2.15.3</span><span
+                        class="ck">&lt;/version&gt;</span>
+                    <span class="ck">&lt;/dependency&gt;</span>
+                    <span class="ck">&lt;/dependencies&gt;</span>
+                    <span class="ck">&lt;/dependencyManagement&gt;</span>
+
+                    <span class="cm">&lt;!-- In child POM: use without specifying version --&gt;</span>
+                    <span class="ck">&lt;dependencies&gt;</span>
+                    <span class="ck">&lt;dependency&gt;</span>
+                    <span class="ck">&lt;groupId&gt;</span><span class="cv">com.fasterxml.jackson.core</span><span
+                        class="ck">&lt;/groupId&gt;</span>
+                    <span class="ck">&lt;artifactId&gt;</span><span class="cv">jackson-databind</span><span
+                        class="ck">&lt;/artifactId&gt;</span>
+                    <span class="cm">&lt;!-- Version inherited from parent's dependencyManagement --&gt;</span>
+                    <span class="ck">&lt;/dependency&gt;</span>
+                    <span class="ck">&lt;/dependencies&gt;</span>
+                </div>
+                <div class="cb-explanation">⚡ <code>dependencyManagement</code> declares versions without pulling in the
+                    dependency. Child modules inherit the version but must still declare the dependency to use it. This
+                    is the standard pattern in enterprise multi-module POMs.</div>
+            </div>
+
+            <div class="sub-title">Exclusions — Block Transitive Dependencies</div>
+            <div class="code-block">
+                <div class="cb-header"><span class="cb-label">Exclude Unwanted Transitive Dependency</span><span
+                        class="cb-lang">XML</span><button class="cb-copy" onclick="copyCode(this)">📋 Copy</button>
+                </div>
+                <div class="cb-body"><span class="cm">&lt;!-- Spring Boot brings in Logback; exclude to use Log4j2
+                        instead --&gt;</span>
+                    <span class="ck">&lt;dependency&gt;</span>
+                    <span class="ck">&lt;groupId&gt;</span><span class="cv">org.springframework.boot</span><span
+                        class="ck">&lt;/groupId&gt;</span>
+                    <span class="ck">&lt;artifactId&gt;</span><span class="cv">spring-boot-starter-web</span><span
+                        class="ck">&lt;/artifactId&gt;</span>
+                    <span class="ck">&lt;exclusions&gt;</span>
+                    <span class="ck">&lt;exclusion&gt;</span>
+                    <span class="ck">&lt;groupId&gt;</span><span class="cv">org.springframework.boot</span><span
+                        class="ck">&lt;/groupId&gt;</span>
+                    <span class="ck">&lt;artifactId&gt;</span><span class="cv">spring-boot-starter-logging</span><span
+                        class="ck">&lt;/artifactId&gt;</span>
+                    <span class="ck">&lt;/exclusion&gt;</span>
+                    <span class="ck">&lt;/exclusions&gt;</span>
+                    <span class="ck">&lt;/dependency&gt;</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 6: PLUGINS -->
+        <section class="section" id="plugins">
+            <div class="section-title"><span class="st-num">6</span>Plugins & Goals</div>
+            <p>Maven itself does almost nothing — everything is done by plugins. A <strong>goal</strong> is a specific
+                task a plugin performs. A phase binds to one or more plugin goals.</p>
+            <div class="tbl-wrap">
+                <table class="tbl">
+                    <thead>
+                        <tr>
+                            <th>Plugin</th>
+                            <th>Key Goals</th>
+                            <th>Use Case</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>maven-compiler-plugin</td>
+                            <td>compile, testCompile</td>
+                            <td>Compile Java source — set Java version here</td>
+                        </tr>
+                        <tr>
+                            <td>maven-surefire-plugin</td>
+                            <td>test</td>
+                            <td>Run JUnit/TestNG unit tests</td>
+                        </tr>
+                        <tr>
+                            <td>maven-failsafe-plugin</td>
+                            <td>integration-test, verify</td>
+                            <td>Run integration tests (separate from unit)</td>
+                        </tr>
+                        <tr>
+                            <td>maven-jar-plugin</td>
+                            <td>jar</td>
+                            <td>Package into JAR; set main class in manifest</td>
+                        </tr>
+                        <tr>
+                            <td>spring-boot-maven-plugin</td>
+                            <td>repackage, run</td>
+                            <td>Fat JAR with embedded Tomcat</td>
+                        </tr>
+                        <tr>
+                            <td>jacoco-maven-plugin</td>
+                            <td>prepare-agent, report, check</td>
+                            <td>Code coverage — fail build if below threshold</td>
+                        </tr>
+                        <tr>
+                            <td>maven-checkstyle-plugin</td>
+                            <td>check</td>
+                            <td>Enforce code style rules</td>
+                        </tr>
+                        <tr>
+                            <td>spotbugs-maven-plugin</td>
+                            <td>check</td>
+                            <td>Static analysis for common bugs</td>
+                        </tr>
+                        <tr>
+                            <td>maven-release-plugin</td>
+                            <td>prepare, perform</td>
+                            <td>Release workflow: tag, version bump, deploy</td>
+                        </tr>
+                        <tr>
+                            <td>dockerfile-maven-plugin</td>
+                            <td>build, push</td>
+                            <td>Build Docker image from Maven</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="code-block">
+                <div class="cb-header"><span class="cb-label">maven-compiler-plugin — Set Java Version</span><span
+                        class="cb-lang">XML</span><button class="cb-copy" onclick="copyCode(this)">📋 Copy</button>
+                </div>
+                <div class="cb-body"><span class="ck">&lt;build&gt;</span>
+                    <span class="ck">&lt;plugins&gt;</span>
+                    <span class="ck">&lt;plugin&gt;</span>
+                    <span class="ck">&lt;groupId&gt;</span><span class="cv">org.apache.maven.plugins</span><span
+                        class="ck">&lt;/groupId&gt;</span>
+                    <span class="ck">&lt;artifactId&gt;</span><span class="cv">maven-compiler-plugin</span><span
+                        class="ck">&lt;/artifactId&gt;</span>
+                    <span class="ck">&lt;version&gt;</span><span class="cv">3.11.0</span><span
+                        class="ck">&lt;/version&gt;</span>
+                    <span class="ck">&lt;configuration&gt;</span>
+                    <span class="ck">&lt;source&gt;</span><span class="cv">17</span><span
+                        class="ck">&lt;/source&gt;</span>
+                    <span class="ck">&lt;target&gt;</span><span class="cv">17</span><span
+                        class="ck">&lt;/target&gt;</span>
+                    <span class="ck">&lt;encoding&gt;</span><span class="cv">UTF-8</span><span
+                        class="ck">&lt;/encoding&gt;</span>
+                    <span class="ck">&lt;parameters&gt;</span><span class="cv">true</span><span
+                        class="ck">&lt;/parameters&gt;</span> <span class="cm">&lt;!-- Preserve method param names
+                        --&gt;</span>
+                    <span class="ck">&lt;/configuration&gt;</span>
+                    <span class="ck">&lt;/plugin&gt;</span>
+
+                    <span class="cm">&lt;!-- JaCoCo: fail build if coverage &lt; 80% --&gt;</span>
+                    <span class="ck">&lt;plugin&gt;</span>
+                    <span class="ck">&lt;groupId&gt;</span><span class="cv">org.jacoco</span><span
+                        class="ck">&lt;/groupId&gt;</span>
+                    <span class="ck">&lt;artifactId&gt;</span><span class="cv">jacoco-maven-plugin</span><span
+                        class="ck">&lt;/artifactId&gt;</span>
+                    <span class="ck">&lt;version&gt;</span><span class="cv">0.8.11</span><span
+                        class="ck">&lt;/version&gt;</span>
+                    <span class="ck">&lt;executions&gt;</span>
+                    <span class="ck">&lt;execution&gt;</span><span class="ck">&lt;goals&gt;&lt;goal&gt;</span><span
+                        class="co">prepare-agent</span><span class="ck">&lt;/goal&gt;&lt;/goals&gt;</span><span
+                        class="ck">&lt;/execution&gt;</span>
+                    <span class="ck">&lt;execution&gt;</span>
+                    <span class="ck">&lt;id&gt;</span><span class="cv">jacoco-check</span><span
+                        class="ck">&lt;/id&gt;</span>
+                    <span class="ck">&lt;goals&gt;&lt;goal&gt;</span><span class="co">check</span><span
+                        class="ck">&lt;/goal&gt;&lt;/goals&gt;</span>
+                    <span class="ck">&lt;configuration&gt;</span>
+                    <span class="ck">&lt;rules&gt;</span>
+                    <span class="ck">&lt;rule&gt;</span>
+                    <span class="ck">&lt;limits&gt;</span>
+                    <span class="ck">&lt;limit&gt;</span>
+                    <span class="ck">&lt;counter&gt;</span><span class="cv">LINE</span><span
+                        class="ck">&lt;/counter&gt;</span>
+                    <span class="ck">&lt;minimum&gt;</span><span class="cv">0.80</span><span
+                        class="ck">&lt;/minimum&gt;</span> <span class="cm">&lt;!-- 80% coverage required --&gt;</span>
+                    <span class="ck">&lt;/limit&gt;</span>
+                    <span class="ck">&lt;/limits&gt;</span>
+                    <span class="ck">&lt;/rule&gt;</span>
+                    <span class="ck">&lt;/rules&gt;</span>
+                    <span class="ck">&lt;/configuration&gt;</span>
+                    <span class="ck">&lt;/execution&gt;</span>
+                    <span class="ck">&lt;/executions&gt;</span>
+                    <span class="ck">&lt;/plugin&gt;</span>
+                    <span class="ck">&lt;/plugins&gt;</span>
+                    <span class="ck">&lt;/build&gt;</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 7: REPOSITORIES -->
+        <section class="section" id="repositories">
+            <div class="section-title"><span class="st-num">7</span>Repositories</div>
+            <p>Maven resolves dependencies from repositories in this order: <strong>local cache → company
+                    Nexus/Artifactory → Maven Central</strong>. In enterprise environments, everything goes through
+                Nexus — internet access is blocked.</p>
+            <div class="code-block">
+                <div class="cb-header"><span class="cb-label">Configure Nexus in settings.xml</span><span
+                        class="cb-lang">XML</span><button class="cb-copy" onclick="copyCode(this)">📋 Copy</button>
+                </div>
+                <div class="cb-body"><span class="cm">&lt;!-- ~/.m2/settings.xml — machine-level Maven config
+                        --&gt;</span>
+                    <span class="ck">&lt;settings&gt;</span>
+                    <span class="ck">&lt;mirrors&gt;</span>
+                    <span class="cm">&lt;!-- Route ALL Maven Central requests through company Nexus --&gt;</span>
+                    <span class="ck">&lt;mirror&gt;</span>
+                    <span class="ck">&lt;id&gt;</span><span class="cv">nexus</span><span class="ck">&lt;/id&gt;</span>
+                    <span class="ck">&lt;mirrorOf&gt;</span><span class="cv">*</span><span
+                        class="ck">&lt;/mirrorOf&gt;</span> <span class="cm">&lt;!-- * = intercept ALL repos
+                        --&gt;</span>
+                    <span class="ck">&lt;url&gt;</span><span
+                        class="cv">http://nexus.company.com:8081/repository/maven-public/</span><span
+                        class="ck">&lt;/url&gt;</span>
+                    <span class="ck">&lt;/mirror&gt;</span>
+                    <span class="ck">&lt;/mirrors&gt;</span>
+
+                    <span class="ck">&lt;servers&gt;</span>
+                    <span class="cm">&lt;!-- Credentials for Nexus (never hardcode in pom.xml) --&gt;</span>
+                    <span class="ck">&lt;server&gt;</span>
+                    <span class="ck">&lt;id&gt;</span><span class="cv">nexus</span><span class="ck">&lt;/id&gt;</span>
+                    <span class="ck">&lt;username&gt;</span><span class="cv">deploy-user</span><span
+                        class="ck">&lt;/username&gt;</span>
+                    <span class="ck">&lt;password&gt;</span><span class="cv">${env.NEXUS_PASSWORD}</span><span
+                        class="ck">&lt;/password&gt;</span> <span class="cm">&lt;!-- env var --&gt;</span>
+                    <span class="ck">&lt;/server&gt;</span>
+                    <span class="ck">&lt;/servers&gt;</span>
+                    <span class="ck">&lt;/settings&gt;</span>
+                </div>
+                <div class="cb-explanation">⚡ <strong>Never</strong> store Nexus passwords in pom.xml. Use environment
+                    variable interpolation in settings.xml, or Jenkins credential binding.</div>
+            </div>
+            <div class="box box-production"><span class="box-title">🏭 Production Reality</span>In Indian service
+                company projects (Infosys, TCS, Wipro), your build will fail with "Could not resolve artifact" on day 1.
+                Reason: corporate firewall blocks Maven Central. Solution: configure <code>~/.m2/settings.xml</code> to
+                point to the internal Nexus mirror. Ask your team lead for the Nexus URL before writing any code.</div>
+        </section>
+
+        <!-- SECTION 8: PROFILES -->
+        <section class="section" id="profiles">
+            <div class="section-title"><span class="st-num">8</span>Profiles</div>
+            <p>Profiles let you customise the build for different environments — dev, staging, production — without
+                changing the pom.xml.</p>
+            <div class="code-block">
+                <div class="cb-header"><span class="cb-label">Environment Profiles</span><span
+                        class="cb-lang">XML</span><button class="cb-copy" onclick="copyCode(this)">📋 Copy</button>
+                </div>
+                <div class="cb-body"><span class="ck">&lt;profiles&gt;</span>
+                    <span class="ck">&lt;profile&gt;</span>
+                    <span class="ck">&lt;id&gt;</span><span class="cv">dev</span><span class="ck">&lt;/id&gt;</span>
+                    <span class="ck">&lt;activation&gt;</span>
+                    <span class="ck">&lt;activeByDefault&gt;</span><span class="cv">true</span><span
+                        class="ck">&lt;/activeByDefault&gt;</span> <span class="cm">&lt;!-- active when no profile
+                        specified --&gt;</span>
+                    <span class="ck">&lt;/activation&gt;</span>
+                    <span class="ck">&lt;properties&gt;</span>
+                    <span class="ck">&lt;app.env&gt;</span><span class="cv">development</span><span
+                        class="ck">&lt;/app.env&gt;</span>
+                    <span class="ck">&lt;skip.integration.tests&gt;</span><span class="cv">true</span><span
+                        class="ck">&lt;/skip.integration.tests&gt;</span>
+                    <span class="ck">&lt;/properties&gt;</span>
+                    <span class="ck">&lt;/profile&gt;</span>
+
+                    <span class="ck">&lt;profile&gt;</span>
+                    <span class="ck">&lt;id&gt;</span><span class="cv">production</span><span
+                        class="ck">&lt;/id&gt;</span>
+                    <span class="ck">&lt;properties&gt;</span>
+                    <span class="ck">&lt;app.env&gt;</span><span class="cv">production</span><span
+                        class="ck">&lt;/app.env&gt;</span>
+                    <span class="ck">&lt;skip.integration.tests&gt;</span><span class="cv">false</span><span
+                        class="ck">&lt;/skip.integration.tests&gt;</span>
+                    <span class="ck">&lt;/properties&gt;</span>
+                    <span class="ck">&lt;/profile&gt;</span>
+                    <span class="ck">&lt;/profiles&gt;</span>
+                </div>
+            </div>
+            <div class="code-block">
+                <div class="cb-header"><span class="cb-label">Activate Profile</span><span
+                        class="cb-lang">BASH</span><button class="cb-copy" onclick="copyCode(this)">📋 Copy</button>
+                </div>
+                <div class="cb-body"><span class="cm"># Activate production profile</span>
+                    mvn clean install <span class="ck">-P</span> production
+
+                    <span class="cm"># In Jenkins pipeline:</span>
+                    sh <span class="cv">'mvn clean install -P production -Dapp.version=${BUILD_NUMBER}'</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 9: MULTI-MODULE -->
+        <section class="section" id="multi-module">
+            <div class="section-title"><span class="st-num">9</span>Multi-Module Projects</div>
+            <p>Real enterprise projects are multi-module: a <strong>parent POM</strong> coordinates shared
+                configuration, and child modules inherit from it. This is the standard structure at Razorpay, PhonePe,
+                and every large Spring Boot project.</p>
+            <div class="code-block">
+                <div class="cb-header"><span class="cb-label">Multi-Module Project Layout</span><span
+                        class="cb-lang">TREE</span><button class="cb-copy" onclick="copyCode(this)">📋 Copy</button>
+                </div>
+                <div class="cb-body"><span class="cn">payment-platform/</span> <span class="cm"># Parent module</span>
+                    ├── <span class="co">pom.xml</span> <span class="cm"># packaging: pom (not jar)</span>
+                    ├── <span class="cv">payment-api/</span> <span class="cm"># REST API module</span>
+                    │ └── pom.xml <span class="cm"># inherits from parent</span>
+                    ├── <span class="cv">payment-domain/</span> <span class="cm"># Business logic / entities</span>
+                    │ └── pom.xml
+                    ├── <span class="cv">payment-infra/</span> <span class="cm"># DB, messaging, external clients</span>
+                    │ └── pom.xml
+                    └── <span class="cv">payment-service/</span> <span class="cm"># Spring Boot entry point</span>
+                    └── pom.xml</div>
+            </div>
+
+            <div class="code-block">
+                <div class="cb-header"><span class="cb-label">Parent POM — payment-platform/pom.xml</span><span
+                        class="cb-lang">XML</span><button class="cb-copy" onclick="copyCode(this)">📋 Copy</button>
+                </div>
+                <div class="cb-body"><span class="ck">&lt;project&gt;</span>
+                    <span class="ck">&lt;groupId&gt;</span><span class="cv">com.company</span><span
+                        class="ck">&lt;/groupId&gt;</span>
+                    <span class="ck">&lt;artifactId&gt;</span><span class="cv">payment-platform</span><span
+                        class="ck">&lt;/artifactId&gt;</span>
+                    <span class="ck">&lt;version&gt;</span><span class="cv">2.0.0-SNAPSHOT</span><span
+                        class="ck">&lt;/version&gt;</span>
+                    <span class="ck">&lt;packaging&gt;</span><span class="co">pom</span><span
+                        class="ck">&lt;/packaging&gt;</span> <span class="cm">&lt;!-- CRITICAL: parent must be 'pom'
+                        --&gt;</span>
+
+                    <span class="cm">&lt;!-- List all child modules --&gt;</span>
+                    <span class="ck">&lt;modules&gt;</span>
+                    <span class="ck">&lt;module&gt;</span><span class="cv">payment-domain</span><span
+                        class="ck">&lt;/module&gt;</span>
+                    <span class="ck">&lt;module&gt;</span><span class="cv">payment-infra</span><span
+                        class="ck">&lt;/module&gt;</span>
+                    <span class="ck">&lt;module&gt;</span><span class="cv">payment-api</span><span
+                        class="ck">&lt;/module&gt;</span>
+                    <span class="ck">&lt;module&gt;</span><span class="cv">payment-service</span><span
+                        class="ck">&lt;/module&gt;</span>
+                    <span class="ck">&lt;/modules&gt;</span>
+
+                    <span class="cm">&lt;!-- Shared properties across ALL child modules --&gt;</span>
+                    <span class="ck">&lt;properties&gt;</span>
+                    <span class="ck">&lt;java.version&gt;</span><span class="cv">17</span><span
+                        class="ck">&lt;/java.version&gt;</span>
+                    <span class="ck">&lt;spring-boot.version&gt;</span><span class="cv">3.2.0</span><span
+                        class="ck">&lt;/spring-boot.version&gt;</span>
+                    <span class="ck">&lt;/properties&gt;</span>
+                    <span class="ck">&lt;/project&gt;</span>
+                </div>
+            </div>
+
+            <div class="code-block">
+                <div class="cb-header"><span class="cb-label">Child POM — payment-api/pom.xml</span><span
+                        class="cb-lang">XML</span><button class="cb-copy" onclick="copyCode(this)">📋 Copy</button>
+                </div>
+                <div class="cb-body"><span class="ck">&lt;project&gt;</span>
+                    <span class="cm">&lt;!-- Declare parent --&gt;</span>
+                    <span class="ck">&lt;parent&gt;</span>
+                    <span class="ck">&lt;groupId&gt;</span><span class="cv">com.company</span><span
+                        class="ck">&lt;/groupId&gt;</span>
+                    <span class="ck">&lt;artifactId&gt;</span><span class="cv">payment-platform</span><span
+                        class="ck">&lt;/artifactId&gt;</span>
+                    <span class="ck">&lt;version&gt;</span><span class="cv">2.0.0-SNAPSHOT</span><span
+                        class="ck">&lt;/version&gt;</span>
+                    <span class="ck">&lt;relativePath&gt;</span><span class="cv">../pom.xml</span><span
+                        class="ck">&lt;/relativePath&gt;</span>
+                    <span class="ck">&lt;/parent&gt;</span>
+
+                    <span class="ck">&lt;artifactId&gt;</span><span class="cv">payment-api</span><span
+                        class="ck">&lt;/artifactId&gt;</span>
+                    <span class="cm">&lt;!-- groupId and version inherited from parent --&gt;</span>
+
+                    <span class="ck">&lt;dependencies&gt;</span>
+                    <span class="cm">&lt;!-- Depend on sibling module --&gt;</span>
+                    <span class="ck">&lt;dependency&gt;</span>
+                    <span class="ck">&lt;groupId&gt;</span><span class="cv">com.company</span><span
+                        class="ck">&lt;/groupId&gt;</span>
+                    <span class="ck">&lt;artifactId&gt;</span><span class="cv">payment-domain</span><span
+                        class="ck">&lt;/artifactId&gt;</span>
+                    <span class="ck">&lt;version&gt;</span><span class="cv">${project.version}</span><span
+                        class="ck">&lt;/version&gt;</span>
+                    <span class="ck">&lt;/dependency&gt;</span>
+                    <span class="ck">&lt;/dependencies&gt;</span>
+                    <span class="ck">&lt;/project&gt;</span>
+                </div>
+            </div>
+
+            <div class="code-block">
+                <div class="cb-header"><span class="cb-label">Build from Parent Directory</span><span
+                        class="cb-lang">BASH</span><button class="cb-copy" onclick="copyCode(this)">📋 Copy</button>
+                </div>
+                <div class="cb-body"><span class="cm"># From payment-platform/ — builds ALL modules in dependency
+                        order</span>
+                    mvn clean install
+
+                    <span class="cm"># Build only specific module + its dependencies</span>
+                    mvn clean install -pl payment-api -am
+
+                    <span class="cm"># -pl = project list (modules to build)</span>
+                    <span class="cm"># -am = also make dependencies</span>
+                    <span class="cm"># -amd = also make dependents (reverse)</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 10: PROPERTIES -->
+        <section class="section" id="properties">
+            <div class="section-title"><span class="st-num">10</span>Properties & Filtering</div>
+            <div class="code-block">
+                <div class="cb-header"><span class="cb-label">Resource Filtering — Inject Build Properties</span><span
+                        class="cb-lang">XML</span><button class="cb-copy" onclick="copyCode(this)">📋 Copy</button>
+                </div>
+                <div class="cb-body"><span class="cm">&lt;!-- Enable filtering in build --&gt;</span>
+                    <span class="ck">&lt;build&gt;</span>
+                    <span class="ck">&lt;resources&gt;</span>
+                    <span class="ck">&lt;resource&gt;</span>
+                    <span class="ck">&lt;directory&gt;</span><span class="cv">src/main/resources</span><span
+                        class="ck">&lt;/directory&gt;</span>
+                    <span class="ck">&lt;filtering&gt;</span><span class="cv">true</span><span
+                        class="ck">&lt;/filtering&gt;</span> <span class="cm">&lt;!-- enables ${} replacement
+                        --&gt;</span>
+                    <span class="ck">&lt;/resource&gt;</span>
+                    <span class="ck">&lt;/resources&gt;</span>
+                    <span class="ck">&lt;/build&gt;</span>
+
+                    <span class="cm">&lt;!-- In application.properties: --&gt;</span>
+                    <span class="cm"># app.version=${project.version}</span>
+                    <span class="cm"># app.build.time=${maven.build.timestamp}</span>
+                    <span class="cm"># Gets replaced at build time with actual values</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 11: TESTING -->
+        <section class="section" id="testing">
+            <div class="section-title"><span class="st-num">11</span>Test Management</div>
+            <div class="two-col">
+                <div>
+                    <div class="sub-sub">Unit Tests (Surefire Plugin)</div>
+                    <div class="code-block">
+                        <div class="cb-header"><span class="cb-label">Surefire Config</span><span
+                                class="cb-lang">XML</span><button class="cb-copy" onclick="copyCode(this)">📋
+                                Copy</button></div>
+                        <div class="cb-body"><span class="ck">&lt;plugin&gt;</span>
+                            <span class="ck">&lt;artifactId&gt;</span><span class="cv">maven-surefire-plugin</span><span
+                                class="ck">&lt;/artifactId&gt;</span>
+                            <span class="ck">&lt;version&gt;</span><span class="cv">3.1.2</span><span
+                                class="ck">&lt;/version&gt;</span>
+                            <span class="ck">&lt;configuration&gt;</span>
+                            <span class="cm">&lt;!-- Include patterns --&gt;</span>
+                            <span class="ck">&lt;includes&gt;</span>
+                            <span class="ck">&lt;include&gt;</span><span class="cv">**/*Test.java</span><span
+                                class="ck">&lt;/include&gt;</span>
+                            <span class="ck">&lt;include&gt;</span><span class="cv">**/*Tests.java</span><span
+                                class="ck">&lt;/include&gt;</span>
+                            <span class="ck">&lt;/includes&gt;</span>
+                            <span class="cm">&lt;!-- Parallel test execution --&gt;</span>
+                            <span class="ck">&lt;parallel&gt;</span><span class="cv">classes</span><span
+                                class="ck">&lt;/parallel&gt;</span>
+                            <span class="ck">&lt;threadCount&gt;</span><span class="cv">4</span><span
+                                class="ck">&lt;/threadCount&gt;</span>
+                            <span class="ck">&lt;/configuration&gt;</span>
+                            <span class="ck">&lt;/plugin&gt;</span>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <div class="sub-sub">Skip Tests — When & How</div>
+                    <div class="code-block">
+                        <div class="cb-header"><span class="cb-label">Test Skip Options</span><span
+                                class="cb-lang">BASH</span><button class="cb-copy" onclick="copyCode(this)">📋
+                                Copy</button></div>
+                        <div class="cb-body"><span class="cm"># Skip test EXECUTION (still compile)</span>
+                            mvn package <span class="ck">-DskipTests</span>
+
+                            <span class="cm"># Skip test compilation + execution</span>
+                            mvn package <span class="ck">-Dmaven.test.skip=true</span>
+
+                            <span class="cm"># Run only specific test class</span>
+                            mvn test <span class="ck">-Dtest=</span><span class="cv">PaymentServiceTest</span>
+
+                            <span class="cm"># Run only specific method</span>
+                            mvn test <span class="ck">-Dtest=</span><span
+                                class="cv">PaymentServiceTest#testPayment</span>
+                        </div>
+                    </div>
+                    <div class="box box-warn"><span class="box-title">⚠️ Warning</span><code>-DskipTests</code> vs
+                        <code>-Dmaven.test.skip=true</code>: the first still compiles tests. Use
+                        <code>-DskipTests</code> in dev; never in CI.</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 12: CI INTEGRATION -->
+        <section class="section" id="ci-integration">
+            <div class="section-title"><span class="st-num">12</span>CI/CD Integration</div>
+            <div class="code-block">
+                <div class="cb-header"><span class="cb-label">Maven in Jenkins Declarative Pipeline</span><span
+                        class="cb-lang">GROOVY</span><button class="cb-copy" onclick="copyCode(this)">📋 Copy</button>
+                </div>
+                <div class="cb-body">pipeline {
+                    agent any
+                    tools {
+                    maven <span class="cv">'Maven-3.8.6'</span> <span class="cm">// name from Jenkins Global Tool
+                        Config</span>
+                    jdk <span class="cv">'JDK-17'</span>
+                    }
+                    stages {
+                    stage(<span class="cv">'Build'</span>) {
+                    steps {
+                    sh <span class="cv">'mvn clean compile'</span>
+                    }
+                    }
+                    stage(<span class="cv">'Test'</span>) {
+                    steps {
+                    sh <span class="cv">'mvn test'</span>
+                    }
+                    post {
+                    always {
+                    junit <span class="cv">'target/surefire-reports/*.xml'</span>
+                    jacoco execPattern: <span class="cv">'target/jacoco.exec'</span>
+                    }
+                    }
+                    }
+                    stage(<span class="cv">'Package'</span>) {
+                    steps {
+                    sh <span class="cv">'mvn package -DskipTests'</span>
+                    archiveArtifacts artifacts: <span class="cv">'target/*.jar'</span>
+                    }
+                    }
+                    stage(<span class="cv">'Deploy to Nexus'</span>) {
+                    when { branch <span class="cv">'main'</span> }
+                    steps {
+                    sh <span class="cv">'mvn deploy -DskipTests -P production'</span>
+                    }
+                    }
+                    }
+                    }</div>
+                <div class="cb-explanation">⚡ The <code>tools</code> block tells Jenkins which Maven/JDK installation to
+                    use. Configure these in Jenkins → Manage Jenkins → Global Tool Configuration before using them in
+                    pipelines.</div>
+            </div>
+            <div class="code-block">
+                <div class="cb-header"><span class="cb-label">GitHub Actions with Maven</span><span
+                        class="cb-lang">YAML</span><button class="cb-copy" onclick="copyCode(this)">📋 Copy</button>
+                </div>
+                <div class="cb-body">name: Maven CI
+
+                    on: [push, pull_request]
+
+                    jobs:
+                    build:
+                    runs-on: ubuntu-latest
+                    steps:
+                    - uses: actions/checkout@v4
+                    - uses: actions/setup-java@v4
+                    with:
+                    java-version: <span class="cv">'17'</span>
+                    distribution: <span class="cv">'corretto'</span>
+                    cache: <span class="cv">'maven'</span> <span class="cm"># Cache ~/.m2 between runs</span>
+
+                    - name: Build and Test
+                    run: mvn clean verify
+
+                    - name: Upload Test Results
+                    uses: actions/upload-artifact@v4
+                    if: always()
+                    with:
+                    name: test-results
+                    path: target/surefire-reports/</div>
+            </div>
+        </section>
+
+        <!-- SECTION 13: BEGINNER EXAMPLES -->
+        <section class="section" id="beginner-examples">
+            <div class="section-title"><span class="st-num">13</span>Beginner Examples</div>
+            <div class="sub-title">Example 1: Build a Spring Boot App</div>
+            <div class="code-block">
+                <div class="cb-header"><span class="cb-label">Spring Boot Project — Full Workflow</span><span
+                        class="cb-lang">BASH</span><button class="cb-copy" onclick="copyCode(this)">📋 Copy</button>
+                </div>
+                <div class="cb-body"><span class="cm"># 1. Go to start.spring.io and download, or generate
+                        manually</span>
+                    mvn archetype:generate \
+                    -DarchetypeGroupId=org.springframework.boot \
+                    -DarchetypeArtifactId=spring-boot-blank-project \
+                    -DgroupId=com.devops \
+                    -DartifactId=hello-service \
+                    -Dversion=1.0.0-SNAPSHOT
+
+                    <span class="cm"># 2. Build the fat JAR</span>
+                    cd hello-service
+                    mvn clean package
+
+                    <span class="cm"># 3. Verify JAR was created</span>
+                    ls -lh target/*.jar
+
+                    <span class="cm"># 4. Run it</span>
+                    java -jar target/hello-service-1.0.0-SNAPSHOT.jar
+
+                    <span class="cm"># 5. Check it's running</span>
+                    curl http://localhost:8080/actuator/health
+                </div>
+            </div>
+
+            <div class="sub-title">Example 2: Diagnose a Build Failure</div>
+            <div class="code-block">
+                <div class="cb-header"><span class="cb-label">Build Debug Workflow</span><span
+                        class="cb-lang">BASH</span><button class="cb-copy" onclick="copyCode(this)">📋 Copy</button>
+                </div>
+                <div class="cb-body"><span class="cm"># Verbose output — see exactly what Maven is doing</span>
+                    mvn clean install -X 2>&1 | head -100
+
+                    <span class="cm"># Check the dependency tree for version conflicts</span>
+                    mvn dependency:tree | grep <span class="cv">'WARN\|conflict\|omit'</span>
+
+                    <span class="cm"># See the effective (merged) POM — what Maven actually sees</span>
+                    mvn help:effective-pom
+
+                    <span class="cm"># Check what's in the local repository cache</span>
+                    ls ~/.m2/repository/org/springframework/boot/
+
+                    <span class="cm"># Force re-download all dependencies (fix corrupted cache)</span>
+                    mvn clean install -U
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 14: INTERMEDIATE -->
+        <section class="section" id="intermediate-examples">
+            <div class="section-title"><span class="st-num">14</span>Intermediate Examples</div>
+            <div class="sub-title">Executable JAR with Main Class</div>
+            <div class="code-block">
+                <div class="cb-header"><span class="cb-label">Set Main Class in MANIFEST.MF</span><span
+                        class="cb-lang">XML</span><button class="cb-copy" onclick="copyCode(this)">📋 Copy</button>
+                </div>
+                <div class="cb-body"><span class="ck">&lt;plugin&gt;</span>
+                    <span class="ck">&lt;artifactId&gt;</span><span class="cv">maven-jar-plugin</span><span
+                        class="ck">&lt;/artifactId&gt;</span>
+                    <span class="ck">&lt;configuration&gt;</span>
+                    <span class="ck">&lt;archive&gt;</span>
+                    <span class="ck">&lt;manifest&gt;</span>
+                    <span class="ck">&lt;mainClass&gt;</span><span class="cv">com.devops.App</span><span
+                        class="ck">&lt;/mainClass&gt;</span>
+                    <span class="ck">&lt;addClasspath&gt;</span><span class="cv">true</span><span
+                        class="ck">&lt;/addClasspath&gt;</span>
+                    <span class="ck">&lt;/manifest&gt;</span>
+                    <span class="ck">&lt;/archive&gt;</span>
+                    <span class="ck">&lt;finalName&gt;</span><span class="cv">payment-service</span><span
+                        class="ck">&lt;/finalName&gt;</span> <span class="cm">&lt;!-- override JAR name --&gt;</span>
+                    <span class="ck">&lt;/configuration&gt;</span>
+                    <span class="ck">&lt;/plugin&gt;</span>
+                </div>
+            </div>
+
+            <div class="sub-title">Version Bumping for Release</div>
+            <div class="code-block">
+                <div class="cb-header"><span class="cb-label">Change Versions Across Multi-Module</span><span
+                        class="cb-lang">BASH</span><button class="cb-copy" onclick="copyCode(this)">📋 Copy</button>
+                </div>
+                <div class="cb-body"><span class="cm"># Update ALL module versions to 2.0.0 in one command</span>
+                    mvn versions:set -DnewVersion=2.0.0
+
+                    <span class="cm"># Confirm the change</span>
+                    mvn versions:commit
+
+                    <span class="cm"># Rollback if wrong</span>
+                    mvn versions:revert
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 15: PRODUCTION -->
+        <section class="section" id="production-examples">
+            <div class="section-title"><span class="st-num">15</span>Production Examples</div>
+            <div class="sub-title">Build Script for CI Pipeline</div>
+            <div class="code-block">
+                <div class="cb-header"><span class="cb-label">ci-build.sh — Production Maven Build Script</span><span
+                        class="cb-lang">BASH</span><button class="cb-copy" onclick="copyCode(this)">📋 Copy</button>
+                </div>
+                <div class="cb-body">#!/usr/bin/env bash
+                    set -euo pipefail
+
+                    <span class="cm"># ── CI Build Script for Maven Projects ──</span>
+                    BUILD_VERSION="${CI_BUILD_NUMBER:-local}"
+                    MAVEN_OPTS="${MAVEN_OPTS:--Xmx2048m -XX:+TieredCompilation}"
+
+                    log() { echo "[$(date '+%H:%M:%S')] $*"; }
+
+                    log "🔨 Starting build — version: ${BUILD_VERSION}"
+
+                    <span class="cm"># Clean and validate</span>
+                    mvn clean validate --batch-mode --no-transfer-progress
+
+                    <span class="cm"># Run tests with code coverage</span>
+                    log "🧪 Running tests..."
+                    mvn test \
+                    --batch-mode \
+                    --no-transfer-progress \
+                    -Djacoco.destFile=target/jacoco.exec
+
+                    <span class="cm"># Package (tests already ran)</span>
+                    log "📦 Packaging..."
+                    mvn package -DskipTests \
+                    --batch-mode \
+                    --no-transfer-progress \
+                    -Drevision="${BUILD_VERSION}"
+
+                    <span class="cm"># Deploy to Nexus (main branch only)</span>
+                    if [[ "${GIT_BRANCH:-}" == "main" ]]; then
+                    log "🚀 Deploying to Nexus..."
+                    mvn deploy -DskipTests --batch-mode --no-transfer-progress
+                    fi
+
+                    log "✅ Build complete: target/*.jar"
+                </div>
+                <div class="cb-explanation">⚡ <code>--batch-mode</code> suppresses interactive prompts (essential in
+                    CI). <code>--no-transfer-progress</code> reduces noise in Jenkins logs. Always set these in CI
+                    pipelines.</div>
+            </div>
+        </section>
+
+        <!-- SECTION 16: FLOW DIAGRAMS -->
+        <section class="section" id="flow-diagrams">
+            <div class="section-title"><span class="st-num">16</span>Flow Diagrams</div>
+            <div class="flow"> MAVEN DEPENDENCY RESOLUTION ORDER
+                ════════════════════════════════════════════════════════
+
+                mvn clean install
+                │
+                ▼
+                1. Check LOCAL REPO (~/.m2/repository/)
+                │
+                Found? ──YES──▶ Use it
+                │
+                NO
+                ▼
+                2. Check SETTINGS.XML mirrors / proxies
+                │
+                ▼
+                3. Download from REMOTE REPO (Nexus / Maven Central)
+                │
+                ▼
+                4. Cache in ~/.m2/repository/
+                │
+                ▼
+                Build proceeds ──────────────────────────────────────
+
+                NEAREST-WINS CONFLICT RULE:
+
+                Your POM ──▶ spring-boot ──▶ jackson-databind 2.14.0
+                Your POM ──▶ jackson-databind 2.15.0 ← NEAREST WINS
+
+                ════════════════════════════════════════════════════════</div>
+
+            <div class="flow"> MULTI-MODULE BUILD ORDER
+                ════════════════════════════════════════════════════════
+
+                Parent POM declares modules in order:
+                [payment-domain, payment-infra, payment-api, payment-service]
+
+                Maven calculates dependency graph:
+
+                payment-domain (no deps) ──▶ built FIRST
+                │
+                payment-infra (depends on domain) ──▶ built SECOND
+                │
+                payment-api (depends on domain, infra) ──▶ built THIRD
+                │
+                payment-service (depends on api) ──▶ built LAST
+
+                Maven reactor: automatically reorders to satisfy deps.
+                ════════════════════════════════════════════════════════</div>
+        </section>
+
+        <!-- SECTION 17: EXERCISES -->
+        <section class="section" id="exercises">
+            <div class="section-title"><span class="st-num">17</span>Exercises</div>
+            <div class="exercise-card">
+                <div class="ex-header">
+                    <div class="ex-title">⚙️ Exercise 1 — Read a Real pom.xml</div>
+                    <span class="ex-diff easy">EASY</span>
+                </div>
+                <div class="ex-body">
+                    <div class="ex-field">
+                        <div class="ex-field-label">Objective</div>
+                        <div class="ex-field-value">Clone a Spring Boot sample project and inspect its POM.</div>
+                    </div>
+                    <div class="ex-field">
+                        <div class="ex-field-label">Steps</div>
+                        <div class="ex-field-value">
+                            1. Clone: <code>git clone https://github.com/spring-projects/spring-petclinic.git</code><br>
+                            2. Open <code>pom.xml</code> — identify: groupId, artifactId, version, packaging<br>
+                            3. List all direct dependencies and their scopes<br>
+                            4. Find the parent POM it inherits from<br>
+                            5. Run <code>mvn dependency:tree</code> and count total transitive deps
+                        </div>
+                    </div>
+                    <div class="ex-field">
+                        <div class="ex-field-label">Expected Output</div>
+                        <div class="ex-field-value">You can explain every section of the pom.xml to an interviewer
+                            without looking it up.</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="exercise-card">
+                <div class="ex-header">
+                    <div class="ex-title">🔧 Exercise 2 — Add JaCoCo Coverage Gate</div>
+                    <span class="ex-diff medium">MEDIUM</span>
+                </div>
+                <div class="ex-body">
+                    <div class="ex-field">
+                        <div class="ex-field-label">Objective</div>
+                        <div class="ex-field-value">Add JaCoCo to the petclinic project and fail the build if coverage
+                            drops below 70%.</div>
+                    </div>
+                    <div class="ex-field">
+                        <div class="ex-field-label">Steps</div>
+                        <div class="ex-field-value">
+                            1. Add JaCoCo plugin to <code>pom.xml</code><br>
+                            2. Configure coverage check with <code>minimum 0.70</code><br>
+                            3. Run <code>mvn verify</code><br>
+                            4. Check <code>target/site/jacoco/index.html</code> — what's the actual coverage?<br>
+                            5. Lower the threshold until the build passes; raise it until it fails
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 18: EASY CHALLENGE -->
+        <section class="section" id="easy-challenge">
+            <div class="section-title"><span class="st-num">18</span>Easy Challenge</div>
+            <div class="exercise-card">
+                <div class="ex-header">
+                    <div class="ex-title">🟢 Create a Multi-Module Maven Project</div>
+                    <span class="ex-diff easy">EASY</span>
+                </div>
+                <div class="ex-body">
+                    <div class="ex-field">
+                        <div class="ex-field-label">Task</div>
+                        <div class="ex-field-value">Create a two-module project: <code>core-lib</code> (utility library)
+                            and <code>web-app</code> (depends on core-lib). Build both from the parent.</div>
+                    </div>
+                    <div class="collapsible">
+                        <div class="collapsible-header" onclick="this.parentElement.classList.toggle('open')">
+                            <h4>🔓 Solution</h4><span class="collapsible-arrow">▶</span>
+                        </div>
+                        <div class="collapsible-body">
+                            <div class="code-block">
+                                <div class="cb-header"><span class="cb-label">Solution</span><span
+                                        class="cb-lang">BASH</span></div>
+                                <div class="cb-body"><span class="cm"># 1. Create parent directory</span>
+                                    mkdir myproject && cd myproject
+
+                                    <span class="cm"># 2. Create parent pom.xml manually</span>
+                                    cat &gt; pom.xml &lt;&lt;'EOF'
+                                    &lt;project&gt;
+                                    &lt;modelVersion&gt;4.0.0&lt;/modelVersion&gt;
+                                    &lt;groupId&gt;com.demo&lt;/groupId&gt;
+                                    &lt;artifactId&gt;myproject&lt;/artifactId&gt;
+                                    &lt;version&gt;1.0-SNAPSHOT&lt;/version&gt;
+                                    &lt;packaging&gt;pom&lt;/packaging&gt;
+                                    &lt;modules&gt;
+                                    &lt;module&gt;core-lib&lt;/module&gt;
+                                    &lt;module&gt;web-app&lt;/module&gt;
+                                    &lt;/modules&gt;
+                                    &lt;/project&gt;
+                                    EOF
+
+                                    <span class="cm"># 3. Generate child modules</span>
+                                    mvn archetype:generate -DgroupId=com.demo -DartifactId=core-lib \
+                                    -DarchetypeArtifactId=maven-archetype-quickstart \
+                                    -DarchetypeVersion=1.4 -DinteractiveMode=false
+
+                                    mvn archetype:generate -DgroupId=com.demo -DartifactId=web-app \
+                                    -DarchetypeArtifactId=maven-archetype-quickstart \
+                                    -DarchetypeVersion=1.4 -DinteractiveMode=false
+
+                                    <span class="cm"># 4. Build everything from parent</span>
+                                    mvn clean install
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 19: MEDIUM CHALLENGE -->
+        <section class="section" id="medium-challenge">
+            <div class="section-title"><span class="st-num">19</span>Medium Challenge</div>
+            <div class="exercise-card">
+                <div class="ex-header">
+                    <div class="ex-title">🟡 Nexus Proxy Setup</div>
+                    <span class="ex-diff medium">MEDIUM</span>
+                </div>
+                <div class="ex-body">
+                    <div class="ex-field">
+                        <div class="ex-field-label">Task</div>
+                        <div class="ex-field-value">Simulate a corporate Nexus environment: install Nexus on your EC2,
+                            configure a proxy repository pointing to Maven Central, and update your local settings.xml
+                            to route all downloads through it.</div>
+                    </div>
+                    <div class="ex-field">
+                        <div class="ex-field-label">Success Criteria</div>
+                        <div class="ex-field-value"><code>mvn clean install</code> works with internet blocked (verify
+                            <code>target/</code> populates via Nexus cache).</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 20: HARD CHALLENGE -->
+        <section class="section" id="hard-challenge">
+            <div class="section-title"><span class="st-num">20</span>Hard Challenge</div>
+            <div class="exercise-card">
+                <div class="ex-header">
+                    <div class="ex-title">🔴 Full CI Pipeline: Maven + Jenkins + Nexus</div>
+                    <span class="ex-diff hard">HARD</span>
+                </div>
+                <div class="ex-body">
+                    <div class="ex-field">
+                        <div class="ex-field-label">Task</div>
+                        <div class="ex-field-value">Build a Jenkins pipeline that: (1) compiles a Spring Boot project,
+                            (2) runs tests and publishes JUnit/JaCoCo reports, (3) packages the JAR, (4) deploys to
+                            Nexus on main branch, (5) sends Slack notification on failure.</div>
+                    </div>
+                    <div class="ex-field">
+                        <div class="ex-field-label">Hints</div>
+                        <div class="ex-field-value">
+                            — Use <code>tools { maven 'Maven-3.8.6' }</code> block<br>
+                            — Use <code>post { always { junit '...' }}</code> for test reports<br>
+                            — Use <code>when { branch 'main' }</code> for conditional deployment<br>
+                            — Nexus credentials go in Jenkins Credentials Store, referenced with
+                            <code>withCredentials</code>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 21: INTERVIEW QUESTIONS -->
+        <section class="section" id="interview-questions">
+            <div class="section-title"><span class="st-num">21</span>Interview Questions</div>
+            <div class="qa-item">
+                <div class="qa-q" onclick="this.parentElement.classList.toggle('open')"><span class="qnum">Q1</span>What
+                    is the difference between <code>mvn install</code> and <code>mvn deploy</code>?</div>
+                <div class="qa-a"><strong>install</strong> copies the artifact to your local
+                    <code>~/.m2/repository</code> — only you can use it. <strong>deploy</strong> first does install,
+                    then pushes to the remote repository (Nexus/Artifactory) — the entire team can use it. In CI, you
+                    run <code>deploy</code> on main/release branches; <code>install</code> on feature branches.</div>
+            </div>
+            <div class="qa-item">
+                <div class="qa-q" onclick="this.parentElement.classList.toggle('open')"><span class="qnum">Q2</span>What
+                    is a SNAPSHOT version and when do you use it?</div>
+                <div class="qa-a">A SNAPSHOT (e.g., <code>1.0.0-SNAPSHOT</code>) is an in-development version. Maven
+                    re-downloads SNAPSHOT dependencies periodically because they change. A release version (e.g.,
+                    <code>1.0.0</code>) is immutable — Maven caches it forever. Rule: develop with SNAPSHOTs, release
+                    with fixed versions. Never deploy a SNAPSHOT to production.</div>
+            </div>
+            <div class="qa-item">
+                <div class="qa-q" onclick="this.parentElement.classList.toggle('open')"><span class="qnum">Q3</span>What
+                    does <code>mvn clean install -U</code> do?</div>
+                <div class="qa-a"><code>clean</code> deletes <code>target/</code>. <code>install</code> builds and
+                    caches locally. <code>-U</code> (update snapshots) forces Maven to check remote repos for newer
+                    SNAPSHOT versions, bypassing the local cache. Use when a teammate published a new SNAPSHOT and your
+                    local cache is stale. Never use in CI where you want deterministic builds from the cache.</div>
+            </div>
+            <div class="qa-item">
+                <div class="qa-q" onclick="this.parentElement.classList.toggle('open')"><span
+                        class="qnum">Q4</span>Maven build fails with "Could not resolve artifact." What are the top 3
+                    causes?</div>
+                <div class="qa-a">1. <strong>Network/firewall</strong>: corporate VPN blocks Maven Central. Fix:
+                    configure Nexus mirror in settings.xml. 2. <strong>Corrupted cache</strong>: partial download left a
+                    broken JAR in ~/.m2. Fix: delete the specific artifact directory and rebuild with <code>-U</code>.
+                    3. <strong>Wrong repository</strong>: artifact lives in a non-standard repo not configured in your
+                    pom.xml or settings.xml. Fix: add the repository declaration.</div>
+            </div>
+            <div class="qa-item">
+                <div class="qa-q" onclick="this.parentElement.classList.toggle('open')"><span class="qnum">Q5</span>What
+                    is the difference between <code>dependencies</code> and <code>dependencyManagement</code>?</div>
+                <div class="qa-a"><code>dependencies</code> directly adds a dependency to the project.
+                    <code>dependencyManagement</code> only <em>declares</em> the version — it does not add the
+                    dependency. Child modules inherit the version from <code>dependencyManagement</code> but must still
+                    declare the dependency themselves. This lets the parent control all versions centrally without
+                    forcing every child to use every dependency.</div>
+            </div>
+        </section>
+
+        <!-- SECTION 22: INTERVIEW MODE -->
+        <section class="section" id="interview-mode">
+            <div class="section-title"><span class="st-num">22</span>Interview Mode — Scenario Simulation</div>
+            <div class="interview-card">
+                <div class="int-header">
+                    <h4>🎤 Senior DevOps Interview — Maven Round</h4>
+                </div>
+                <div class="int-body">
+                    <div class="int-scenario">You just joined a team whose Jenkins CI is randomly failing with "BUILD
+                        SUCCESS" on the test stage but tests are clearly not running. The test reports in Jenkins are
+                        empty. You have 10 minutes to diagnose it.</div>
+                    <div class="int-question">Q: Walk me through your diagnostic process.</div>
+                    <div class="int-scenario">Model Answer: First check the <code>target/surefire-reports/</code>
+                        directory — if empty, Surefire is skipping tests, not running them. Then check if
+                        <code>-DskipTests</code> is set in the Jenkins job config or Jenkinsfile. Check Surefire plugin
+                        version — older versions miss JUnit 5 tests unless you add the JUnit 5 engine dependency.
+                        Finally check if test class names match Surefire's default patterns
+                        (<code>**/*Test.java</code>). If tests are named <code>PaymentSpec.java</code>, Surefire won't
+                        find them.</div>
+                    <div class="int-question">Q: The Spring Boot app builds fine locally but fails in Jenkins with
+                        NoClassDefFoundError. What's your hypothesis?</div>
+                    <div class="int-scenario">Model Answer: Different Java versions between local and Jenkins. Check
+                        <code>java -version</code> locally vs <code>sh 'java -version'</code> in Jenkinsfile. Or: a
+                        dependency with <code>provided</code> scope is missing at runtime because Jenkins doesn't have
+                        the expected application server. Or: the build uses a local JAR installed via
+                        <code>mvn install</code> locally but not present in the Jenkins workspace or Nexus.</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 23: COMMON MISTAKES -->
+        <section class="section" id="common-mistakes">
+            <div class="section-title"><span class="st-num">23</span>Common Mistakes</div>
+            <div class="box box-mistake"><span class="box-title">❌ Mistake 1 — Committing target/ to Git</span>The
+                <code>target/</code> directory contains build artifacts and .class files — hundreds of MB. Always add
+                <code>target/</code> to <code>.gitignore</code>. Verify with <code>git ls-files target/</code> — should
+                return empty.</div>
+            <div class="box box-mistake"><span class="box-title">❌ Mistake 2 — Storing Nexus Password in
+                    pom.xml</span>Never put credentials in pom.xml — it gets committed to Git. Use
+                <code>~/.m2/settings.xml</code> for credentials, and reference environment variables:
+                <code>${env.NEXUS_PASSWORD}</code>.</div>
+            <div class="box box-mistake"><span class="box-title">❌ Mistake 3 — Using SNAPSHOT in
+                    Production</span>SNAPSHOT versions are re-downloaded whenever Maven finds a newer one. In
+                production, every deploy could use a different binary. Always release with fixed versions (e.g.,
+                <code>1.2.3</code> not <code>1.2.3-SNAPSHOT</code>).</div>
+            <div class="box box-mistake"><span class="box-title">❌ Mistake 4 — Skipping Tests in
+                    CI</span><code>-DskipTests</code> in your CI pipeline defeats the purpose of CI. Tests should always
+                run in CI. Use it only in local dev builds when iterating on non-test code. The PR should never merge if
+                CI runs with <code>-DskipTests</code>.</div>
+            <div class="box box-mistake"><span class="box-title">❌ Mistake 5 — Wrong packaging in Parent POM</span>A
+                parent (aggregator) POM must have <code>&lt;packaging&gt;pom&lt;/packaging&gt;</code>. If you leave it
+                as the default <code>jar</code>, Maven tries to produce a JAR from a POM-only project and fails with
+                strange errors.</div>
+        </section>
+
+        <!-- SECTION 24: BEST PRACTICES -->
+        <section class="section" id="best-practices">
+            <div class="section-title"><span class="st-num">24</span>Best Practices</div>
+            <div class="box box-best"><span class="box-title">✅ Centralise Versions in Properties</span>Define all
+                dependency versions in <code>&lt;properties&gt;</code>, reference them as
+                <code>${spring.version}</code>. Never hardcode versions inside <code>&lt;dependency&gt;</code> tags
+                directly. This makes upgrades a one-line change.</div>
+            <div class="box box-best"><span class="box-title">✅ Use --batch-mode in CI</span>Always run Maven with
+                <code>--batch-mode</code> in CI pipelines. It suppresses interactive prompts and download progress bars,
+                keeping Jenkins logs clean and parseable.</div>
+            <div class="box box-best"><span class="box-title">✅ Separate Unit and Integration Tests</span>Use Surefire
+                for unit tests (<code>*Test.java</code>) and Failsafe for integration tests (<code>*IT.java</code>).
+                Integration tests run during the <code>verify</code> phase, not <code>test</code> — so you can skip them
+                with <code>mvn test</code> for fast feedback loops.</div>
+            <div class="box box-best"><span class="box-title">✅ Pin Plugin Versions</span>Always explicitly declare
+                plugin versions in your POM. If you don't, Maven uses whatever's latest in Central — and that changes.
+                Pin it: <code>&lt;version&gt;3.11.0&lt;/version&gt;</code>. This is a CI determinism issue, not a style
+                preference.</div>
+            <div class="box box-best"><span class="box-title">✅ Run mvn dependency:analyze in PRs</span>This catches:
+                (a) declared but unused dependencies bloating your artifact, (b) used but undeclared dependencies that
+                work only because a transitive dep brings them — these break when you upgrade.</div>
+        </section>
+
+        <!-- SECTION 25: CHEAT SHEET -->
+        <section class="section" id="cheatsheet">
+            <div class="section-title"><span class="st-num">25</span>Cheat Sheet</div>
+            <div class="cheat-grid">
+                <div class="cheat-card">
+                    <h4>Lifecycle Commands</h4>
+                    <span class="cc-line">mvn clean<span>delete target/</span></span>
+                    <span class="cc-line">mvn compile<span>compile only</span></span>
+                    <span class="cc-line">mvn test<span>compile + run tests</span></span>
+                    <span class="cc-line">mvn package<span>compile + test + JAR</span></span>
+                    <span class="cc-line">mvn install<span>package + local cache</span></span>
+                    <span class="cc-line">mvn deploy<span>install + remote push</span></span>
+                    <span class="cc-line">mvn verify<span>package + integration tests</span></span>
+                </div>
+                <div class="cheat-card">
+                    <h4>Useful Flags</h4>
+                    <span class="cc-line">-DskipTests<span>skip test run</span></span>
+                    <span class="cc-line">-Dmaven.test.skip<span>skip compile + run</span></span>
+                    <span class="cc-line">-P profile<span>activate profile</span></span>
+                    <span class="cc-line">-pl module<span>build specific module</span></span>
+                    <span class="cc-line">-am<span>also make dependencies</span></span>
+                    <span class="cc-line">-U<span>force SNAPSHOT update</span></span>
+                    <span class="cc-line">--batch-mode<span>non-interactive (CI)</span></span>
+                    <span class="cc-line">-X<span>debug output</span></span>
+                </div>
+                <div class="cheat-card">
+                    <h4>Diagnostic Goals</h4>
+                    <span class="cc-line">dependency:tree<span>full dep hierarchy</span></span>
+                    <span class="cc-line">dependency:analyze<span>unused/undeclared</span></span>
+                    <span class="cc-line">help:effective-pom<span>merged final POM</span></span>
+                    <span class="cc-line">versions:display-dependency-updates<span>newer versions</span></span>
+                    <span class="cc-line">versions:set<span>bump all versions</span></span>
+                </div>
+                <div class="cheat-card">
+                    <h4>Dependency Scopes</h4>
+                    <span class="cc-line">compile<span>default, in JAR</span></span>
+                    <span class="cc-line">test<span>tests only</span></span>
+                    <span class="cc-line">provided<span>compile, not packed</span></span>
+                    <span class="cc-line">runtime<span>run time, not compile</span></span>
+                    <span class="cc-line">system<span>local JAR (avoid)</span></span>
+                </div>
+                <div class="cheat-card">
+                    <h4>Local Repository</h4>
+                    <span class="cc-line">~/.m2/repository/<span>local cache</span></span>
+                    <span class="cc-line">~/.m2/settings.xml<span>machine config</span></span>
+                    <span class="cc-line">mvn install -U<span>force re-download</span></span>
+                    <span class="cc-line">rm -rf ~/.m2/repository/…<span>delete specific artifact</span></span>
+                </div>
+                <div class="cheat-card">
+                    <h4>Packaging Types</h4>
+                    <span class="cc-line">jar<span>default Java library</span></span>
+                    <span class="cc-line">war<span>web application</span></span>
+                    <span class="cc-line">pom<span>parent/aggregator</span></span>
+                    <span class="cc-line">ear<span>enterprise app (rare)</span></span>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 26: SKILL MATRIX -->
+        <section class="section" id="skill-matrix">
+            <div class="section-title"><span class="st-num">26</span>Skill Matrix</div>
+            <div class="skill-matrix">
+                <h3>📊 DevOps Skill Matrix — Updated After Module 07</h3>
+                <div class="skill-grid">
+                    <div class="skill-item"><span class="skill-name">POM.xml Structure</span><span
+                            class="skill-level proficient">PROFICIENT</span></div>
+                    <div class="skill-item"><span class="skill-name">Build Lifecycle</span><span
+                            class="skill-level proficient">PROFICIENT</span></div>
+                    <div class="skill-item"><span class="skill-name">Dependency Management</span><span
+                            class="skill-level intermediate">INTERMEDIATE</span></div>
+                    <div class="skill-item"><span class="skill-name">Plugin Configuration</span><span
+                            class="skill-level intermediate">INTERMEDIATE</span></div>
+                    <div class="skill-item"><span class="skill-name">Multi-Module Projects</span><span
+                            class="skill-level beginner">BEGINNER</span></div>
+                    <div class="skill-item"><span class="skill-name">Nexus Integration</span><span
+                            class="skill-level beginner">BEGINNER</span></div>
+                    <div class="skill-item"><span class="skill-name">JaCoCo Coverage</span><span
+                            class="skill-level intermediate">INTERMEDIATE</span></div>
+                    <div class="skill-item"><span class="skill-name">CI/CD Integration</span><span
+                            class="skill-level intermediate">INTERMEDIATE</span></div>
+                    <div class="skill-item"><span class="skill-name">Dependency Debugging</span><span
+                            class="skill-level intermediate">INTERMEDIATE</span></div>
+                    <div class="skill-item"><span class="skill-name">Maven Profiles</span><span
+                            class="skill-level beginner">BEGINNER</span></div>
+                    <div class="skill-item"><span class="skill-name">Release Management</span><span
+                            class="skill-level not-started">NOT STARTED</span></div>
+                    <div class="skill-item"><span class="skill-name">settings.xml Config</span><span
+                            class="skill-level intermediate">INTERMEDIATE</span></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 27: SUMMARY -->
+        <section class="section" id="summary">
+            <div class="section-title"><span class="st-num">27</span>Summary & Key Takeaways</div>
+            <ul class="checklist">
+                <li>Maven coordinates (groupId:artifactId:version) uniquely identify every artifact — these are your
+                    build addresses</li>
+                <li>The 3 lifecycles are: <strong>default</strong> (compile → deploy), <strong>clean</strong> (delete
+                    target/), <strong>site</strong> (docs). Running a phase runs all prior phases automatically.</li>
+                <li><code>mvn package</code> runs tests; <code>mvn package -DskipTests</code> skips them. Never skip
+                    tests in CI.</li>
+                <li><code>dependencyManagement</code> declares versions in parent; child modules declare which they want
+                    — not both</li>
+                <li>SNAPSHOT versions are for development; release versions are for deployment. Never ship SNAPSHOTs.
+                </li>
+                <li>Dependency scopes control classpath visibility: <code>compile</code> goes in JAR, <code>test</code>
+                    does not, <code>provided</code> is assumed to exist at runtime</li>
+                <li>Multi-module: parent POM has <code>&lt;packaging&gt;pom&lt;/packaging&gt;</code>; children declare
+                    <code>&lt;parent&gt;</code>; reactor builds in dependency order</li>
+                <li>Never commit passwords to pom.xml; use <code>settings.xml</code> with environment variables for
+                    Nexus credentials</li>
+                <li><code>mvn dependency:tree</code> and <code>dependency:analyze</code> are your diagnostic lifelines
+                    for build failures</li>
+                <li>Always use <code>--batch-mode</code> in CI; always pin plugin versions for reproducible builds</li>
+            </ul>
+        </section>
+
+        <!-- SECTION 28: NEXT LESSON -->
+        <section class="section" id="next-lesson">
+            <div class="section-title"><span class="st-num">28</span>Next Lesson Preview</div>
+            <div class="next-lesson-preview">
+                <h4>📚 Module 08 — Jenkins CI/CD: Pipelines, Shared Libraries & Production Workflows</h4>
+                <p>Deep dive into Jenkins: Declarative vs Scripted pipelines, shared pipeline libraries, BlueOcean,
+                    multi-branch pipelines, credentials management, webhook triggers, and building a production-grade
+                    CI/CD pipeline that compiles → tests → packages → deploys a Spring Boot application. You'll build
+                    the complete pipeline on your EC2 instance.</p>
+            </div>
+        </section>
+
+        <div class="lesson-footer">
+            <div class="footer-grid">
+                <div class="footer-section">
+                    <h4>Lesson Summary</h4>
+                    <p>This module covered Maven from first principles to production usage: POM structure, build
+                        lifecycle, dependency management including conflict resolution and exclusions, plugin
+                        configuration, multi-module projects, profiles, Nexus integration, and CI/CD integration with
+                        Jenkins and GitHub Actions.</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Completion Stats</h4>
+                    <p><strong>Sections Covered:</strong> 28<br><strong>Code Examples:</strong>
+                        20+<br><strong>Exercises:</strong> 5 (Easy + Medium + Hard)<br><strong>Interview
+                            Questions:</strong> 5<br><strong>Estimated Completion:</strong> 4-5
+                        hours<br><strong>Module:</strong> 07 of ongoing</p>
+                </div>
+            </div>
+            <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border);text-align:center;">
+                <p style="font-size:11px;color:var(--dim);margin:0;">90-Day DevOps Mastery · Module 07 — Maven Build
+                    Tool Fundamentals<br>Save as: <code>maven-fundamentals.html</code></p>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        function copyCode(btn) {
+            const block = btn.closest('.code-block');
+            const codeEl = block.querySelector('.code-content') || block.querySelector('.cb-body');
+            navigator.clipboard.writeText(codeEl.innerText).then(() => {
+                btn.textContent = '✅ Copied!'; btn.classList.add('copied');
+                setTimeout(() => { btn.textContent = '📋 Copy'; btn.classList.remove('copied'); }, 2000);
+            });
+        }
+        const sections = document.querySelectorAll('.section, .objectives, .progress-header');
+        const navLinks = document.querySelectorAll('.sidebar a');
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    navLinks.forEach(link => link.classList.remove('active'));
+                    const id = entry.target.id;
+                    if (id) { const al = document.querySelector(`.sidebar a[href="#${id}"]`); if (al) al.classList.add('active'); }
+                }
+            });
+        }, { rootMargin: '-20% 0px -70% 0px' });
+        sections.forEach(s => { if (s.id) observer.observe(s); });
+        document.querySelectorAll('.sidebar a').forEach(link => {
+            link.addEventListener('click', () => { if (window.innerWidth <= 640) document.querySelector('.sidebar').classList.remove('show'); });
+        });
+        window.addEventListener('load', () => {
+            const bar = document.querySelector('.progress-bar-fill');
+            bar.style.width = '0%';
+            setTimeout(() => { bar.style.width = '100%'; }, 300);
+        });
+    </script>
+</body>
+
+</html>
