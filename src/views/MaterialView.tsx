@@ -134,14 +134,14 @@ const MODULES: ModuleData[] = [
     lessons: 8,
     authored: 8,
     topics: [
-      { title: 'CI/CD Fundamentals', subtitle: 'Why automate?' },
-      { title: 'Jenkins Installation on AWS EC2', subtitle: 'Deploying the master' },
-      { title: 'Jenkins Architecture (Master/Agent)', subtitle: 'Scaling builds' },
-      { title: 'Essential Plugins', subtitle: 'Extending Jenkins' },
-      { title: 'Declarative Pipeline', subtitle: 'Jenkinsfile syntax' },
-      { title: 'GitHub Integration', subtitle: 'Webhooks and SCM polling' },
-      { title: 'Shared Libraries', subtitle: 'vars/, src/, structure' },
-      { title: 'P1 Incident Simulation', subtitle: 'Troubleshooting failed builds' },
+      { title: 'CI/CD Fundamentals', subtitle: 'Why automate?', anchor: '#cicd-fundamentals' },
+      { title: 'Jenkins Installation on AWS EC2', subtitle: 'Deploying the master', anchor: '#jenkins-installation' },
+      { title: 'Jenkins Architecture (Master/Agent)', subtitle: 'Scaling builds', anchor: '#jenkins-architecture' },
+      { title: 'Essential Plugins', subtitle: 'Extending Jenkins', anchor: '#essential-plugins' },
+      { title: 'Declarative Pipeline', subtitle: 'Jenkinsfile syntax', anchor: '#declarative-pipeline' },
+      { title: 'GitHub Integration', subtitle: 'Webhooks and SCM polling', anchor: '#github-integration' },
+      { title: 'Shared Libraries', subtitle: 'vars/, src/, structure', anchor: '#shared-libraries' },
+      { title: 'P1 Incident Simulation', subtitle: 'Troubleshooting failed builds', anchor: '#p1-incident' },
     ],
     labs: [
       'Lab A: Install Jenkins on EC2, configure plugins',
@@ -150,8 +150,9 @@ const MODULES: ModuleData[] = [
       'Lab D: Simulate P1 incident and rollback'
     ],
     resources: [
-      { title: 'Jenkins User Documentation', type: 'DOCS', url: '#' },
-      { title: 'Pipeline Syntax Guide', type: 'GUIDE', url: '#' },
+      { title: 'Jenkins Fundamentals Guide', type: 'INTERACTIVE', url: '/jenkins-fundamentals.html' },
+      { title: 'Jenkins User Documentation', type: 'DOCS', url: 'https://www.jenkins.io/doc/' },
+      { title: 'Pipeline Syntax Guide', type: 'GUIDE', url: 'https://www.jenkins.io/doc/book/pipeline/syntax/' },
     ],
   },
   {
@@ -493,8 +494,20 @@ const ArrowUpRight = () => (
 export const MaterialView: React.FC = () => {
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [selectedGuideUrl, setSelectedGuideUrl] = useState<string | null>(null);
+  const [selectedTopicIndex, setSelectedTopicIndex] = useState<number>(0);
+  const [completedTopics, setCompletedTopics] = useState<Set<string>>(new Set());
 
   const selectedModule = MODULES.find(m => m.id === selectedId);
+
+  const openTopic = (module: typeof MODULES[0], topicIdx: number) => {
+    const guide = module.resources?.find(r => r.type === 'INTERACTIVE' || r.type === 'GUIDE');
+    if (guide && guide.url !== '#') {
+      const topic = module.topics[topicIdx] as any;
+      const urlToOpen = topic.anchor ? `${guide.url}${topic.anchor}` : guide.url;
+      setSelectedTopicIndex(topicIdx);
+      setSelectedGuideUrl(urlToOpen);
+    }
+  };
 
   // Detail View
   if (selectedModule) {
@@ -539,11 +552,7 @@ export const MaterialView: React.FC = () => {
                   <div
                     key={idx}
                     onClick={() => {
-                      const guide = selectedModule.resources?.find(r => r.type === 'INTERACTIVE' || r.type === 'GUIDE' || r.type === 'DOCS');
-                      if (guide && guide.url !== '#') {
-                        const urlToOpen = (topic as any).anchor ? `${guide.url}${(topic as any).anchor}` : guide.url;
-                        setSelectedGuideUrl(urlToOpen);
-                      }
+                      if (selectedModule) openTopic(selectedModule, idx);
                     }}
                     style={{
                       border: '1px solid #1f1f1f',
@@ -710,13 +719,14 @@ export const MaterialView: React.FC = () => {
             title="Interactive Guide"
           />
           
-          {/* Finish Line Footer */}
+          {/* Finish Line Footer — Previous / Mark as Completed / Next */}
+          {selectedModule && (
           <div style={{
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
             background: '#0a0a0b',
-            border: '1px solid #3f1d1d', /* subtle red tint border */
+            border: '1px solid #3f1d1d',
             borderRadius: '12px',
             padding: '20px 24px',
             boxShadow: '0 4px 20px rgba(0,0,0,0.5)'
@@ -726,24 +736,67 @@ export const MaterialView: React.FC = () => {
                 Finish Line
               </div>
               <div style={{ fontSize: '13px', color: '#999' }}>
-                Lesson completed — it counts toward your streak and coverage.
+                {selectedModule.topics[selectedTopicIndex]?.title} &mdash; Lesson {selectedTopicIndex + 1} of {selectedModule.topics.length}
               </div>
             </div>
             <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-              <button style={{
-                background: 'rgba(34, 197, 94, 0.1)',
-                color: '#22c55e',
-                border: '1px solid rgba(34, 197, 94, 0.2)',
-                padding: '8px 16px',
-                borderRadius: '8px',
-                fontSize: '13px',
-                fontWeight: 600,
-                cursor: 'default'
-              }}>
-                Completed ✓
+              {/* Previous */}
+              <button
+                disabled={selectedTopicIndex === 0}
+                onClick={() => {
+                  const prev = selectedTopicIndex - 1;
+                  openTopic(selectedModule, prev);
+                }}
+                style={{
+                  background: selectedTopicIndex === 0 ? '#1a1a1a' : '#1f1f1f',
+                  color: selectedTopicIndex === 0 ? '#444' : '#ccc',
+                  border: '1px solid #2a2a2a',
+                  padding: '8px 16px',
+                  borderRadius: '8px',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  cursor: selectedTopicIndex === 0 ? 'not-allowed' : 'pointer',
+                  transition: 'all 0.2s'
+                }}
+              >
+                ← Previous
               </button>
-              <button 
-                onClick={() => setSelectedGuideUrl(null)}
+
+              {/* Mark as Completed */}
+              <button
+                onClick={() => {
+                  const key = `${selectedModule.id}-${selectedTopicIndex}`;
+                  setCompletedTopics(prev => {
+                    const next = new Set(prev);
+                    if (next.has(key)) next.delete(key); else next.add(key);
+                    return next;
+                  });
+                }}
+                style={{
+                  background: completedTopics.has(`${selectedModule.id}-${selectedTopicIndex}`) ? 'rgba(34,197,94,0.15)' : 'rgba(34,197,94,0.08)',
+                  color: '#22c55e',
+                  border: `1px solid ${completedTopics.has(`${selectedModule.id}-${selectedTopicIndex}`) ? 'rgba(34,197,94,0.5)' : 'rgba(34,197,94,0.2)'}`,
+                  padding: '8px 16px',
+                  borderRadius: '8px',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  transition: 'all 0.2s'
+                }}
+              >
+                {completedTopics.has(`${selectedModule.id}-${selectedTopicIndex}`) ? '✓ Completed' : 'Mark as Completed'}
+              </button>
+
+              {/* Next */}
+              <button
+                onClick={() => {
+                  const next = selectedTopicIndex + 1;
+                  if (next < selectedModule.topics.length) {
+                    openTopic(selectedModule, next);
+                  } else {
+                    setSelectedGuideUrl(null);
+                  }
+                }}
                 style={{
                   background: 'linear-gradient(135deg, #ef4444 0%, #b91c1c 100%)',
                   color: 'white',
@@ -753,12 +806,15 @@ export const MaterialView: React.FC = () => {
                   fontSize: '13px',
                   fontWeight: 600,
                   cursor: 'pointer',
-                  boxShadow: '0 2px 10px rgba(239, 68, 68, 0.3)'
-              }}>
-                Next lesson
+                  boxShadow: '0 2px 10px rgba(239, 68, 68, 0.3)',
+                  transition: 'all 0.2s'
+                }}
+              >
+                {selectedTopicIndex + 1 < selectedModule.topics.length ? 'Next →' : 'Finish'}
               </button>
             </div>
           </div>
+          )}
         </div>
       )}
       </React.Fragment>
