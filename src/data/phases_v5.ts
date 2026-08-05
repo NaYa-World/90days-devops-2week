@@ -11,7 +11,7 @@ export const PHASES_V5: Phase[] = [
     "estimatedCost": "Free tier eligible — $0",
     "weeklyProject": {
       "title": "Automated Linux Hardening & Monitoring Script",
-      "scenario": "Write a single idempotent Bash script that hardens a fresh Amazon Linux 2 instance: creates a deploy user, locks down SSH, installs core utilities, sets up log rotation, and writes a simple health-check cron job.",
+      "scenario": "Write a single idempotent Bash script that hardens a fresh Amazon Linux 2023 instance: creates a deploy user, locks down SSH, installs core utilities, sets up log rotation, and writes a simple health-check cron job.",
       "successCriteria": [
         "Script is idempotent — runs twice without errors",
         "SSH root login and password auth disabled",
@@ -292,11 +292,11 @@ export const PHASES_V5: Phase[] = [
       {
         "id": "p1-d10",
         "title": "Package Management & systemd Service Management",
-        "scenario": "You need to deploy a Node.js API on a fresh Amazon Linux instance: install dependencies via yum, configure the application as a systemd service that restarts on failure, and ensure it starts on boot.",
+        "scenario": "You need to deploy a Node.js API on a fresh Amazon Linux 2023 instance: install dependencies via dnf, configure the application as a systemd service that restarts on failure, and ensure it starts on boot.",
         "tasks": [
-          "Use yum/dnf to install packages, list installed, and remove with dependency cleanup",
-          "Use yum history to audit and rollback package changes",
-          "Add a custom RPM/yum repository for NodeJS from NodeSource",
+          "Use dnf to install packages, list installed, and remove with dependency cleanup",
+          "Use dnf history to audit and rollback package changes",
+          "Add a custom RPM/dnf repository for NodeJS from NodeSource",
           "Write a systemd unit file (.service) for the Node.js application",
           "Set Restart=on-failure and RestartSec in the unit file",
           "Use systemctl enable, start, status, and journalctl -u for log viewing",
@@ -304,12 +304,12 @@ export const PHASES_V5: Phase[] = [
           "Use systemd-analyze to check boot time and identify slow services"
         ],
         "commands": [
-          "sudo yum install -y nodejs",
+          "sudo dnf install -y nodejs",
           "systemctl enable --now myapp.service",
           "journalctl -u myapp.service -f --since \"1 hour ago\"",
           "systemd-analyze blame | head -10"
         ],
-        "gotcha": "Never pin to package major versions with yum install nodejs. This gives you the OS repository version which is often years behind. Add the NodeSource repository to get the current LTS. Also, systemctl enable does NOT start the service immediately — use enable --now or follow with systemctl start.",
+        "gotcha": "Never pin to package major versions with dnf install nodejs. This gives you the OS repository version which is often years behind. Add the NodeSource repository to get the current LTS. Also, systemctl enable does NOT start the service immediately — use enable --now or follow with systemctl start.",
         "interviewAnswer": "I manage application services with systemd unit files that include Restart=on-failure, dependency ordering (After=network.target), and proper environment variable injection via EnvironmentFile. This ensures the service survives crashes, reboots, and deployments without manual intervention.",
         "artifactContract": {
           "type": "gist-url",
@@ -365,7 +365,7 @@ export const PHASES_V5: Phase[] = [
           "aws ssm start-session --target i-0abc123def456",
           "sshd -t && systemctl reload sshd"
         ],
-        "gotcha": "AWS Systems Manager Session Manager requires the EC2 to have the SSM Agent installed (pre-installed on Amazon Linux 2) and an IAM Instance Profile with AmazonSSMManagedInstanceCore. Without this profile attached, you have no break-glass access path if SSH is broken.",
+        "gotcha": "AWS Systems Manager Session Manager requires the EC2 to have the SSM Agent installed (pre-installed on Amazon Linux 2023) and an IAM Instance Profile with AmazonSSMManagedInstanceCore. Without this profile attached, you have no break-glass access path if SSH is broken.",
         "interviewAnswer": "My hardening scripts always include a self-validation step: run sshd -t before restarting SSH. I also maintain AWS Systems Manager as a break-glass access path — this requires the SSM Agent and correct IAM profile to be configured at instance launch time, not after you are locked out.",
         "artifactContract": {
           "type": "github-commit",
@@ -835,7 +835,7 @@ export const PHASES_V5: Phase[] = [
         "title": "Jenkins Architecture, Installation & Master-Agent Setup",
         "scenario": "Your team needs to set up a Jenkins CI server on AWS EC2. The Jenkins master must NOT run builds directly — all builds execute on ephemeral agent nodes to isolate environments and prevent master overload.",
         "tasks": [
-          "Install Jenkins on Amazon Linux 2 via the official RPM repository",
+          "Install Jenkins on Amazon Linux 2023 via the official RPM repository",
           "Configure Jenkins behind an Nginx reverse proxy with HTTPS (self-signed cert)",
           "Set up a second EC2 instance as a permanent SSH agent node",
           "Configure agent launch via SSH with the Jenkins master SSH credential",
@@ -845,7 +845,7 @@ export const PHASES_V5: Phase[] = [
           "Configure Jenkins URL, SMTP email, and System Admin email address"
         ],
         "commands": [
-          "sudo yum install -y java-17-amazon-corretto jenkins",
+          "sudo dnf install -y java-17-amazon-corretto jenkins",
           "sudo systemctl enable --now jenkins",
           "cat /var/lib/jenkins/secrets/initialAdminPassword  # First-time setup"
         ],
@@ -1245,8 +1245,8 @@ export const PHASES_V5: Phase[] = [
           "Write a reflection document: \"10 Problems With Manual Server Deployment\""
         ],
         "commands": [
-          "sudo yum install java-17-amazon-corretto -y",
-          "sudo yum install nodejs -y  # Conflict with java? Different glibc?",
+          "sudo dnf install java-17-amazon-corretto -y",
+          "sudo dnf install nodejs -y  # Conflict with java? Different glibc?",
           "java -version && node -v  # Document exact versions",
           "node app.js  # Watch what environment-specific errors appear"
         ],
@@ -2520,7 +2520,7 @@ export const PHASES_V5: Phase[] = [
         "title": "Ansible Playbooks, Roles & Handlers",
         "scenario": "Write an Ansible playbook to configure an Nginx web server. It must install the package, copy a custom configuration file, start the service, and restart the service ONLY if the configuration file changes.",
         "tasks": [
-          "Write a playbook (site.yml) with tasks using apt/yum, copy, and service modules",
+          "Write a playbook (site.yml) with tasks using apt/dnf, copy, and service modules",
           "Run the playbook: ansible-playbook -i hosts.ini site.yml",
           "Implement a Handler (notify) to restart Nginx only when the config file changes",
           "Verify idempotency: run the playbook again and ensure Nginx is NOT restarted",
@@ -3361,7 +3361,7 @@ export const PHASES_V5: Phase[] = [
         "title": "Ansible Playbooks, Roles & Handlers",
         "scenario": "Write an Ansible playbook to configure an Nginx web server. It must install the package, copy a custom configuration file, start the service, and restart the service ONLY if the configuration file changes.",
         "tasks": [
-          "Write a playbook (site.yml) with tasks using apt/yum, copy, and service modules",
+          "Write a playbook (site.yml) with tasks using apt/dnf, copy, and service modules",
           "Run the playbook: ansible-playbook -i hosts.ini site.yml",
           "Implement a Handler (notify) to restart Nginx only when the config file changes",
           "Verify idempotency: run the playbook again and ensure Nginx is NOT restarted",
