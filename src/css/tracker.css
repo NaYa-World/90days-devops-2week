@@ -1,0 +1,6 @@
+/*
+ * Tailwind CSS — scoped to DevOpsTracker dashboard only.
+ * We import ONLY the utilities layer (no preflight/base reset)
+ * so existing global CSS variables and layout styles are unaffected.
+ */
+@import "tailwindcss/utilities";

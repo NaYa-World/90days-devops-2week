@@ -4,6 +4,7 @@ import { ErrorBoundary } from './ErrorBoundary';
 // Lazy load views for optimal code splitting & bundle size reduction
 const RoadmapView = React.lazy(() => import('../views/RoadmapView').then(m => ({ default: m.RoadmapView })));
 const RoadmapV4View = React.lazy(() => import('../views/RoadmapV4View').then(m => ({ default: m.RoadmapV4View })));
+const RoadmapV5View = React.lazy(() => import('../views/RoadmapV5View').then(m => ({ default: m.RoadmapV5View })));
 const KanbanView = React.lazy(() => import('../views/KanbanView').then(m => ({ default: m.KanbanView })));
 const FocusView = React.lazy(() => import('../views/FocusView').then(m => ({ default: m.FocusView })));
 const JobsView = React.lazy(() => import('../views/JobsView').then(m => ({ default: m.JobsView })));
@@ -131,6 +132,10 @@ export const AppViews: React.FC<AppViewsProps> = (props) => {
           case 'roadmap-v4':
             return (
               <RoadmapV4View appState={props.appState} />
+            );
+          case 'roadmap-v5':
+            return (
+              <RoadmapV5View appState={props.appState} />
             );
           case 'github-rewriter':
             return (

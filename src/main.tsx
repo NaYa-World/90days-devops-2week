@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { Capacitor } from '@capacitor/core';
-import App from './App';
+import App from './App.tsx';
 import './index.css';
 
 // Register Service Worker for PWA / offline support (web only)

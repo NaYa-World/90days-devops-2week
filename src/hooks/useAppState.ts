@@ -101,6 +101,8 @@ export interface AppState {
   notifications: AppNotification[];
   v4Tasks: Record<string, boolean>;
   v4Artifacts: Record<string, string>;
+  v5Tasks: Record<string, boolean>;
+  v5Artifacts: Record<string, string>;
   dashboardFeedback: string;
 }
 
@@ -143,6 +145,8 @@ const getBlankState = (): AppState => ({
   ],
   v4Tasks: {},
   v4Artifacts: {},
+  v5Tasks: {},
+  v5Artifacts: {},
   dashboardFeedback: ''
 });
 
@@ -160,6 +164,8 @@ const parseState = (storedStr: string, userToMigrate?: string | null): AppState 
     // Auto-migrate legacy V4 state if present
     let v4Tasks: Record<string, boolean> = parsed._v4Tasks || {};
     let v4Artifacts: Record<string, string> = parsed._v4Artifacts || {};
+    let v5Tasks: Record<string, boolean> = parsed._v5Tasks || {};
+    let v5Artifacts: Record<string, string> = parsed._v5Artifacts || {};
     
     if (userToMigrate) {
       const legacyTasksKey = `devops90_v4_tasks_${userToMigrate.toLowerCase()}`;
@@ -230,6 +236,8 @@ const parseState = (storedStr: string, userToMigrate?: string | null): AppState 
       ],
       v4Tasks,
       v4Artifacts,
+      v5Tasks,
+      v5Artifacts,
       dashboardFeedback: parsed._dashboardFeedback || ''
     };
   } catch (e) {
@@ -279,6 +287,8 @@ export function useAppState() {
         _notifications: updated.notifications,
         _v4Tasks: updated.v4Tasks,
         _v4Artifacts: updated.v4Artifacts,
+        _v5Tasks: updated.v5Tasks,
+        _v5Artifacts: updated.v5Artifacts,
         _dashboardFeedback: updated.dashboardFeedback,
       };
 
@@ -342,6 +352,8 @@ export function useAppState() {
          
          if (next.v4Tasks !== prev.v4Tasks) diffKeys.push('_v4Tasks');
          if (next.v4Artifacts !== prev.v4Artifacts) diffKeys.push('_v4Artifacts');
+         if (next.v5Tasks !== prev.v5Tasks) diffKeys.push('_v5Tasks');
+         if (next.v5Artifacts !== prev.v5Artifacts) diffKeys.push('_v5Artifacts');
          if (next.dashboardFeedback !== prev.dashboardFeedback) diffKeys.push('_dashboardFeedback');
          
          if (next.pomoSessions !== prev.pomoSessions) diffKeys.push('_pomoSessions');
@@ -1202,6 +1214,31 @@ export function useAppState() {
     }));
   };
 
+  
+  const toggleV5Task = (pi: number, di: number, ti: number) => {
+    const key = `v5_${pi}_${di}_${ti}`;
+    setAppState(prev => ({
+      ...prev,
+      v5Tasks: { ...prev.v5Tasks, [key]: !prev.v5Tasks[key] }
+    }));
+  };
+
+  const saveV5Artifact = (pi: number, di: number, url: string) => {
+    const key = `v5_${pi}_${di}`;
+    setAppState(prev => ({
+      ...prev,
+      v5Artifacts: { ...prev.v5Artifacts, [key]: url }
+    }));
+  };
+
+  const clearV5Progress = () => {
+    setAppState(prev => ({
+      ...prev,
+      v5Tasks: {},
+      v5Artifacts: {}
+    }));
+  };
+
   const clearV4Progress = () => {
     updateState(prev => ({
       ...prev,
@@ -1290,6 +1327,9 @@ export function useAppState() {
     toggleV4Task,
     saveV4Artifact,
     clearV4Progress,
+    toggleV5Task,
+    saveV5Artifact,
+    clearV5Progress,
     saveDashboardFeedback
   };
 }
