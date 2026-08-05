@@ -37,12 +37,16 @@
     "@sentry/capacitor": "^4.0.0",
     "@vercel/analytics": "^2.0.1",
     "canvas-confetti": "^1.6.0",
+    "lucide-react": "^1.28.0",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "recharts": "^3.10.1",
+    "tailwindcss": "^4.3.3"
   },
   "devDependencies": {
     "@capacitor/assets": "^3.0.5",
     "@playwright/test": "^1.61.0",
+    "@tailwindcss/vite": "^4.3.3",
     "@testing-library/react": "^14.2.1",
     "@types/canvas-confetti": "^1.6.0",
     "@types/node": "^25.9.3",
