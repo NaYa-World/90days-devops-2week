@@ -50,8 +50,8 @@
                         </goals>
                         <phase>generate-resources</phase>
                         <configuration>
-                            <!-- You could also use 'ci' instead of 'install' for stricter Jenkins builds -->
-                            <arguments>install</arguments>
+                            <!-- Use 'ci' instead of 'install' for strict, deterministic CI builds -->
+                            <arguments>ci</arguments>
                         </configuration>
                     </execution>
 

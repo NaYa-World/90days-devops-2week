@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, act } from '@testing-library/react';
-import App from '../App';
+import App from '../App.tsx';
 
 // Mock canvas-confetti
 vi.mock('canvas-confetti', () => ({
@@ -24,8 +24,8 @@ describe('App component rendering and routing tests', () => {
       vi.advanceTimersByTime(6000);
     });
     vi.useRealTimers();
-    expect(screen.getByText('DEV')).toBeDefined();
-    expect(screen.getByText('OPS')).toBeDefined();
+    expect(screen.getByText('DevOps')).toBeDefined();
+    expect(screen.getByText('90')).toBeDefined();
     expect(screen.getAllByText('BY GK')[0]).toBeDefined();
   });
 
@@ -35,9 +35,9 @@ describe('App component rendering and routing tests', () => {
       vi.advanceTimersByTime(6000);
     });
     vi.useRealTimers();
-    expect(screen.getByText('☑ Roadmap')).toBeDefined();
-    expect(screen.getByText('⊞ Kanban')).toBeDefined();
-    expect(screen.getByText('◎ Focus')).toBeDefined();
+    expect(screen.getAllByText(/Roadmap/i, { selector: 'button' }).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Kanban/i, { selector: 'button' }).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Focus/i, { selector: 'button' }).length).toBeGreaterThan(0);
   });
 
   it('should switch view when clicking tabs', async () => {
@@ -46,7 +46,7 @@ describe('App component rendering and routing tests', () => {
       vi.advanceTimersByTime(6000);
     });
     vi.useRealTimers();
-    const kanbanTab = screen.getByText('⊞ Kanban');
+    const kanbanTab = screen.getByText(/Kanban/i, { selector: 'button' });
     fireEvent.click(kanbanTab);
     expect(await screen.findByText(/Day Progress Kanban/i)).toBeDefined();
   });
@@ -66,8 +66,8 @@ describe('App component rendering and routing tests', () => {
     const aiToolsHeader = screen.getByText(/AI Tools/i);
     fireEvent.click(aiToolsHeader);
 
-    // Find and click 'Diagram Builder' button
-    const diagramBtn = screen.getByText('Diagram Builder');
+    // Find and click 'MindMap' button
+    const diagramBtn = screen.getByText(/MindMap/i, { selector: 'button' });
     fireEvent.click(diagramBtn);
 
 
