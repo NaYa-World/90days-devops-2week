@@ -29,7 +29,7 @@ import { AppShortcuts } from '@capawesome/capacitor-app-shortcuts';
 import { Network } from '@capacitor/network';
 import { showToast } from './components/Toast';
 import {
-  LayoutGrid, Clock, Compass, Library, 
+  LayoutGrid, Clock, Compass, Library, Map,
   Briefcase, Code, Layers, HelpCircle, MessageSquare, 
   LineChart, Settings
 } from 'lucide-react';
@@ -544,7 +544,8 @@ export const App: React.FC = () => {
       items: [
         { view: 'dashboard', icon: <LayoutGrid size={18} strokeWidth={1.5} />, label: 'Overview' },
         { view: 'focus', icon: <Clock size={18} strokeWidth={1.5} />, label: "Today's Lesson" },
-        { view: 'roadmap-v4', icon: <Compass size={18} strokeWidth={1.5} />, label: 'Explore a Topic' },
+        { view: 'roadmap-v4', icon: <Compass size={18} strokeWidth={1.5} />, label: 'v4 Roadmap' },
+        { view: 'roadmap-v5', icon: <Map size={18} strokeWidth={1.5} />, label: 'v5 Roadmap' },
         { view: 'material', icon: <Library size={18} strokeWidth={1.5} />, label: 'Knowledge Library' },
       ],
     },
@@ -596,8 +597,8 @@ export const App: React.FC = () => {
         height: '100vh',
         position: 'sticky',
         top: 0,
-        borderRight: '1px solid rgba(255,255,255,0.07)',
-        background: 'rgba(14,14,16,0.90)',
+        
+        
         backdropFilter: 'blur(20px)',
         WebkitBackdropFilter: 'blur(20px)',
         overflowY: 'auto',
@@ -677,8 +678,8 @@ export const App: React.FC = () => {
           gap: '8px',
           padding: '0 20px',
           height: '53px',
-          borderBottom: '1px solid rgba(255,255,255,0.07)',
-          background: 'rgba(14,14,16,0.85)',
+          
+          
           backdropFilter: 'blur(20px)',
           WebkitBackdropFilter: 'blur(20px)',
           position: 'sticky',
