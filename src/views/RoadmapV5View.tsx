@@ -29,7 +29,7 @@ const TaskRow = React.memo(({ task, isDone, onToggle }: { task: string, isDone: 
       width: '14px',
       height: '14px',
       border: isDone ? 'none' : '1px solid rgba(255,255,255,0.25)',
-      background: isDone ? '#38bdf8' : 'transparent',
+      background: isDone ? '#a855f7' : 'transparent',
       borderRadius: '3px',
       display: 'flex',
       alignItems: 'center',
@@ -296,7 +296,7 @@ export const RoadmapV5View: React.FC<RoadmapV5ViewProps> = ({ appState }) => {
 
           <div style={{ background: 'rgba(255,255,255,0.02)', padding: '14px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.03)' }}>
             <div style={{ fontSize: '11px', color: '#8f9bb3', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.5px' }}>Tasks Completed</div>
-            <div style={{ fontSize: '24px', fontWeight: 800, color: '#38bdf8', marginTop: '4px' }}>{overallTaskPercent}%</div>
+            <div style={{ fontSize: '24px', fontWeight: 800, color: '#a855f7', marginTop: '4px' }}>{overallTaskPercent}%</div>
             <div style={{ fontSize: '12px', color: '#8f9bb3', marginTop: '2px' }}>{completedTasks} / {totalTasks} Tasks</div>
           </div>
 
@@ -596,7 +596,7 @@ export const RoadmapV5View: React.FC<RoadmapV5ViewProps> = ({ appState }) => {
                             {/* 2. Tasks Checklist */}
                             <div style={{ margin: '16px 0' }}>
                               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                                <div style={{ fontSize: '11px', color: '#38bdf8', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.5px' }}>
+                                <div style={{ fontSize: '11px', color: '#a855f7', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.5px' }}>
                                   📋 Execution Checklist
                                 </div>
                                 <div style={{ display: 'flex', gap: '8px' }}>
@@ -643,8 +643,8 @@ export const RoadmapV5View: React.FC<RoadmapV5ViewProps> = ({ appState }) => {
                                     style={{
                                       fontSize: '9px',
                                       fontWeight: 700,
-                                      color: '#38bdf8',
-                                      border: '1px solid rgba(56,189,248,0.2)',
+                                      color: '#a855f7',
+                                      border: '1px solid rgba(168,85,247,0.2)',
                                       background: 'transparent',
                                       padding: '2px 6px',
                                       borderRadius: '4px',
