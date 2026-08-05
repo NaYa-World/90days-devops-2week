@@ -253,7 +253,7 @@ export const RoadmapV5View: React.FC<RoadmapV5ViewProps> = ({ appState }) => {
       {/* HEADER Progress Dashboard */}
       <div style={{
         background: 'linear-gradient(135deg, #131520 0%, #0c0e17 100%)',
-        border: '1px solid rgba(255,255,255,0.05)',
+        border: '1px solid var(--border)',
         borderRadius: '16px',
         padding: '24px',
         marginBottom: '24px',
@@ -261,10 +261,10 @@ export const RoadmapV5View: React.FC<RoadmapV5ViewProps> = ({ appState }) => {
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '16px' }}>
           <div>
-            <h1 style={{ margin: 0, fontSize: '24px', fontWeight: 800, letterSpacing: '-0.5px', color: '#fff' }}>
+            <h1 style={{ margin: 0, fontSize: '24px', fontWeight: 800, letterSpacing: '-0.5px', color: 'var(--text, #fff)' }}>
               🔥 DevOps Zero to Job — 100 Days V5
             </h1>
-            <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: '#8f9bb3' }}>
+            <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: 'var(--muted, #8f9bb3)' }}>
               Verifiable artifact-driven curriculum with real-world incident simulations.
             </p>
           </div>
@@ -288,22 +288,22 @@ export const RoadmapV5View: React.FC<RoadmapV5ViewProps> = ({ appState }) => {
 
         {/* STATS TILES */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '16px', marginBottom: '20px' }}>
-          <div style={{ background: 'rgba(255,255,255,0.02)', padding: '14px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.03)' }}>
-            <div style={{ fontSize: '11px', color: '#8f9bb3', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.5px' }}>Overall Progress</div>
+          <div style={{ background: 'var(--s2, rgba(255,255,255,0.02))', padding: '14px', borderRadius: '12px', border: '1px solid var(--border)' }}>
+            <div style={{ fontSize: '11px', color: 'var(--muted, #8f9bb3)', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.5px' }}>Overall Progress</div>
             <div style={{ fontSize: '24px', fontWeight: 800, color: 'var(--green, #00d9a0)', marginTop: '4px' }}>{overallDayPercent}%</div>
-            <div style={{ fontSize: '12px', color: '#8f9bb3', marginTop: '2px' }}>{completedDaysCount} / {totalDaysCount} Days complete</div>
+            <div style={{ fontSize: '12px', color: 'var(--muted, #8f9bb3)', marginTop: '2px' }}>{completedDaysCount} / {totalDaysCount} Days complete</div>
           </div>
 
-          <div style={{ background: 'rgba(255,255,255,0.02)', padding: '14px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.03)' }}>
-            <div style={{ fontSize: '11px', color: '#8f9bb3', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.5px' }}>Tasks Completed</div>
+          <div style={{ background: 'var(--s2, rgba(255,255,255,0.02))', padding: '14px', borderRadius: '12px', border: '1px solid var(--border)' }}>
+            <div style={{ fontSize: '11px', color: 'var(--muted, #8f9bb3)', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.5px' }}>Tasks Completed</div>
             <div style={{ fontSize: '24px', fontWeight: 800, color: '#a855f7', marginTop: '4px' }}>{overallTaskPercent}%</div>
-            <div style={{ fontSize: '12px', color: '#8f9bb3', marginTop: '2px' }}>{completedTasks} / {totalTasks} Tasks</div>
+            <div style={{ fontSize: '12px', color: 'var(--muted, #8f9bb3)', marginTop: '2px' }}>{completedTasks} / {totalTasks} Tasks</div>
           </div>
 
-          <div style={{ background: 'rgba(255,255,255,0.02)', padding: '14px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.03)' }}>
-            <div style={{ fontSize: '11px', color: '#8f9bb3', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.5px' }}>Total XP Earned</div>
+          <div style={{ background: 'var(--s2, rgba(255,255,255,0.02))', padding: '14px', borderRadius: '12px', border: '1px solid var(--border)' }}>
+            <div style={{ fontSize: '11px', color: 'var(--muted, #8f9bb3)', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.5px' }}>Total XP Earned</div>
             <div style={{ fontSize: '24px', fontWeight: 800, color: '#ffc850', marginTop: '4px' }}>{totalXP.toLocaleString()} XP</div>
-            <div style={{ fontSize: '12px', color: '#8f9bb3', marginTop: '2px' }}>+15 XP/task, +100 XP/day</div>
+            <div style={{ fontSize: '12px', color: 'var(--muted, #8f9bb3)', marginTop: '2px' }}>+15 XP/task, +100 XP/day</div>
           </div>
         </div>
 
@@ -316,16 +316,16 @@ export const RoadmapV5View: React.FC<RoadmapV5ViewProps> = ({ appState }) => {
             onChange={e => setSearch(e.target.value)}
             style={{
               flex: 1,
-              background: '#07090f',
-              border: '1px solid rgba(255,255,255,0.08)',
+              background: 'var(--bg, #07090f)',
+              border: '1px solid var(--border)',
               padding: '10px 16px',
               borderRadius: '10px',
               fontSize: '13px',
-              color: '#fff',
+              color: 'var(--text, #fff)',
               outline: 'none',
             }}
           />
-          <div style={{ display: 'flex', gap: '6px', background: '#07090f', padding: '4px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.08)' }}>
+          <div style={{ display: 'flex', gap: '6px', background: 'var(--bg, #07090f)', padding: '4px', borderRadius: '10px', border: '1px solid var(--border)' }}>
             {(['all', 'todo', 'done'] as const).map(f => (
               <button
                 key={f}
@@ -351,7 +351,7 @@ export const RoadmapV5View: React.FC<RoadmapV5ViewProps> = ({ appState }) => {
 
       {/* SEARCH QUERY NORMALIZATION */}
       {search && (
-        <p style={{ fontSize: '13px', color: '#8f9bb3', margin: '0 0 16px 8px' }}>
+        <p style={{ fontSize: '13px', color: 'var(--muted, #8f9bb3)', margin: '0 0 16px 8px' }}>
           Filtering roadmap items matching: &quot;{search}&quot;
         </p>
       )}
@@ -381,8 +381,8 @@ export const RoadmapV5View: React.FC<RoadmapV5ViewProps> = ({ appState }) => {
             <div
               key={phase.id}
               style={{
-                background: '#131520',
-                border: '1px solid rgba(255,255,255,0.06)',
+                background: 'var(--s1, #131520)',
+                border: '1px solid var(--border)',
                 borderRadius: '12px',
                 overflow: 'hidden',
                 boxShadow: '0 4px 15px rgba(0,0,0,0.15)',
@@ -409,11 +409,11 @@ export const RoadmapV5View: React.FC<RoadmapV5ViewProps> = ({ appState }) => {
                     <span style={{ fontSize: '11px', color: '#ff5f5f', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                       Phase {phase.phase} • {phase.days}
                     </span>
-                    <span style={{ fontSize: '10px', color: '#8f9bb3', background: 'rgba(255,255,255,0.05)', padding: '1px 6px', borderRadius: '4px' }}>
+                    <span style={{ fontSize: '10px', color: 'var(--muted, #8f9bb3)', background: 'var(--s3, rgba(255,255,255,0.05))', padding: '1px 6px', borderRadius: '4px' }}>
                       {phase.instanceType}
                     </span>
                   </div>
-                  <h3 style={{ margin: '4px 0 0 0', fontSize: '16px', fontWeight: 700, color: '#fff' }}>
+                  <h3 style={{ margin: '4px 0 0 0', fontSize: '16px', fontWeight: 700, color: 'var(--text, #fff)' }}>
                     {phase.title}
                   </h3>
                 </div>
@@ -441,7 +441,7 @@ export const RoadmapV5View: React.FC<RoadmapV5ViewProps> = ({ appState }) => {
                     style={{
                       transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
                       transition: 'transform 0.2s',
-                      color: '#8f9bb3',
+                      color: 'var(--muted, #8f9bb3)',
                     }}
                   >
                     <polyline points="6 9 12 15 18 9" />
@@ -454,8 +454,8 @@ export const RoadmapV5View: React.FC<RoadmapV5ViewProps> = ({ appState }) => {
                 <div style={{ padding: '0 0 16px 0' }}>
 
                   {/* Phase cost detail banner */}
-                  <div style={{ padding: '10px 20px', background: 'rgba(255,255,255,0.02)', borderBottom: '1px solid rgba(255,255,255,0.03)', display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#8f9bb3' }}>
-                    <span>Estimated Cloud Cost: <strong style={{ color: '#fff' }}>{phase.estimatedCost}</strong></span>
+                  <div style={{ padding: '10px 20px', background: 'var(--s2, rgba(255,255,255,0.02))', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: 'var(--muted, #8f9bb3)' }}>
+                    <span>Estimated Cloud Cost: <strong style={{ color: 'var(--text, #fff)' }}>{phase.estimatedCost}</strong></span>
                     {phase.instanceWarning && <span style={{ color: '#ef4444' }}>⚠️ {phase.instanceWarning}</span>}
                   </div>
 
@@ -489,7 +489,7 @@ export const RoadmapV5View: React.FC<RoadmapV5ViewProps> = ({ appState }) => {
                       <div
                         key={day.id}
                         style={{
-                          borderBottom: '1px solid rgba(255,255,255,0.03)',
+                          borderBottom: '1px solid var(--border)',
                           background: dayComplete ? 'rgba(0,217,160,0.01)' : 'transparent',
                         }}
                       >
@@ -536,7 +536,7 @@ export const RoadmapV5View: React.FC<RoadmapV5ViewProps> = ({ appState }) => {
 
                           <div style={{ flex: 1 }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                              <span style={{ fontSize: '10px', color: '#8f9bb3', fontWeight: 700, fontFamily: 'monospace' }}>
+                              <span style={{ fontSize: '10px', color: 'var(--muted, #8f9bb3)', fontWeight: 700, fontFamily: 'monospace' }}>
                                 Day {di + 1}
                               </span>
                               {isMissingArtifact && (
@@ -551,7 +551,7 @@ export const RoadmapV5View: React.FC<RoadmapV5ViewProps> = ({ appState }) => {
                           </div>
 
                           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <span style={{ fontSize: '11px', color: '#8f9bb3', fontFamily: 'monospace' }}>
+                            <span style={{ fontSize: '11px', color: 'var(--muted, #8f9bb3)', fontFamily: 'monospace' }}>
                               {dayDoneTasksCount}/{day.tasks.length}
                             </span>
                             <svg
@@ -564,7 +564,7 @@ export const RoadmapV5View: React.FC<RoadmapV5ViewProps> = ({ appState }) => {
                               style={{
                                 transform: dayIsOpen ? 'rotate(180deg)' : 'rotate(0deg)',
                                 transition: 'transform 0.2s',
-                                color: '#8f9bb3',
+                                color: 'var(--muted, #8f9bb3)',
                               }}
                             >
                               <polyline points="6 9 12 15 18 9" />
@@ -574,12 +574,12 @@ export const RoadmapV5View: React.FC<RoadmapV5ViewProps> = ({ appState }) => {
 
                         {/* Day Collapsible Detail Container */}
                         {dayIsOpen && (
-                          <div style={{ padding: '0 20px 20px 52px', borderTop: '1px solid rgba(255,255,255,0.02)', background: 'rgba(0,0,0,0.1)' }}>
+                          <div style={{ padding: '0 20px 20px 52px', borderTop: '1px solid var(--border)', background: 'var(--s2, rgba(0,0,0,0.1))' }}>
 
                             {/* Instance Notes */}
                             {day.instanceNote && (
-                              <div style={{ margin: '12px 0 8px 0', fontSize: '11px', color: '#8f9bb3', background: 'rgba(255,255,255,0.03)', padding: '6px 12px', borderRadius: '6px', display: 'inline-block' }}>
-                                💡 Instance Advice: <span style={{ color: '#fff' }}>{day.instanceNote}</span>
+                              <div style={{ margin: '12px 0 8px 0', fontSize: '11px', color: 'var(--muted, #8f9bb3)', background: 'var(--s3, rgba(255,255,255,0.03))', padding: '6px 12px', borderRadius: '6px', display: 'inline-block' }}>
+                                💡 Instance Advice: <span style={{ color: 'var(--text, #fff)' }}>{day.instanceNote}</span>
                               </div>
                             )}
 
@@ -588,7 +588,7 @@ export const RoadmapV5View: React.FC<RoadmapV5ViewProps> = ({ appState }) => {
                               <div style={{ fontSize: '11px', color: '#ef4444', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.5px', marginBottom: '4px' }}>
                                 🔴 Target Production Scenario
                               </div>
-                              <div style={{ fontSize: '13px', lineHeight: 1.6, color: '#c3c9d7' }}>
+                              <div style={{ fontSize: '13px', lineHeight: 1.6, color: 'var(--sub, #c3c9d7)' }}>
                                 {day.scenario}
                               </div>
                             </div>
@@ -694,8 +694,8 @@ export const RoadmapV5View: React.FC<RoadmapV5ViewProps> = ({ appState }) => {
                                   </button>
                                 </div>
                                 <div style={{
-                                  background: '#07090f',
-                                  border: '1px solid rgba(255,255,255,0.08)',
+                                  background: 'var(--bg, #07090f)',
+                                  border: '1px solid var(--border)',
                                   borderRadius: '8px',
                                   padding: '12px 16px',
                                   fontFamily: 'monospace',
@@ -707,7 +707,7 @@ export const RoadmapV5View: React.FC<RoadmapV5ViewProps> = ({ appState }) => {
                                 }}>
                                   {day.commands.map((cmd: any, cIdx: number) => (
                                     <div key={cIdx} style={{ marginBottom: cIdx === day.commands!.length - 1 ? 0 : '4px' }}>
-                                      <span style={{ color: '#8f9bb3', marginRight: '8px' }}>$</span>
+                                      <span style={{ color: 'var(--muted, #8f9bb3)', marginRight: '8px' }}>$</span>
                                       {cmd}
                                     </div>
                                   ))}
@@ -727,7 +727,7 @@ export const RoadmapV5View: React.FC<RoadmapV5ViewProps> = ({ appState }) => {
                                 <span>⚠️</span>
                                 <span>Real Production Gotcha</span>
                               </div>
-                              <div style={{ fontSize: '12px', lineHeight: 1.6, color: '#c3c9d7' }}>
+                              <div style={{ fontSize: '12px', lineHeight: 1.6, color: 'var(--sub, #c3c9d7)' }}>
                                 {day.gotcha}
                               </div>
                             </div>
@@ -755,7 +755,7 @@ export const RoadmapV5View: React.FC<RoadmapV5ViewProps> = ({ appState }) => {
                                   </span>
                                 </div>
                                 {openV5Notes[dayKey] && (
-                                  <div style={{ padding: '16px', background: 'var(--s1, #07090f)', borderTop: '1px solid rgba(0,217,160,0.1)' }}>
+                                  <div style={{ padding: '16px', background: 'var(--s1, #131520)', borderTop: '1px solid rgba(0,217,160,0.1)' }}>
                                     <SimpleMarkdown text={BOOTCAMP_NOTES_V5[day.id]} />
                                   </div>
                                 )}
@@ -763,18 +763,18 @@ export const RoadmapV5View: React.FC<RoadmapV5ViewProps> = ({ appState }) => {
                             )}
 
                             {/* 5. Interview Reveal Box */}
-                            <div style={{ margin: '16px 0', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '8px', overflow: 'hidden' }}>
+                            <div style={{ margin: '16px 0', border: '1px solid var(--border)', borderRadius: '8px', overflow: 'hidden' }}>
                               <div
                                 style={{
                                   padding: '12px 14px',
-                                  background: 'rgba(255,255,255,0.01)',
+                                  background: 'var(--s2, rgba(255,255,255,0.01))',
                                   borderBottom: '1px solid rgba(255,255,255,0.05)'
                                 }}
                               >
                                 <div style={{ fontSize: '11px', color: '#c084fc', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.5px', marginBottom: '6px' }}>
                                   🎤 STAR Interview Preparation Question
                                 </div>
-                                <div style={{ fontSize: '13.5px', lineHeight: 1.5, color: '#fff', fontWeight: 500 }}>
+                                <div style={{ fontSize: '13.5px', lineHeight: 1.5, color: 'var(--text, #fff)', fontWeight: 500 }}>
                                   {getSTARQuestion(day)}
                                 </div>
                               </div>
@@ -783,7 +783,7 @@ export const RoadmapV5View: React.FC<RoadmapV5ViewProps> = ({ appState }) => {
                                 onClick={() => setRevealedAnswers(prev => ({ ...prev, [dayKey]: !prev[dayKey] }))}
                                 style={{
                                   padding: '10px 14px',
-                                  background: 'rgba(255,255,255,0.02)',
+                                  background: 'var(--s2, rgba(255,255,255,0.02))',
                                   cursor: 'pointer',
                                   display: 'flex',
                                   justifyContent: 'space-between',
@@ -798,11 +798,11 @@ export const RoadmapV5View: React.FC<RoadmapV5ViewProps> = ({ appState }) => {
                                 </span>
                               </div>
                               {revealedAnswers[dayKey] && (
-                                <div style={{ padding: '14px', background: 'rgba(0,0,0,0.15)', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-                                  <div style={{ fontSize: '11px', fontStyle: 'italic', color: '#8f9bb3', marginBottom: '8px' }}>
+                                <div style={{ padding: '14px', background: 'var(--s3, rgba(0,0,0,0.15))', borderTop: '1px solid var(--border)' }}>
+                                  <div style={{ fontSize: '11px', fontStyle: 'italic', color: 'var(--muted, #8f9bb3)', marginBottom: '8px' }}>
                                     &quot;Answer the question in your own words, then verify with the senior expert template below:&quot;
                                   </div>
-                                  <div style={{ fontSize: '13px', lineHeight: 1.6, color: '#00d9a0', fontFamily: 'var(--mono)', padding: '10px', background: 'rgba(0,0,0,0.2)', borderRadius: '6px', border: '1px solid rgba(0,217,160,0.1)' }}>
+                                  <div style={{ fontSize: '13px', lineHeight: 1.6, color: '#00d9a0', fontFamily: 'var(--mono)', padding: '10px', background: 'var(--bg, rgba(0,0,0,0.2))', borderRadius: '6px', border: '1px solid rgba(0,217,160,0.1)' }}>
                                     {day.interviewAnswer}
                                   </div>
                                 </div>
@@ -811,19 +811,19 @@ export const RoadmapV5View: React.FC<RoadmapV5ViewProps> = ({ appState }) => {
 
                             {/* 6. Artifact Verification Contract */}
                             <div style={{
-                              background: 'rgba(255,255,255,0.01)',
-                              border: '1px solid rgba(255,255,255,0.06)',
+                              background: 'var(--s2, rgba(255,255,255,0.01))',
+                              border: '1px solid var(--border)',
                               borderRadius: '8px',
                               padding: '14px',
                               marginTop: '16px',
                             }}>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
                                 <span style={{ fontSize: '13px' }}>🔗</span>
-                                <span style={{ fontSize: '11px', fontWeight: 700, color: '#fff', fontFamily: 'monospace', textTransform: 'uppercase' }}>
+                                <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text, #fff)', fontFamily: 'monospace', textTransform: 'uppercase' }}>
                                   Verifiable Artifact Contract
                                 </span>
                               </div>
-                              <p style={{ margin: '0 0 10px 0', fontSize: '12px', color: '#8f9bb3' }}>
+                              <p style={{ margin: '0 0 10px 0', fontSize: '12px', color: 'var(--muted, #8f9bb3)' }}>
                                 {day.artifactContract.instruction}
                               </p>
 
@@ -835,12 +835,12 @@ export const RoadmapV5View: React.FC<RoadmapV5ViewProps> = ({ appState }) => {
                                   onChange={e => updateArtifactUrl(pi, di, e.target.value)}
                                   style={{
                                     flex: 1,
-                                    background: '#07090f',
-                                    border: '1px solid rgba(255,255,255,0.08)',
+                                    background: 'var(--bg, #07090f)',
+                                    border: '1px solid var(--border)',
                                     borderRadius: '6px',
                                     padding: '8px 12px',
                                     fontSize: '12px',
-                                    color: '#fff',
+                                    color: 'var(--text, #fff)',
                                     outline: 'none',
                                   }}
                                 />
@@ -851,7 +851,7 @@ export const RoadmapV5View: React.FC<RoadmapV5ViewProps> = ({ appState }) => {
                                     padding: '8px 12px',
                                     borderRadius: '6px',
                                     background: 'var(--p1, #6366f1)',
-                                    color: '#fff',
+                                    color: 'var(--text, #fff)',
                                     border: 'none',
                                     fontSize: '11px',
                                     fontWeight: 600,
@@ -893,22 +893,22 @@ export const RoadmapV5View: React.FC<RoadmapV5ViewProps> = ({ appState }) => {
                   <div style={{ padding: '20px 20px 0 20px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
 
                     {/* Weekly Project */}
-                    <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)', borderRadius: '8px', padding: '16px' }}>
+                    <div style={{ background: 'var(--s2, rgba(255,255,255,0.02))', border: '1px solid var(--border)', borderRadius: '8px', padding: '16px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
                         <span style={{ fontSize: '18px' }}>🚀</span>
-                        <h4 style={{ margin: 0, fontSize: '14px', color: '#fff', fontWeight: 700 }}>
+                        <h4 style={{ margin: 0, fontSize: '14px', color: 'var(--text, #fff)', fontWeight: 700 }}>
                           Weekly Capstone Project
                         </h4>
                       </div>
                       <h5 style={{ margin: '0 0 6px 0', fontSize: '13px', color: 'var(--green, #00d9a0)' }}>
                         {phase.weeklyProject.title}
                       </h5>
-                      <p style={{ margin: '0 0 12px 0', fontSize: '12px', lineHeight: 1.5, color: '#8f9bb3' }}>
+                      <p style={{ margin: '0 0 12px 0', fontSize: '12px', lineHeight: 1.5, color: 'var(--muted, #8f9bb3)' }}>
                         {phase.weeklyProject.scenario}
                       </p>
 
-                      <div style={{ fontSize: '11px', fontWeight: 700, color: '#fff', textTransform: 'uppercase', marginBottom: '6px' }}>Success Criteria:</div>
-                      <ul style={{ margin: 0, paddingLeft: '16px', fontSize: '11px', lineHeight: 1.6, color: '#c3c9d7' }}>
+                      <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text, #fff)', textTransform: 'uppercase', marginBottom: '6px' }}>Success Criteria:</div>
+                      <ul style={{ margin: 0, paddingLeft: '16px', fontSize: '11px', lineHeight: 1.6, color: 'var(--sub, #c3c9d7)' }}>
                         {phase.weeklyProject.successCriteria.map((c: any, idx: number) => (
                           <li key={idx} style={{ marginBottom: '4px' }}>{c}</li>
                         ))}
@@ -926,13 +926,13 @@ export const RoadmapV5View: React.FC<RoadmapV5ViewProps> = ({ appState }) => {
                       <h5 style={{ margin: '0 0 6px 0', fontSize: '13px', color: '#ff5f5f' }}>
                         {phase.incidentDrill.title}
                       </h5>
-                      <p style={{ margin: '0 0 12px 0', fontSize: '12px', lineHeight: 1.5, color: '#8f9bb3' }}>
+                      <p style={{ margin: '0 0 12px 0', fontSize: '12px', lineHeight: 1.5, color: 'var(--muted, #8f9bb3)' }}>
                         {phase.incidentDrill.scenario}
                       </p>
 
-                      <div style={{ display: 'flex', gap: '16px', fontSize: '11px', color: '#c3c9d7', marginTop: '12px' }}>
-                        <div>Time Limit: <strong style={{ color: '#fff' }}>{phase.incidentDrill.timeLimit}</strong></div>
-                        <div>Post-Mortem: <strong style={{ color: '#fff' }}>{phase.incidentDrill.postMortemRequired ? 'Required' : 'Optional'}</strong></div>
+                      <div style={{ display: 'flex', gap: '16px', fontSize: '11px', color: 'var(--sub, #c3c9d7)', marginTop: '12px' }}>
+                        <div>Time Limit: <strong style={{ color: 'var(--text, #fff)' }}>{phase.incidentDrill.timeLimit}</strong></div>
+                        <div>Post-Mortem: <strong style={{ color: 'var(--text, #fff)' }}>{phase.incidentDrill.postMortemRequired ? 'Required' : 'Optional'}</strong></div>
                       </div>
                     </div>
 
@@ -977,7 +977,7 @@ export const RoadmapV5View: React.FC<RoadmapV5ViewProps> = ({ appState }) => {
           backdropFilter: 'blur(5px)'
         }}>
           <div style={{
-            background: '#141520',
+            background: 'var(--s1, #141520)',
             width: '90%',
             maxWidth: '800px',
             maxHeight: '85vh',
@@ -994,7 +994,7 @@ export const RoadmapV5View: React.FC<RoadmapV5ViewProps> = ({ appState }) => {
               justifyContent: 'space-between',
               alignItems: 'center'
             }}>
-              <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: '#fff' }}>
+              <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: 'var(--text, #fff)' }}>
                 Bootcamp Notes
               </h3>
               <button 

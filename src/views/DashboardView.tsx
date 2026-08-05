@@ -142,29 +142,29 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ appState, switchVi
         marginBottom: '24px' 
       }}>
         {/* Level & XP */}
-        <div style={{ background: '#131520', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px', padding: '16px' }}>
-          <div style={{ fontSize: '11px', color: '#8f9bb3', textTransform: 'uppercase', fontWeight: 600 }}>Rank & Level</div>
+        <div style={{ background: 'var(--s1, #131520)', border: '1px solid var(--border)', borderRadius: '12px', padding: '16px' }}>
+          <div style={{ fontSize: '11px', color: 'var(--sub, #8f9bb3)', textTransform: 'uppercase', fontWeight: 600 }}>Rank & Level</div>
           <div style={{ fontSize: '20px', fontWeight: 700, margin: '8px 0 4px 0', color: levelInfo.lvl.color }}>
             {levelInfo.lvl.title}
           </div>
-          <div style={{ fontSize: '12px', color: '#8f9bb3' }}>{xp} XP accumulated</div>
+          <div style={{ fontSize: '12px', color: 'var(--sub, #8f9bb3)' }}>{xp} XP accumulated</div>
         </div>
 
         {/* Streak */}
-        <div style={{ background: '#131520', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px', padding: '16px' }}>
-          <div style={{ fontSize: '11px', color: '#8f9bb3', textTransform: 'uppercase', fontWeight: 600 }}>Active Streak</div>
+        <div style={{ background: 'var(--s1, #131520)', border: '1px solid var(--border)', borderRadius: '12px', padding: '16px' }}>
+          <div style={{ fontSize: '11px', color: 'var(--sub, #8f9bb3)', textTransform: 'uppercase', fontWeight: 600 }}>Active Streak</div>
           <div style={{ fontSize: '28px', fontWeight: 800, margin: '4px 0', color: '#f5a623' }}>
             🔥 {state.streak} Days
           </div>
-          <div style={{ fontSize: '12px', color: '#8f9bb3' }}>Keep learning daily!</div>
+          <div style={{ fontSize: '12px', color: 'var(--sub, #8f9bb3)' }}>Keep learning daily!</div>
         </div>
 
         {/* Completion */}
         <div 
           onClick={() => switchView('material')}
           style={{ 
-            background: '#131520', 
-            border: '1px solid rgba(255,255,255,0.05)', 
+            background: 'var(--s1, #131520)', 
+            border: '1px solid var(--border)', 
             borderRadius: '12px', 
             padding: '16px',
             cursor: 'pointer',
@@ -173,19 +173,19 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ appState, switchVi
           onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)'}
           onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.05)'}
         >
-          <div style={{ fontSize: '11px', color: '#8f9bb3', textTransform: 'uppercase', fontWeight: 600 }}>Progress Ratio</div>
+          <div style={{ fontSize: '11px', color: 'var(--sub, #8f9bb3)', textTransform: 'uppercase', fontWeight: 600 }}>Progress Ratio</div>
           <div style={{ fontSize: '28px', fontWeight: 800, margin: '4px 0', color: '#00d9a0' }}>
             {progressPct}%
           </div>
-          <div style={{ fontSize: '12px', color: '#8f9bb3' }}>{done} / {total} tasks completed</div>
+          <div style={{ fontSize: '12px', color: 'var(--sub, #8f9bb3)' }}>{done} / {total} tasks completed</div>
         </div>
 
         {/* Study Hours */}
         <div 
           onClick={() => switchView('material')}
           style={{ 
-            background: '#131520', 
-            border: '1px solid rgba(255,255,255,0.05)', 
+            background: 'var(--s1, #131520)', 
+            border: '1px solid var(--border)', 
             borderRadius: '12px', 
             padding: '16px',
             cursor: 'pointer',
@@ -194,17 +194,17 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ appState, switchVi
           onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)'}
           onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.05)'}
         >
-          <div style={{ fontSize: '11px', color: '#8f9bb3', textTransform: 'uppercase', fontWeight: 600 }}>Time Invested</div>
+          <div style={{ fontSize: '11px', color: 'var(--sub, #8f9bb3)', textTransform: 'uppercase', fontWeight: 600 }}>Time Invested</div>
           <div style={{ fontSize: '28px', fontWeight: 800, margin: '4px 0', color: '#38bdf8' }}>
             ⏱ {studyHours()} hrs
           </div>
-          <div style={{ fontSize: '12px', color: '#8f9bb3' }}>Readiness: {readiness}%</div>
+          <div style={{ fontSize: '12px', color: 'var(--sub, #8f9bb3)' }}>Readiness: {readiness}%</div>
         </div>
       </div>
 
       {/* Quick Access Links */}
       <div style={{ marginBottom: '24px' }}>
-        <h4 style={{ margin: '0 0 12px 0', fontSize: '14px', fontWeight: 700, color: '#fff' }}>
+        <h4 style={{ margin: '0 0 12px 0', fontSize: '14px', fontWeight: 700, color: 'var(--text, #fff)' }}>
           Quick Access
         </h4>
         <div style={{ 
@@ -214,17 +214,26 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ appState, switchVi
         }}>
           <button 
             onClick={() => switchView('roadmap-v4')}
-            style={{ background: '#1a1d2d', border: '1px solid #ff444444', borderRadius: '8px', padding: '12px', cursor: 'pointer', textAlign: 'center', transition: 'all 0.2s', color: '#ff4444' }}
+            style={{ background: 'var(--s2, #1a1d2d)', border: '1px solid #ff444444', borderRadius: '8px', padding: '12px', cursor: 'pointer', textAlign: 'center', transition: 'all 0.2s', color: '#ff4444' }}
             onMouseEnter={e => e.currentTarget.style.background = '#2a1f2f'}
             onMouseLeave={e => e.currentTarget.style.background = '#1a1d2d'}
           >
             <div style={{ fontSize: '20px', marginBottom: '4px' }}>🔥</div>
             <div style={{ fontSize: '13px', fontWeight: 600 }}>v4 Roadmap</div>
           </button>
-          
+
+          <button 
+            onClick={() => switchView('roadmap-v5')}
+            style={{ background: 'var(--s2, #1a1d2d)', border: '1px solid #a855f744', borderRadius: '8px', padding: '12px', cursor: 'pointer', textAlign: 'center', transition: 'all 0.2s', color: '#a855f7' }}
+            onMouseEnter={e => e.currentTarget.style.background = '#281a33'}
+            onMouseLeave={e => e.currentTarget.style.background = '#1a1d2d'}
+          >
+            <div style={{ fontSize: '20px', marginBottom: '4px' }}>🚀</div>
+            <div style={{ fontSize: '13px', fontWeight: 600 }}>v5 Roadmap</div>
+          </button>
           <button 
             onClick={() => switchView('notes')}
-            style={{ background: '#1a1d2d', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', padding: '12px', cursor: 'pointer', textAlign: 'center', transition: 'all 0.2s', color: '#e8eaf0' }}
+            style={{ background: 'var(--s2, #1a1d2d)', border: '1px solid var(--border)', borderRadius: '8px', padding: '12px', cursor: 'pointer', textAlign: 'center', transition: 'all 0.2s', color: 'var(--text, #e8eaf0)' }}
             onMouseEnter={e => e.currentTarget.style.background = '#252838'}
             onMouseLeave={e => e.currentTarget.style.background = '#1a1d2d'}
           >
@@ -234,7 +243,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ appState, switchVi
           
           <button 
             onClick={() => switchView('sandbox')}
-            style={{ background: '#1a1d2d', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', padding: '12px', cursor: 'pointer', textAlign: 'center', transition: 'all 0.2s', color: '#e8eaf0' }}
+            style={{ background: 'var(--s2, #1a1d2d)', border: '1px solid var(--border)', borderRadius: '8px', padding: '12px', cursor: 'pointer', textAlign: 'center', transition: 'all 0.2s', color: 'var(--text, #e8eaf0)' }}
             onMouseEnter={e => e.currentTarget.style.background = '#252838'}
             onMouseLeave={e => e.currentTarget.style.background = '#1a1d2d'}
           >
@@ -244,7 +253,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ appState, switchVi
           
           <button 
             onClick={() => switchView('pipeline-ref')}
-            style={{ background: '#1a1d2d', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', padding: '12px', cursor: 'pointer', textAlign: 'center', transition: 'all 0.2s', color: '#e8eaf0' }}
+            style={{ background: 'var(--s2, #1a1d2d)', border: '1px solid var(--border)', borderRadius: '8px', padding: '12px', cursor: 'pointer', textAlign: 'center', transition: 'all 0.2s', color: 'var(--text, #e8eaf0)' }}
             onMouseEnter={e => e.currentTarget.style.background = '#252838'}
             onMouseLeave={e => e.currentTarget.style.background = '#1a1d2d'}
           >
@@ -254,7 +263,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ appState, switchVi
           
           <button 
             onClick={() => switchView('chaos-sim')}
-            style={{ background: '#1a1d2d', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', padding: '12px', cursor: 'pointer', textAlign: 'center', transition: 'all 0.2s', color: '#e8eaf0' }}
+            style={{ background: 'var(--s2, #1a1d2d)', border: '1px solid var(--border)', borderRadius: '8px', padding: '12px', cursor: 'pointer', textAlign: 'center', transition: 'all 0.2s', color: 'var(--text, #e8eaf0)' }}
             onMouseEnter={e => e.currentTarget.style.background = '#252838'}
             onMouseLeave={e => e.currentTarget.style.background = '#1a1d2d'}
           >
@@ -264,7 +273,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ appState, switchVi
           
           <button 
             onClick={() => switchView('tracker')}
-            style={{ background: '#1a1d2d', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', padding: '12px', cursor: 'pointer', textAlign: 'center', transition: 'all 0.2s', color: '#e8eaf0' }}
+            style={{ background: 'var(--s2, #1a1d2d)', border: '1px solid var(--border)', borderRadius: '8px', padding: '12px', cursor: 'pointer', textAlign: 'center', transition: 'all 0.2s', color: 'var(--text, #e8eaf0)' }}
             onMouseEnter={e => e.currentTarget.style.background = '#252838'}
             onMouseLeave={e => e.currentTarget.style.background = '#1a1d2d'}
           >
@@ -290,13 +299,13 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ appState, switchVi
 
       {/* Heatmap Card */}
       <div style={{ 
-        background: '#131520', 
-        border: '1px solid rgba(255,255,255,0.05)', 
+        background: 'var(--s1, #131520)', 
+        border: '1px solid var(--border)', 
         borderRadius: '16px', 
         padding: '20px',
         marginBottom: '24px'
       }}>
-        <h4 style={{ margin: '0 0 12px 0', fontSize: '14px', fontWeight: 700, color: '#fff' }}>
+        <h4 style={{ margin: '0 0 12px 0', fontSize: '14px', fontWeight: 700, color: 'var(--text, #fff)' }}>
           Activity Heatmap (Past 12 Weeks)
         </h4>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
@@ -310,7 +319,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ appState, switchVi
           }}>
             {heatmapCells}
           </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: '#8f9bb3', maxWidth: '160px', margin: '8px auto 0 auto' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: 'var(--sub, #8f9bb3)', maxWidth: '160px', margin: '8px auto 0 auto' }}>
             <span>Less</span>
             <div style={{ display: 'flex', gap: '2px', alignItems: 'center' }}>
               <div style={{ width: '8px', height: '8px', backgroundColor: 'rgba(255, 255, 255, 0.05)' }}></div>
@@ -334,10 +343,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ appState, switchVi
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '12px' }}>
           <div>
-            <h4 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: '#fff' }}>
+            <h4 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: 'var(--text, #fff)' }}>
               🤖 {formatProviderName(getActiveProvider())} Mentor Evaluation & Feedback
             </h4>
-            <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: '#8f9bb3' }}>
+            <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: 'var(--sub, #8f9bb3)' }}>
               Synthesizes your roadmap progress, streak, and quiz scores to offer actionable guidance.
             </p>
           </div>
@@ -349,7 +358,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ appState, switchVi
               borderRadius: '8px',
               border: 'none',
               background: 'linear-gradient(90deg, #7c6fff 0%, #a855f7 100%)',
-              color: '#fff',
+              color: 'var(--text, #fff)',
               fontSize: '12px',
               fontWeight: 700,
               cursor: isGenerating ? 'not-allowed' : 'pointer',
@@ -378,7 +387,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ appState, switchVi
               <SimpleMarkdown text={state.dashboardFeedback} />
             </div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '120px', color: '#8f9bb3' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '120px', color: 'var(--sub, #8f9bb3)' }}>
               <span>No feedback generated yet. Click "Generate Review" above.</span>
             </div>
           )}
