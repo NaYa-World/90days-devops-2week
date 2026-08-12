@@ -67,6 +67,20 @@ android/app/src/main/assets/public/
 .vercel
 .turbo
 
+# Backup files
+*.bak
+*.orig
+
+# Maven build output
+target/
+
+# Maven frontend-plugin downloads (Node/npm binaries)
+node/
+
+# Local-only cleanup/archive folders (not needed on EC2)
+delete-move-unwanted-files/
+files/
+
 # Capacitor & Mobile generated native directories to exclude
 mobile_flutter/
 
