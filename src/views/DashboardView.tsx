@@ -280,8 +280,29 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ appState, switchVi
             <div style={{ fontSize: '20px', marginBottom: '4px' }}>🎯</div>
             <div style={{ fontSize: '13px', fontWeight: 600 }}>Learning Tracker</div>
           </button>
+
+          <button 
+            onClick={() => switchView('daily-tasks')}
+            style={{ background: 'var(--s2, #1a1d2d)', border: '1px solid #0ea5e944', borderRadius: '8px', padding: '12px', cursor: 'pointer', textAlign: 'center', transition: 'all 0.2s', color: '#0ea5e9' }}
+            onMouseEnter={e => e.currentTarget.style.background = '#1a2c3a'}
+            onMouseLeave={e => e.currentTarget.style.background = '#1a1d2d'}
+          >
+            <div style={{ fontSize: '20px', marginBottom: '4px' }}>📅</div>
+            <div style={{ fontSize: '13px', fontWeight: 600 }}>Daily Tasks</div>
+          </button>
+
+          <button 
+            onClick={() => switchView('practice-terminal')}
+            style={{ background: 'var(--s2, #1a1d2d)', border: '1px solid #28c84044', borderRadius: '8px', padding: '12px', cursor: 'pointer', textAlign: 'center', transition: 'all 0.2s', color: '#28c840' }}
+            onMouseEnter={e => e.currentTarget.style.background = '#1a2c1a'}
+            onMouseLeave={e => e.currentTarget.style.background = '#1a1d2d'}
+          >
+            <div style={{ fontSize: '20px', marginBottom: '4px' }}>🖥️</div>
+            <div style={{ fontSize: '13px', fontWeight: 600 }}>Practice Terminal</div>
+          </button>
         </div>
       </div>
+
       
       <ApiKeySetupModal 
         isOpen={isApiKeyModalOpen} 
