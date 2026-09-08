@@ -7,7 +7,9 @@
 // ============================================================
 
 export interface ArtifactContract {
-  type: 'github-commit' | 'pipeline-url' | 'docker-pull' | 'screenshot-url' | 'gist-url';
+  type: 'github-commit' | 'pipeline-url' | 'docker-pull' | 'screenshot-url' | 'gist-url'
+      | 'github-pr' | 'github-actions-run' | 'kubectl-output' | 'sonar-report-url'
+      | 'docker-image-tag' | 'working-url' | 'grafana-dashboard-url' | 'github-repo';
   instruction: string;
   exampleFormat: string;
   blocksCompletion: true;

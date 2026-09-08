@@ -164,8 +164,8 @@ export const day18: BootcampDay = {
             { "type": "output", "text": "WORKDIR /app" },
             { "type": "output", "text": "COPY --from=builder /build/target/*.jar app.jar" },
             { "type": "output", "text": "EXPOSE 8100" },
-            { "type": "output", "text": "ENTRYPOINT ["java", "-jar"]" },
-            { "type": "output", "text": "CMD ["app.jar"]" },
+            { "type": "output", "text": "ENTRYPOINT [\"java\", \"-jar\"]" },
+            { "type": "output", "text": "CMD [\"app.jar\"]" },
             { "type": "ok", "text": "Result: builder stage ~650MB (never shipped) | final image ~200MB (what gets deployed)" },
             { "type": "warn", "text": "In your Jenkins pipeline, Maven already built the jar before docker build. You do NOT need Stage 1 in that case. Multi-stage is for when Docker itself should build the project." }
           ]
@@ -334,10 +334,10 @@ export const day18: BootcampDay = {
             { "type": "output", "text": "stage('Trivy Image Scan') {" },
             { "type": "output", "text": "    steps {" },
             { "type": "output", "text": "        sh '''" },
-            { "type": "output", "text": "            trivy image \" },
-            { "type": "output", "text": "              --exit-code 0 \" },
-            { "type": "output", "text": "              --severity HIGH,CRITICAL \" },
-            { "type": "output", "text": "              --format table \" },
+            { "type": "output", "text": "            trivy image \\" },
+            { "type": "output", "text": "              --exit-code 0 \\" },
+            { "type": "output", "text": "              --severity HIGH,CRITICAL \\" },
+            { "type": "output", "text": "              --format table \\" },
             { "type": "output", "text": "              nayagk/currency-conversion:latest" },
             { "type": "output", "text": "        '''" },
             { "type": "output", "text": "    }" },
@@ -538,23 +538,6 @@ export const day18: BootcampDay = {
   "github": {
     "filename": "devops-90days/day-18/README.md",
     "commitMessage": "feat: Add Docker Compose, multi-stage build, and Jenkins Docker pipeline stages",
-    "template": "# Day 18 — Docker: Volumes, Networking, Compose & Jenkins CI/CD
-**Date:** YYYY-MM-DD | **Status:** Complete
-
-## Roadmap Position
-Maven -> SonarQube -> JFrog -> Docker Build -> **[Trivy + Docker Push HERE]** -> K8s
-
-## What I Built
-- docker-compose.yml with app, db (MySQL), named volumes, healthchecks
-- Multi-stage Dockerfile (maven:3.9 builder -> amazoncorretto:21-alpine runtime)
-- Trivy installed on Jenkins EC2
-- Jenkinsfile extended: Docker Build -> Trivy Scan -> Docker Push stages
-- Image at Docker Hub: nayagk/currency-conversion:latest
-
-## Key Commands
-
-
-## Pipeline Stage Order
-Maven Build -> SonarQube -> JFrog -> Docker Build -> Trivy Scan -> Docker Push"
+    "template": "# Day 18 — Docker: Volumes, Networking, Compose & Jenkins CI/CD\n**Date:** YYYY-MM-DD | **Status:** Complete\n\n## Roadmap Position\nMaven -> SonarQube -> JFrog -> Docker Build -> **[Trivy + Docker Push HERE]** -> K8s\n\n## What I Built\n- docker-compose.yml with app, db (MySQL), named volumes, healthchecks\n- Multi-stage Dockerfile (maven:3.9 builder -> amazoncorretto:21-alpine runtime)\n- Trivy installed on Jenkins EC2\n- Jenkinsfile extended: Docker Build -> Trivy Scan -> Docker Push stages\n- Image at Docker Hub: nayagk/currency-conversion:latest\n\n## Key Commands\n\n\n## Pipeline Stage Order\nMaven Build -> SonarQube -> JFrog -> Docker Build -> Trivy Scan -> Docker Push"
   }
 };

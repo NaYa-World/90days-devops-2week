@@ -1,4 +1,4 @@
-import { Phase } from '../types/roadmap';
+import { Phase } from './phases_v4';
 
 export const PHASES_V5: Phase[] = [
   {

@@ -101,8 +101,8 @@ export const day17: BootcampDay = {
             { "type": "comment", "text": "Dockerfile: capital D, no extension, at project root" },
             { "type": "output", "text": "FROM amazoncorretto:21-alpine" },
             { "type": "output", "text": "" },
-            { "type": "output", "text": "LABEL maintainer="nayagk"" },
-            { "type": "output", "text": "LABEL app="currency-conversion"" },
+            { "type": "output", "text": "LABEL maintainer=\"nayagk\"" },
+            { "type": "output", "text": "LABEL app=\"currency-conversion\"" },
             { "type": "output", "text": "" },
             { "type": "output", "text": "WORKDIR /app" },
             { "type": "output", "text": "" },
@@ -112,8 +112,8 @@ export const day17: BootcampDay = {
             { "type": "output", "text": "" },
             { "type": "output", "text": "HEALTHCHECK --interval=30s --timeout=10s --retries=3 CMD curl -f http://localhost:8100/actuator/health || exit 1" },
             { "type": "output", "text": "" },
-            { "type": "output", "text": "ENTRYPOINT ["java", "-jar"]" },
-            { "type": "output", "text": "CMD ["app.jar"]" }
+            { "type": "output", "text": "ENTRYPOINT [\"java\", \"-jar\"]" },
+            { "type": "output", "text": "CMD [\"app.jar\"]" }
           ]
         },
         {
@@ -138,15 +138,15 @@ export const day17: BootcampDay = {
             { "type": "comment", "text": "USER — sets non-root user. Security best practice." },
             { "type": "output", "text": "USER appuser" },
             { "type": "comment", "text": "LABEL — metadata key-value pairs" },
-            { "type": "output", "text": "LABEL maintainer="team@example.com"" },
+            { "type": "output", "text": "LABEL maintainer=\"team@example.com\"" },
             { "type": "comment", "text": "VOLUME — declares anonymous mount point" },
-            { "type": "output", "text": "VOLUME ["/data"]" },
+            { "type": "output", "text": "VOLUME [\"/data\"]" },
             { "type": "comment", "text": "HEALTHCHECK — tests container health on schedule" },
             { "type": "output", "text": "HEALTHCHECK --interval=30s CMD curl -f http://localhost:8080/health || exit 1" },
             { "type": "comment", "text": "CMD — default command at start. Overridden by docker run." },
-            { "type": "output", "text": "CMD ["java", "-jar", "app.jar"]" },
+            { "type": "output", "text": "CMD [\"java\", \"-jar\", \"app.jar\"]" },
             { "type": "comment", "text": "ENTRYPOINT — fixed executable. CMD becomes its default args." },
-            { "type": "output", "text": "ENTRYPOINT ["java", "-jar"]" }
+            { "type": "output", "text": "ENTRYPOINT [\"java\", \"-jar\"]" }
           ]
         }
       ]
@@ -364,8 +364,8 @@ export const day17: BootcampDay = {
         "",
         "HEALTHCHECK --interval=30s --timeout=10s --retries=3 CMD curl -f http://localhost:8100/actuator/health || exit 1",
         "",
-        "ENTRYPOINT [java, -jar]",
-        "CMD [app.jar]"
+        "ENTRYPOINT [\"java\", \"-jar\"]",
+        "CMD [\"app.jar\"]"
       ]
     },
     "expectedOutput": "docker ps STATUS: Up | curl localhost:8100/actuator/health returns status UP"
@@ -444,13 +444,6 @@ export const day17: BootcampDay = {
   "github": {
     "filename": "devops-90days/day-17/README.md",
     "commitMessage": "feat: Add Docker Dockerfile and containerise currency-conversion app",
-    "template": "# Day 17 — Docker
-**Date:** YYYY-MM-DD | **Status:** Complete
-
-## Roadmap Position
-Jenkins → Maven → SonarQube → JFrog → [Docker HERE] → K8s
-
-## Key Commands
-\\\"
+    "template": "# Day 17 — Docker\n**Date:** YYYY-MM-DD | **Status:** Complete\n\n## Roadmap Position\nJenkins → Maven → SonarQube → JFrog → [Docker HERE] → K8s\n\n## Key Commands"
   }
 };

@@ -1217,7 +1217,7 @@ export function useAppState() {
   
   const toggleV5Task = (pi: number, di: number, ti: number) => {
     const key = `v5_${pi}_${di}_${ti}`;
-    setAppState(prev => ({
+    updateState(prev => ({
       ...prev,
       v5Tasks: { ...prev.v5Tasks, [key]: !prev.v5Tasks[key] }
     }));
@@ -1225,14 +1225,14 @@ export function useAppState() {
 
   const saveV5Artifact = (pi: number, di: number, url: string) => {
     const key = `v5_${pi}_${di}`;
-    setAppState(prev => ({
+    updateState(prev => ({
       ...prev,
       v5Artifacts: { ...prev.v5Artifacts, [key]: url }
     }));
   };
 
   const clearV5Progress = () => {
-    setAppState(prev => ({
+    updateState(prev => ({
       ...prev,
       v5Tasks: {},
       v5Artifacts: {}
