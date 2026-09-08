@@ -80,11 +80,38 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
 
     steps:
+      - name: Validate Jenkins secrets are configured
+        run: |
+          if [ -z "${{ secrets.JENKINS_URL }}" ]; then
+            echo "❌ ERROR: JENKINS_URL secret is not set in GitHub repository settings."
+            echo "   Go to: Settings → Secrets and variables → Actions → New repository secret"
+            echo "   Name: JENKINS_URL"
+            echo "   Value: http://<your-ec2-public-ip>:8080"
+            exit 1
+          fi
+          if [ -z "${{ secrets.JENKINS_TOKEN }}" ]; then
+            echo "❌ ERROR: JENKINS_TOKEN secret is not set in GitHub repository settings."
+            echo "   Name: JENKINS_TOKEN"
+            echo "   Value: The token configured in your Jenkins Generic Webhook Trigger plugin"
+            exit 1
+          fi
+          echo "✅ Jenkins secrets are configured."
+
       - name: Notify Jenkins via Generic Webhook
         run: |
           echo "Triggering Jenkins pipeline on EC2..."
-          RESPONSE=$(curl --silent --show-error --fail \
+          HTTP_STATUS=$(curl --silent --show-error \
             --max-time 30 \
+            --write-out "%{http_code}" \
+            --output /tmp/jenkins_response.txt \
             -X POST \
             "${{ secrets.JENKINS_URL }}/generic-webhook-trigger/invoke?token=${{ secrets.JENKINS_TOKEN }}")
-          echo "Jenkins response: $RESPONSE"
+          echo "Jenkins response body:"
+          cat /tmp/jenkins_response.txt
+          echo ""
+          echo "HTTP Status: $HTTP_STATUS"
+          if [ "$HTTP_STATUS" -lt 200 ] || [ "$HTTP_STATUS" -gt 299 ]; then
+            echo "❌ Jenkins trigger failed with HTTP $HTTP_STATUS"
+            exit 1
+          fi
+          echo "✅ Jenkins pipeline triggered successfully."
