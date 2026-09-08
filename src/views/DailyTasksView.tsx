@@ -1,5 +1,25 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { GitHubSyncService } from '../components/GitHubSyncService';
 
+// ── Persistent Task State Helpers ──────────────────────────────────────────────
+export interface TaskState {
+  completed: boolean;
+  notes: string;
+  lastSync?: string;
+}
+
+const getTaskState = (taskId: string): TaskState => {
+  try {
+    const val = localStorage.getItem(`devops90_task_${taskId}`);
+    if (val) return JSON.parse(val);
+  } catch (e) {}
+  return { completed: false, notes: '' };
+};
+
+const setTaskState = (taskId: string, state: TaskState) => {
+  localStorage.setItem(`devops90_task_${taskId}`, JSON.stringify(state));
+  window.dispatchEvent(new Event('devops90_task_updated'));
+};
 // ── Track metadata for Git / Linux / Jenkins ──────────────────────────────────
 const TRACK: Record<string, { color: string; dim: string; icon: string }> = {
   Git:        { color: '#FB923C', dim: 'rgba(251,146,60,0.12)',  icon: '🔀' },
@@ -883,15 +903,15 @@ const JENKINS_TASKS: TrackTask[] = [
     'Job accessible at DevOps-Team/build-app path') },
 
   { n:5, lv:1, title:'Configure Jenkins Job for Package Installation', detail: TT(
-    "For the Nautilus project, the CI pipeline must automatically run mvn install on the currency-conversion repo on every build.",
-    'Create Freestyle job build-app that clones the currency-conversion repo and runs mvn install.',
-    [['Create Freestyle job','New Item => build-app => Freestyle project => OK'],
-     ['Configure SCM','Source Code Management => Git => https://github.com/NaYaGK/currency-conversion-devops.git'],
-     ['Set branch','Branch: */main'],
-     ['Add Maven build step','Add Build Step => Invoke Maven => Goals: install -DskipTests'],
-     ['Save and trigger','Save => Build Now => watch Console Output'],
-     ['Verify success','Console Output must end with BUILD SUCCESS']],
-    '[INFO] BUILD SUCCESS') },
+    'Some new requirements have come up to install and configure some packages on the Nautilus infrastructure under Stratos Datacenter. The Nautilus DevOps team installed and configured a new Jenkins server so they wanted to create a Jenkins job to automate this task. Find below more details and complete the task accordingly:\n1. Access the Jenkins UI by clicking on the Jenkins button in the top bar. Log in using the credentials: username admin and password Adm!n321.\n2. Create a new Jenkins job named install-packages and configure it with the following specifications:\nAdd a string parameter named PACKAGE.\nConfigure the job to install a package specified in the $PACKAGE parameter on the storage server (Stratos Datacenter).\nBuild the job at least once  (e.g. with parameter PACKAGE=vim-enhanced) so the package is installed on the Storage server and can be verified.',
+    'Create a parameterized Jenkins job named install-packages to install a specified package on the storage server.',
+    [['Login to Jenkins','Access Jenkins UI and login with admin / Adm!n321'],
+     ['Create parameterized job','New Item => install-packages => Freestyle project => OK'],
+     ['Add Parameter','Check "This project is parameterized" => Add Parameter => String Parameter => Name: PACKAGE'],
+     ['Configure build step','Add build step => Execute shell => ssh natasha@ststor01 "sudo yum install -y $PACKAGE"'],
+     ['Save and build','Save => Build with Parameters => PACKAGE=vim-enhanced => Build'],
+     ['Verify success','Console Output must show successful installation on the storage server']],
+    'Package installed on storage server | Build Success') },
 
   // Level 2
   { n:6, lv:2, title:'Jenkins Views', detail: TT(
@@ -2257,7 +2277,13 @@ function ScenarioText({ text }: { text: string }) {
 function TrackDetailPanel({ item, accentColor, icon, trackName, onClose }: {
   item: TrackTask; accentColor: string; icon: string; trackName: string; onClose: () => void;
 }) {
-  const [completed, setCompleted] = useState(false);
+  const taskId = `${trackName.toLowerCase()}-${item.lv}-${item.n}`;
+  const initialState = getTaskState(taskId);
+  const [completed, setCompleted] = useState(initialState.completed);
+  const [notes, setNotes] = useState(initialState.notes || '');
+  const [lastSync, setLastSync] = useState(initialState.lastSync || '');
+  const [isSyncing, setIsSyncing] = useState(false);
+  
   const [showSolution, setShowSolution] = useState(false);
   if (!item?.detail) return null;
   const { context, steps, expected } = item.detail;
@@ -2338,10 +2364,49 @@ function TrackDetailPanel({ item, accentColor, icon, trackName, onClose }: {
         </div>
       </div>
 
-      <div style={{ borderTop: '1px solid #152235', padding: '12px 20px', display: 'flex', justifyContent: 'flex-end' }}>
-        <button onClick={() => setCompleted(true)} style={{ background: completed ? 'rgba(74,222,128,0.25)' : 'rgba(74,222,128,0.12)', color: completed ? '#A7F3D0' : '#4ADE80', border: '1px solid rgba(74,222,128,0.3)', borderRadius: 7, padding: '7px 18px', cursor: 'pointer', fontSize: 12, fontWeight: 600 }}>
-          {completed ? '✅ Completed' : '✓ Mark Complete'}
-        </button>
+      <div style={{ borderTop: '1px solid #152235', padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ fontSize: 13, color: '#4A7A9B' }}>
+            {completed ? 'Task completed. You can add notes below.' : 'Finish the task above, then mark it complete to add notes.'}
+          </div>
+          <button onClick={() => {
+            const newVal = !completed;
+            setCompleted(newVal);
+            setTaskState(taskId, { completed: newVal, notes, lastSync });
+          }} style={{ background: completed ? 'rgba(74,222,128,0.25)' : 'rgba(74,222,128,0.12)', color: completed ? '#A7F3D0' : '#4ADE80', border: '1px solid rgba(74,222,128,0.3)', borderRadius: 7, padding: '7px 18px', cursor: 'pointer', fontSize: 12, fontWeight: 600 }}>
+            {completed ? '✅ Completed' : '✓ Mark Complete'}
+          </button>
+        </div>
+
+        {completed && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, animation: 'fadeIn 0.3s ease' }}>
+            <textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="What did you learn from this task? Note down key commands, concepts, or mistakes here..."
+              style={{ width: '100%', height: 100, background: '#040C18', border: '1px solid #1E2D47', borderRadius: 8, padding: '12px 16px', color: '#C8D8E8', fontSize: 13, fontFamily: 'inherit', resize: 'vertical', outline: 'none' }}
+            />
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: 11, color: '#4A7A9B' }}>
+                {lastSync ? `Last synced to GitHub: ${lastSync}` : 'Notes are saved locally. Sync to back them up.'}
+              </span>
+              <button
+                onClick={async () => {
+                  setIsSyncing(true);
+                  const time = new Date().toLocaleTimeString();
+                  setLastSync(time);
+                  setTaskState(taskId, { completed, notes, lastSync: time });
+                  await GitHubSyncService.autoSyncToGitHub();
+                  setIsSyncing(false);
+                }}
+                disabled={isSyncing}
+                style={{ background: '#0C1829', border: '1px solid #1E2D47', color: '#4A7A9B', borderRadius: 6, padding: '6px 14px', fontSize: 12, cursor: isSyncing ? 'wait' : 'pointer', transition: 'all 0.15s' }}
+              >
+                {isSyncing ? 'Syncing...' : '🐙 Save & Sync'}
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -3484,7 +3549,12 @@ function CmdLine({ label, cmd, locked }: { label: string; cmd: string; locked: b
 
 // ── TaskDetailPanel ───────────────────────────────────────────────────────────
 function TaskDetailPanel({ dayNum, onClose }: { dayNum: number; onClose: () => void }) {
-  const [completed, setCompleted] = useState(false);
+  const taskId = `devops100-${dayNum}`;
+  const initialState = getTaskState(taskId);
+  const [completed, setCompleted] = useState(initialState.completed);
+  const [notes, setNotes] = useState(initialState.notes || '');
+  const [lastSync, setLastSync] = useState(initialState.lastSync || '');
+  const [isSyncing, setIsSyncing] = useState(false);
   const [showSolution, setShowSolution] = useState(false);
   const day    = DAYS.find(d => d.n === dayNum);
   const detail = TASK_DETAILS[dayNum];
@@ -3591,13 +3661,49 @@ function TaskDetailPanel({ dayNum, onClose }: { dayNum: number; onClose: () => v
       </div>
 
       {!locked && (
-        <div style={{ borderTop: '1px solid #152235', padding: '12px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <span style={{ fontSize: 12, color: '#4A7A9B' }}>
-            🏅 <span style={{ color: '#FB923C' }}>800 XP</span> on completion
-          </span>
-          <button onClick={() => setCompleted(true)} style={{ background: completed ? 'rgba(74,222,128,0.25)' : 'rgba(74,222,128,0.12)', color: completed ? '#A7F3D0' : '#4ADE80', border: '1px solid rgba(74,222,128,0.3)', borderRadius: 7, padding: '7px 18px', cursor: 'pointer', fontSize: 12, fontWeight: 600 }}>
-            {completed ? '✅ Completed' : '✓ Mark Complete'}
-          </button>
+        <div style={{ borderTop: '1px solid #152235', padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontSize: 12, color: '#4A7A9B' }}>
+              {completed ? 'Task completed. You can add notes below.' : <>🏅 <span style={{ color: '#FB923C' }}>800 XP</span> on completion</>}
+            </span>
+            <button onClick={() => {
+              const newVal = !completed;
+              setCompleted(newVal);
+              setTaskState(taskId, { completed: newVal, notes, lastSync });
+            }} style={{ background: completed ? 'rgba(74,222,128,0.25)' : 'rgba(74,222,128,0.12)', color: completed ? '#A7F3D0' : '#4ADE80', border: '1px solid rgba(74,222,128,0.3)', borderRadius: 7, padding: '7px 18px', cursor: 'pointer', fontSize: 12, fontWeight: 600 }}>
+              {completed ? '✅ Completed' : '✓ Mark Complete'}
+            </button>
+          </div>
+
+          {completed && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, animation: 'fadeIn 0.3s ease' }}>
+              <textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="What did you learn from this task? Note down key commands, concepts, or mistakes here..."
+                style={{ width: '100%', height: 100, background: '#040C18', border: '1px solid #1E2D47', borderRadius: 8, padding: '12px 16px', color: '#C8D8E8', fontSize: 13, fontFamily: 'inherit', resize: 'vertical', outline: 'none' }}
+              />
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: 11, color: '#4A7A9B' }}>
+                  {lastSync ? `Last synced to GitHub: ${lastSync}` : 'Notes are saved locally. Sync to back them up.'}
+                </span>
+                <button
+                  onClick={async () => {
+                    setIsSyncing(true);
+                    const time = new Date().toLocaleTimeString();
+                    setLastSync(time);
+                    setTaskState(taskId, { completed, notes, lastSync: time });
+                    await GitHubSyncService.autoSyncToGitHub();
+                    setIsSyncing(false);
+                  }}
+                  disabled={isSyncing}
+                  style={{ background: '#0C1829', border: '1px solid #1E2D47', color: '#4A7A9B', borderRadius: 6, padding: '6px 14px', fontSize: 12, cursor: isSyncing ? 'wait' : 'pointer', transition: 'all 0.15s' }}
+                >
+                  {isSyncing ? 'Syncing...' : '🐙 Save & Sync'}
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -3669,11 +3775,17 @@ export const DailyTasksView: React.FC<DailyTasksViewProps> = ({ switchView }) =>
   const [filter,      setFilter]      = useState('All');
   const [selectedDay, setSelectedDay] = useState<number | null>(1);
   const [hoverBtn,    setHoverBtn]    = useState(false);
+  const [completedCount, setCompletedCount] = useState(() => DAYS.filter(d => getTaskState(`devops100-${d.n}`).completed).length);
 
-  const XP        = 800;
-  const completed = DAYS.filter(d => d.open).length;
+  useEffect(() => {
+    const onUpdate = () => setCompletedCount(DAYS.filter(d => getTaskState(`devops100-${d.n}`).completed).length);
+    window.addEventListener('devops90_task_updated', onUpdate);
+    return () => window.removeEventListener('devops90_task_updated', onUpdate);
+  }, []);
+
   const total     = DAYS.length;
-  const pct       = (completed / total) * 100;
+  const XP        = completedCount * 800;
+  const pct       = (completedCount / total) * 100;
   const filters   = ['All', ...Object.keys(CAT_META)];
   const filtered  = filter === 'All' ? DAYS : DAYS.filter(d => getCategory(d.n) === filter);
   const bars      = Array.from({ length: 20 }, (_, i) => i < Math.round(pct / 5));
@@ -3721,7 +3833,7 @@ export const DailyTasksView: React.FC<DailyTasksViewProps> = ({ switchView }) =>
         <div style={{ background: '#0C1829', border: '1px solid #152235', borderRadius: 12, padding: '16px 20px', marginBottom: 20 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
             <span style={{ fontSize: 11, color: '#4A7A9B', letterSpacing: '0.5px' }}>CHALLENGE PROGRESS</span>
-            <span style={{ fontSize: 11, fontFamily: 'monospace', color: '#00C4FF' }}>{completed} / {total} days</span>
+            <span style={{ fontSize: 11, fontFamily: 'monospace', color: '#00C4FF' }}>{completedCount} / {total} days</span>
           </div>
           <div style={{ display: 'flex', gap: 3, marginBottom: 8 }}>
             {bars.map((filled, i) => (
@@ -3881,7 +3993,7 @@ export const DailyTasksView: React.FC<DailyTasksViewProps> = ({ switchView }) =>
         </div>
 
         <div style={{ textAlign: 'center', marginTop: 20, fontSize: 11, color: '#1E2D3A' }}>
-          Showing {filtered.length} of {total} tasks · {completed} completed · {total - completed} locked
+          Showing {filtered.length} of {total} tasks · {completedCount} completed · {total - completedCount} locked
         </div>
 
         </>)}{/* end devops100 tab */}
