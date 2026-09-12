@@ -2295,17 +2295,19 @@ function TrackDetailPanel({ item, accentColor, icon, trackName, onClose }: {
     <div style={{ background: '#0A1A2C', border: `1px solid ${accentColor}44`, borderRadius: 12, overflow: 'hidden', marginBottom: 20, boxShadow: `0 0 28px ${accentColor}0D` }}>
       {/* Terminal title bar */}
       <div style={{ background: '#0C1F34', borderBottom: `1px solid ${accentColor}22`, padding: '10px 16px', display: 'flex', alignItems: 'center', gap: 10 }}>
-        <div style={{ display: 'flex', gap: 5 }}>
+        <div style={{ display: 'flex', gap: 5, flexShrink: 0 }}>
           {['#EF4444','#F59E0B','#4ADE80'].map(c => <div key={c} style={{ width: 10, height: 10, borderRadius: '50%', background: c, opacity: 0.7 }} />)}
         </div>
-        <div style={{ flex: 1, textAlign: 'center', fontSize: 11, color: '#4A7A9B', fontFamily: 'monospace' }}>
+        <div style={{ flex: 1, textAlign: 'center', fontSize: 11, color: '#4A7A9B', fontFamily: 'monospace', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
           stratos.xfusioncorp.com — {trackName.toLowerCase()}-{lvLabel.toLowerCase().replace(' ','-')}-{num}
         </div>
-        <span style={{ background: 'rgba(74,222,128,0.15)', color: '#4ADE80', border: '1px solid rgba(74,222,128,0.3)', borderRadius: 20, padding: '1px 10px', fontSize: 10, letterSpacing: '1px' }}>● ACTIVE</span>
-        <button onClick={onClose} style={{ background: 'transparent', border: '1px solid #1E2D47', borderRadius: 4, color: '#4A7A9B', fontSize: 11, padding: '2px 8px', cursor: 'pointer' }}>✕</button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+          <span style={{ background: 'rgba(74,222,128,0.15)', color: '#4ADE80', border: '1px solid rgba(74,222,128,0.3)', borderRadius: 20, padding: '1px 10px', fontSize: 10, letterSpacing: '1px' }}>● ACTIVE</span>
+          <button onClick={onClose} style={{ background: 'transparent', border: '1px solid #1E2D47', borderRadius: 4, color: '#4A7A9B', fontSize: 11, padding: '2px 8px', cursor: 'pointer' }}>✕</button>
+        </div>
       </div>
 
-      <div style={{ padding: 24 }}>
+      <div style={{ padding: '16px 20px' }}>
         {/* Badges */}
         <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' }}>
           <div style={{ background: `${accentColor}18`, border: `1px solid ${accentColor}33`, borderRadius: 8, padding: '5px 12px', fontSize: 11, color: accentColor }}>
@@ -2365,7 +2367,7 @@ function TrackDetailPanel({ item, accentColor, icon, trackName, onClose }: {
       </div>
 
       <div style={{ borderTop: '1px solid #152235', padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 16 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
           <div style={{ fontSize: 13, color: '#4A7A9B' }}>
             {completed ? 'Task completed. You can add notes below.' : 'Finish the task above, then mark it complete to add notes.'}
           </div>
@@ -2386,7 +2388,7 @@ function TrackDetailPanel({ item, accentColor, icon, trackName, onClose }: {
               placeholder="What did you learn from this task? Note down key commands, concepts, or mistakes here..."
               style={{ width: '100%', height: 100, background: '#040C18', border: '1px solid #1E2D47', borderRadius: 8, padding: '12px 16px', color: '#C8D8E8', fontSize: 13, fontFamily: 'inherit', resize: 'vertical', outline: 'none' }}
             />
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
               <span style={{ fontSize: 11, color: '#4A7A9B' }}>
                 {lastSync ? `Last synced to GitHub: ${lastSync}` : 'Notes are saved locally. Sync to back them up.'}
               </span>
@@ -3575,22 +3577,24 @@ function TaskDetailPanel({ dayNum, onClose }: { dayNum: number; onClose: () => v
     <div style={{ background: '#0A1A2C', border: `1px solid ${locked ? '#1E2D47' : meta.color + '44'}`, borderRadius: 12, overflow: 'hidden', marginBottom: 20, boxShadow: locked ? 'none' : `0 0 28px ${meta.color}0D` }}>
       {/* Terminal bar */}
       <div style={{ background: '#0C1F34', borderBottom: `1px solid ${locked ? '#152235' : meta.color + '22'}`, padding: '10px 16px', display: 'flex', alignItems: 'center', gap: 10 }}>
-        <div style={{ display: 'flex', gap: 5 }}>
+        <div style={{ display: 'flex', gap: 5, flexShrink: 0 }}>
           {['#EF4444','#F59E0B','#4ADE80'].map(c => (
             <div key={c} style={{ width: 10, height: 10, borderRadius: '50%', background: c, opacity: 0.7 }} />
           ))}
         </div>
-        <div style={{ flex: 1, textAlign: 'center', fontSize: 11, color: '#4A7A9B', fontFamily: 'monospace' }}>
+        <div style={{ flex: 1, textAlign: 'center', fontSize: 11, color: '#4A7A9B', fontFamily: 'monospace', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
           {locked ? `locked — day-${num}` : `stratos.xfusioncorp.com — ${cat.toLowerCase()}-day-${num}`}
         </div>
-        <span style={{ background: locked ? 'rgba(74,114,255,0.1)' : 'rgba(74,222,128,0.15)', color: locked ? '#4A6A9B' : '#4ADE80', border: `1px solid ${locked ? 'rgba(74,114,255,0.2)' : 'rgba(74,222,128,0.3)'}`, borderRadius: 20, padding: '1px 10px', fontSize: 10, letterSpacing: '1px' }}>
-          {locked ? '🔒 LOCKED' : '● ACTIVE'}
-        </span>
-        <button onClick={onClose} style={{ background: 'transparent', border: '1px solid #1E2D47', borderRadius: 4, color: '#4A7A9B', fontSize: 11, padding: '2px 8px', cursor: 'pointer' }}>✕</button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+          <span style={{ background: locked ? 'rgba(74,114,255,0.1)' : 'rgba(74,222,128,0.15)', color: locked ? '#4A6A9B' : '#4ADE80', border: `1px solid ${locked ? 'rgba(74,114,255,0.2)' : 'rgba(74,222,128,0.3)'}`, borderRadius: 20, padding: '1px 10px', fontSize: 10, letterSpacing: '1px' }}>
+            {locked ? '🔒' : '●'}
+          </span>
+          <button onClick={onClose} style={{ background: 'transparent', border: '1px solid #1E2D47', borderRadius: 4, color: '#4A7A9B', fontSize: 11, padding: '2px 8px', cursor: 'pointer' }}>✕</button>
+        </div>
       </div>
 
       {/* Content */}
-      <div style={{ padding: 24 }}>
+      <div style={{ padding: '16px 20px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14, flexWrap: 'wrap' }}>
           <div style={{ background: meta.dim, border: `1px solid ${meta.color}33`, borderRadius: 8, padding: '5px 12px', fontSize: 11, color: meta.color, letterSpacing: '0.5px' }}>
             {meta.icon} {cat} · Day {num}
@@ -3668,7 +3672,7 @@ function TaskDetailPanel({ dayNum, onClose }: { dayNum: number; onClose: () => v
 
       {!locked && (
         <div style={{ borderTop: '1px solid #152235', padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
             <span style={{ fontSize: 12, color: '#4A7A9B' }}>
               {completed ? 'Task completed. You can add notes below.' : <>🏅 <span style={{ color: '#FB923C' }}>800 XP</span> on completion</>}
             </span>
@@ -3689,7 +3693,7 @@ function TaskDetailPanel({ dayNum, onClose }: { dayNum: number; onClose: () => v
                 placeholder="What did you learn from this task? Note down key commands, concepts, or mistakes here..."
                 style={{ width: '100%', height: 100, background: '#040C18', border: '1px solid #1E2D47', borderRadius: 8, padding: '12px 16px', color: '#C8D8E8', fontSize: 13, fontFamily: 'inherit', resize: 'vertical', outline: 'none' }}
               />
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
                 <span style={{ fontSize: 11, color: '#4A7A9B' }}>
                   {lastSync ? `Last synced to GitHub: ${lastSync}` : 'Notes are saved locally. Sync to back them up.'}
                 </span>
@@ -3859,7 +3863,7 @@ export const DailyTasksView: React.FC<DailyTasksViewProps> = ({ switchView }) =>
         </div>
 
         {/* Top-level Tab Bar */}
-        <div style={{ display: 'flex', gap: 6, marginBottom: 24, borderBottom: '1px solid #152235', paddingBottom: 0 }}>
+        <div style={{ display: 'flex', gap: 6, marginBottom: 24, borderBottom: '1px solid #152235', paddingBottom: 0, overflowX: 'auto', whiteSpace: 'nowrap' }}>
           {TOP_TABS.map(tab => (
             <button
               key={tab.id}
