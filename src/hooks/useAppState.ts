@@ -8,6 +8,7 @@ import { Capacitor } from '@capacitor/core';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
 import { GitHubSyncService } from '../components/GitHubSyncService';
 import { SyncMeta } from '../utils/SyncMeta';
+import { MonitoringService } from '../components/MonitoringService';
 
 // BUG-028 FIX: Module-scoped sync timeout instead of (window as any)._syncTimeout
 let _syncTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -178,7 +179,7 @@ const parseState = (storedStr: string, userToMigrate?: string | null): AppState 
           localStorage.removeItem(legacyTasksKey);
         }
       } catch (e) {
-        import('../components/MonitoringService').then(m => m.MonitoringService.logError(e, 'Legacy V4 Tasks Migration'));
+        MonitoringService.logError(e, 'Legacy V4 Tasks Migration');
       }
       
       try {
@@ -188,7 +189,7 @@ const parseState = (storedStr: string, userToMigrate?: string | null): AppState 
           localStorage.removeItem(legacyArtifactsKey);
         }
       } catch (e) {
-        import('../components/MonitoringService').then(m => m.MonitoringService.logError(e, 'Legacy V4 Artifacts Migration'));
+        MonitoringService.logError(e, 'Legacy V4 Artifacts Migration');
       }
     }
     
@@ -241,7 +242,7 @@ const parseState = (storedStr: string, userToMigrate?: string | null): AppState 
       dashboardFeedback: parsed._dashboardFeedback || ''
     };
   } catch (e) {
-    import('../components/MonitoringService').then(m => m.MonitoringService.logError(e, 'parseState fallback'));
+    MonitoringService.logError(e, 'parseState fallback');
     return getBlankState();
   }
 };
