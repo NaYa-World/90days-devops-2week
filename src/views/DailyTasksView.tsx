@@ -1075,14 +1075,14 @@ const JENKINS_TASKS: TrackTask[] = [
 const DOCKER_TASKS: TrackTask[] = [
   // Level 1
   { n:1, lv:1, title:'Install Docker Packages and Start Docker Service', detail: TT(
-    "For the Nautilus project, xFusionCorp is adopting containers and needs Docker installed on App Server 1.",
-    'Install Docker on App Server 1, start and enable the service, add tony to the docker group.',
-    [['SSH to App Server 1','ssh tony@stapp01'],
-     ['Install Docker','sudo dnf install -y docker'],
+    "The Nautilus DevOps team aims to containerize various applications following a recent meeting with the application development team. They intend to conduct testing with the following steps:",
+    'Install docker-ce and docker compose packages on App Server 3. Initiate the docker service.',
+    [['SSH to App Server 3','ssh banner@stapp03'],
+     ['Add Docker repo','sudo dnf config-manager --add-repo=https://download.docker.com/linux/centos/docker-ce.repo'],
+     ['Install Docker CE and Compose','sudo dnf install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin'],
      ['Enable and start Docker','sudo systemctl enable --now docker'],
-     ['Add tony to docker group','sudo usermod -aG docker tony'],
-     ['Verify installation','docker --version && docker run hello-world']],
-    'Docker version x.x.x | Hello from Docker!') },
+     ['Verify installation','docker --version && docker compose version']],
+    'Docker version x.x.x | Docker Compose version x.x.x') },
 
   { n:2, lv:1, title:'Deploy Nginx Container on Application Server', detail: TT(
     "For the Nautilus project, the web team needs an Nginx container for a quick static site deployment.",
