@@ -2414,9 +2414,10 @@ function TrackDetailPanel({ item, accentColor, icon, trackName, onClose }: {
 
 
 // ── Level section (collapsible) ───────────────────────────────────────────────
-function LevelSection({ level, tasks, accentColor, trackName, selectedId, onSelect }: {
+function LevelSection({ level, tasks, accentColor, trackName, selectedId, onSelect, icon }: {
   level: number; tasks: TrackTask[]; accentColor: string;
   trackName: string; selectedId: string | null; onSelect: (id: string, t: TrackTask) => void;
+  icon: string;
 }) {
   const [open, setOpen] = useState(level === 1);
   const xp = LV_XP[level];
@@ -2439,9 +2440,19 @@ function LevelSection({ level, tasks, accentColor, trackName, selectedId, onSele
       {open && (
         <div style={{ border: `1px solid ${accentColor}22`, borderTop: 'none', borderRadius: '0 0 10px 10px', padding: 16, background: '#07101F' }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 8 }}>
-            {tasks.map(t => (
-              <TrackTaskCard key={t.n} item={t} accentColor={accentColor} isSelected={selectedId === `${trackName}-${t.n}`} onClick={() => onSelect(`${trackName}-${t.n}`, t)} />
-            ))}
+            {tasks.map(t => {
+              const isSelected = selectedId === `${trackName}-${t.n}`;
+              return (
+              <React.Fragment key={t.n}>
+                <TrackTaskCard item={t} accentColor={accentColor} isSelected={isSelected} onClick={() => onSelect(`${trackName}-${t.n}`, t)} />
+                {isSelected && (
+                  <div style={{ gridColumn: '1 / -1', marginTop: 8, marginBottom: 12 }}>
+                    <TrackDetailPanel item={t} accentColor={accentColor} icon={icon} trackName={trackName} onClose={() => onSelect(`${trackName}-${t.n}`, t)} />
+                  </div>
+                )}
+              </React.Fragment>
+              );
+            })}
           </div>
         </div>
       )}
@@ -2454,15 +2465,14 @@ function ChallengeTab({ trackName, tasks }: { trackName: keyof typeof TRACK; tas
   const meta = TRACK[trackName] ?? { color: '#A78BFA', dim: 'rgba(167,139,250,0.12)', icon: '📋' };
   const [filterLv, setFilterLv]   = useState(0);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [selectedItem, setSelectedItem] = useState<TrackTask | null>(null);
 
   const levels = [1, 2, 3, 4];
   const visibleLevels = filterLv === 0 ? levels : [filterLv];
   const totalXP = tasks.reduce((s, t) => s + (LV_XP[t.lv] || 0), 0);
 
-  const handleSelect = (id: string, item: TrackTask) => {
-    if (selectedId === id) { setSelectedId(null); setSelectedItem(null); return; }
-    setSelectedId(id); setSelectedItem(item);
+  const handleSelect = (id: string, _item: TrackTask) => {
+    if (selectedId === id) { setSelectedId(null); return; }
+    setSelectedId(id);
   };
 
   return (
@@ -2487,12 +2497,8 @@ function ChallengeTab({ trackName, tasks }: { trackName: keyof typeof TRACK; tas
         ))}
       </div>
 
-      {selectedItem && (
-        <TrackDetailPanel item={selectedItem} accentColor={meta.color} icon={meta.icon} trackName={trackName} onClose={() => { setSelectedId(null); setSelectedItem(null); }} />
-      )}
-
       {visibleLevels.map(lv => (
-        <LevelSection key={lv} level={lv} tasks={tasks.filter(t => t.lv === lv)} accentColor={meta.color} trackName={trackName} selectedId={selectedId} onSelect={handleSelect} />
+        <LevelSection key={lv} level={lv} tasks={tasks.filter(t => t.lv === lv)} accentColor={meta.color} trackName={trackName} selectedId={selectedId} onSelect={handleSelect} icon={meta.icon} />
       ))}
     </div>
   );
@@ -3943,10 +3949,7 @@ export const DailyTasksView: React.FC<DailyTasksViewProps> = ({ switchView }) =>
         {/* DevOps 100 tab content */}
         {activeTab === 'devops100' && (<>
 
-        {/* Task Detail Panel */}
-        {selectedDay !== null && (
-          <TaskDetailPanel dayNum={selectedDay} onClose={() => setSelectedDay(null)} />
-        )}
+
 
         {/* Divider */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
@@ -3983,12 +3986,18 @@ export const DailyTasksView: React.FC<DailyTasksViewProps> = ({ switchView }) =>
         {/* Day Grid */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(148px, 1fr))', gap: 8 }}>
           {filtered.map(d => (
-            <DayCard
-              key={d.n}
-              day={d}
-              isSelected={selectedDay === d.n}
-              onClick={() => setSelectedDay(prev => prev === d.n ? null : d.n)}
-            />
+            <React.Fragment key={d.n}>
+              <DayCard
+                day={d}
+                isSelected={selectedDay === d.n}
+                onClick={() => setSelectedDay(prev => prev === d.n ? null : d.n)}
+              />
+              {selectedDay === d.n && (
+                <div style={{ gridColumn: '1 / -1', marginTop: 8, marginBottom: 16 }}>
+                  <TaskDetailPanel dayNum={selectedDay} onClose={() => setSelectedDay(null)} />
+                </div>
+              )}
+            </React.Fragment>
           ))}
         </div>
 
