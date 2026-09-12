@@ -1398,15 +1398,15 @@ const AWS_TASKS: TrackTask[] = [
     'eth1 visible in ip addr show inside the instance') },
 
   { n:12, lv:2, title:'Attach Volume to EC2 Instance', detail: TT(
-    "For the Nautilus project, eBS volumes provide persistent block storage that can be attached and detached from instances.",
-    'Attach the 20 GiB GP3 volume to the running EC2 instance and mount it at /data.',
-    [['Attach in console','EC2 => Volumes => select xfusion-data-vol => Actions => Attach volume => select instance => /dev/sdf'],
+    "The Nautilus DevOps team has been creating a couple of services on AWS cloud. They have been breaking down the migration into smaller tasks, allowing for better control, risk mitigation, and optimization of resources throughout the migration process. Recently they came up with requirements mentioned below.",
+    'An instance named nautilus-ec2 and a volume named nautilus-volume already exists in us-east-1 region. Attach the nautilus-volume volume to the nautilus-ec2 instance, make sure to set the device name to /dev/sdb while attaching the volume.',
+    [['Attach in console','EC2 => Volumes => select nautilus-volume => Actions => Attach volume => select nautilus-ec2 => /dev/sdb'],
      ['SSH to instance','ssh -i xfusion-key.pem ec2-user@<public-ip>'],
-     ['List block devices','lsblk  =>  should show xvdf or nvme1n1'],
-     ['Format the volume','sudo mkfs -t xfs /dev/xvdf'],
-     ['Mount the volume','sudo mkdir /data && sudo mount /dev/xvdf /data'],
-     ['Persist mount','echo /dev/xvdf /data xfs defaults 0 0 | sudo tee -a /etc/fstab']],
-    '/data mounted | df -h shows xvdf mounted at /data') },
+     ['List block devices','lsblk  =>  should show sdb or xvdb'],
+     ['Format the volume','sudo mkfs -t xfs /dev/xvdb'],
+     ['Mount the volume','sudo mkdir /data && sudo mount /dev/xvdb /data'],
+     ['Persist mount','echo /dev/xvdb /data xfs defaults 0 0 | sudo tee -a /etc/fstab']],
+    '/data mounted | df -h shows xvdb mounted at /data') },
 
   { n:13, lv:2, title:'Create AMI from EC2 Instance', detail: TT(
     "For the Nautilus project, aMIs allow you to capture instance state as a reusable golden image for fast deployment.",
