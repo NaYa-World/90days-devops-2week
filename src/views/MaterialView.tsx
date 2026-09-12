@@ -500,6 +500,10 @@ export const MaterialView: React.FC = () => {
   const selectedModule = MODULES.find(m => m.id === selectedId);
 
   const openTopic = (module: typeof MODULES[0], topicIdx: number) => {
+    if (selectedTopicIndex === topicIdx && selectedGuideUrl !== null) {
+      setSelectedGuideUrl(null);
+      return;
+    }
     const guide = module.resources?.find(r => r.type === 'INTERACTIVE' || r.type === 'GUIDE');
     if (guide && guide.url !== '#') {
       const topic = module.topics[topicIdx] as any;
@@ -548,46 +552,163 @@ export const MaterialView: React.FC = () => {
                 LESSONS • {selectedModule.authored} AUTHORED OF {selectedModule.lessons} PLANNED
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                {selectedModule.topics.map((topic, idx) => (
-                  <div
-                    key={idx}
-                    onClick={() => {
-                      if (selectedModule) openTopic(selectedModule, idx);
-                    }}
-                    style={{
-                      border: '1px solid #1f1f1f',
-                      borderRadius: 12,
-                      padding: '20px',
-                      background: '#0a0a0b',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 16,
-                      cursor: 'pointer',
-                      transition: 'border-color 0.2s',
-                    }}
-                    onMouseEnter={(e) => (e.currentTarget.style.borderColor = '#333')}
-                    onMouseLeave={(e) => (e.currentTarget.style.borderColor = '#1f1f1f')}
-                  >
-                    <div style={{
-                      width: 28, height: 28, borderRadius: 6, background: '#1c1c1c', border: '1px solid #2a2a2a',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      color: '#e53e3e', fontSize: 11, fontWeight: 700, flexShrink: 0
-                    }}>
-                      {idx + 1}
-                    </div>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: 15, fontWeight: 600, color: '#fff', marginBottom: 4 }}>
-                        {topic.title}
+                {selectedModule.topics.map((topic, idx) => {
+                  const isExpanded = selectedTopicIndex === idx && selectedGuideUrl !== null;
+                  return (
+                  <div key={idx} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    <div
+                      onClick={() => {
+                        if (selectedModule) openTopic(selectedModule, idx);
+                      }}
+                      style={{
+                        border: '1px solid #1f1f1f',
+                        borderRadius: 12,
+                        padding: '20px',
+                        background: '#0a0a0b',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 16,
+                        cursor: 'pointer',
+                        transition: 'border-color 0.2s',
+                        borderColor: isExpanded ? '#e53e3e' : '#1f1f1f'
+                      }}
+                      onMouseEnter={(e) => { if (!isExpanded) e.currentTarget.style.borderColor = '#333'; }}
+                      onMouseLeave={(e) => { if (!isExpanded) e.currentTarget.style.borderColor = '#1f1f1f'; }}
+                    >
+                      <div style={{
+                        width: 28, height: 28, borderRadius: 6, background: '#1c1c1c', border: '1px solid #2a2a2a',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        color: '#e53e3e', fontSize: 11, fontWeight: 700, flexShrink: 0
+                      }}>
+                        {idx + 1}
                       </div>
-                      <div style={{ fontSize: 13, color: '#666' }}>
-                        {topic.subtitle || 'Learn the fundamentals'}
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: 15, fontWeight: 600, color: '#fff', marginBottom: 4 }}>
+                          {topic.title}
+                        </div>
+                        <div style={{ fontSize: 13, color: '#666' }}>
+                          {topic.subtitle || 'Learn the fundamentals'}
+                        </div>
+                      </div>
+                      <div style={{ color: '#444', transform: isExpanded ? 'rotate(90deg)' : 'none', transition: 'transform 0.2s' }}>
+                        <ChevronRight />
                       </div>
                     </div>
-                    <div style={{ color: '#444' }}>
-                      <ChevronRight />
-                    </div>
+
+                    {isExpanded && (
+                      <div style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        borderRadius: '12px',
+                        overflow: 'hidden',
+                        background: '#0a0a0b',
+                        border: '1px solid #1f1f1f',
+                        marginBottom: 12
+                      }}>
+                        <iframe 
+                          src={selectedGuideUrl!} 
+                          style={{
+                            width: '100%',
+                            height: '600px',
+                            border: 'none',
+                            backgroundColor: '#fff',
+                            borderBottom: '1px solid #1f1f1f'
+                          }}
+                          title="Interactive Guide"
+                        />
+                        
+                        <div style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          padding: '16px 20px',
+                          background: '#0a0a0b'
+                        }}>
+                          <div>
+                            <div style={{ fontSize: '11px', letterSpacing: '0.15em', color: '#666', textTransform: 'uppercase', marginBottom: '4px', fontWeight: 600 }}>
+                              Progress
+                            </div>
+                            <div style={{ fontSize: '13px', color: '#999' }}>
+                              Lesson {selectedTopicIndex + 1} of {selectedModule.topics.length}
+                            </div>
+                          </div>
+                          <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                            <button
+                              disabled={selectedTopicIndex === 0}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openTopic(selectedModule, selectedTopicIndex - 1);
+                              }}
+                              style={{
+                                background: selectedTopicIndex === 0 ? '#1a1a1a' : '#1f1f1f',
+                                color: selectedTopicIndex === 0 ? '#444' : '#ccc',
+                                border: '1px solid #2a2a2a',
+                                padding: '8px 16px',
+                                borderRadius: '8px',
+                                fontSize: '13px',
+                                fontWeight: 600,
+                                cursor: selectedTopicIndex === 0 ? 'not-allowed' : 'pointer',
+                                transition: 'all 0.2s'
+                              }}
+                            >
+                              ← Prev
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const key = `${selectedModule.id}-${selectedTopicIndex}`;
+                                setCompletedTopics(prev => {
+                                  const next = new Set(prev);
+                                  if (next.has(key)) next.delete(key); else next.add(key);
+                                  return next;
+                                });
+                              }}
+                              style={{
+                                background: completedTopics.has(`${selectedModule.id}-${selectedTopicIndex}`) ? 'rgba(34,197,94,0.15)' : 'rgba(34,197,94,0.08)',
+                                color: '#22c55e',
+                                border: `1px solid ${completedTopics.has(`${selectedModule.id}-${selectedTopicIndex}`) ? 'rgba(34,197,94,0.5)' : 'rgba(34,197,94,0.2)'}`,
+                                padding: '8px 16px',
+                                borderRadius: '8px',
+                                fontSize: '13px',
+                                fontWeight: 600,
+                                cursor: 'pointer',
+                                transition: 'all 0.2s'
+                              }}
+                            >
+                              {completedTopics.has(`${selectedModule.id}-${selectedTopicIndex}`) ? '✓ Done' : 'Mark Done'}
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const next = selectedTopicIndex + 1;
+                                if (next < selectedModule.topics.length) {
+                                  openTopic(selectedModule, next);
+                                } else {
+                                  setSelectedGuideUrl(null);
+                                }
+                              }}
+                              style={{
+                                background: 'linear-gradient(135deg, #ef4444 0%, #b91c1c 100%)',
+                                color: 'white',
+                                border: 'none',
+                                padding: '8px 20px',
+                                borderRadius: '8px',
+                                fontSize: '13px',
+                                fontWeight: 600,
+                                cursor: 'pointer',
+                                boxShadow: '0 2px 10px rgba(239, 68, 68, 0.3)',
+                                transition: 'all 0.2s'
+                              }}
+                            >
+                              {selectedTopicIndex + 1 < selectedModule.topics.length ? 'Next →' : 'Finish'}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
 
@@ -671,152 +792,7 @@ export const MaterialView: React.FC = () => {
       </div>
       </div>
       
-      {/* HTML Guide Modal */}
-      {selectedGuideUrl && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0,0,0,0.8)',
-          zIndex: 1000,
-          display: 'flex',
-          flexDirection: 'column',
-          padding: '20px'
-        }}>
-          <div style={{
-            display: 'flex',
-            justifyContent: 'flex-end',
-            marginBottom: '10px'
-          }}>
-            <button
-              onClick={() => setSelectedGuideUrl(null)}
-              style={{
-                background: '#e53e3e',
-                color: 'white',
-                border: 'none',
-                padding: '8px 16px',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontWeight: 'bold',
-                fontSize: '14px'
-              }}
-            >
-              Close Guide
-            </button>
-          </div>
-          <iframe 
-            src={selectedGuideUrl} 
-            style={{
-              flex: 1,
-              width: '100%',
-              border: '1px solid #333',
-              borderRadius: '8px',
-              backgroundColor: '#fff', // The iframe's content has its own background, but fallback to white.
-              marginBottom: '16px'
-            }}
-            title="Interactive Guide"
-          />
-          
-          {/* Finish Line Footer — Previous / Mark as Completed / Next */}
-          {selectedModule && (
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            background: '#0a0a0b',
-            border: '1px solid #3f1d1d',
-            borderRadius: '12px',
-            padding: '20px 24px',
-            boxShadow: '0 4px 20px rgba(0,0,0,0.5)'
-          }}>
-            <div>
-              <div style={{ fontSize: '11px', letterSpacing: '0.15em', color: '#666', textTransform: 'uppercase', marginBottom: '8px', fontWeight: 600 }}>
-                Finish Line
-              </div>
-              <div style={{ fontSize: '13px', color: '#999' }}>
-                {selectedModule.topics[selectedTopicIndex]?.title} &mdash; Lesson {selectedTopicIndex + 1} of {selectedModule.topics.length}
-              </div>
-            </div>
-            <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-              {/* Previous */}
-              <button
-                disabled={selectedTopicIndex === 0}
-                onClick={() => {
-                  const prev = selectedTopicIndex - 1;
-                  openTopic(selectedModule, prev);
-                }}
-                style={{
-                  background: selectedTopicIndex === 0 ? '#1a1a1a' : '#1f1f1f',
-                  color: selectedTopicIndex === 0 ? '#444' : '#ccc',
-                  border: '1px solid #2a2a2a',
-                  padding: '8px 16px',
-                  borderRadius: '8px',
-                  fontSize: '13px',
-                  fontWeight: 600,
-                  cursor: selectedTopicIndex === 0 ? 'not-allowed' : 'pointer',
-                  transition: 'all 0.2s'
-                }}
-              >
-                ← Previous
-              </button>
 
-              {/* Mark as Completed */}
-              <button
-                onClick={() => {
-                  const key = `${selectedModule.id}-${selectedTopicIndex}`;
-                  setCompletedTopics(prev => {
-                    const next = new Set(prev);
-                    if (next.has(key)) next.delete(key); else next.add(key);
-                    return next;
-                  });
-                }}
-                style={{
-                  background: completedTopics.has(`${selectedModule.id}-${selectedTopicIndex}`) ? 'rgba(34,197,94,0.15)' : 'rgba(34,197,94,0.08)',
-                  color: '#22c55e',
-                  border: `1px solid ${completedTopics.has(`${selectedModule.id}-${selectedTopicIndex}`) ? 'rgba(34,197,94,0.5)' : 'rgba(34,197,94,0.2)'}`,
-                  padding: '8px 16px',
-                  borderRadius: '8px',
-                  fontSize: '13px',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  transition: 'all 0.2s'
-                }}
-              >
-                {completedTopics.has(`${selectedModule.id}-${selectedTopicIndex}`) ? '✓ Completed' : 'Mark as Completed'}
-              </button>
-
-              {/* Next */}
-              <button
-                onClick={() => {
-                  const next = selectedTopicIndex + 1;
-                  if (next < selectedModule.topics.length) {
-                    openTopic(selectedModule, next);
-                  } else {
-                    setSelectedGuideUrl(null);
-                  }
-                }}
-                style={{
-                  background: 'linear-gradient(135deg, #ef4444 0%, #b91c1c 100%)',
-                  color: 'white',
-                  border: 'none',
-                  padding: '8px 20px',
-                  borderRadius: '8px',
-                  fontSize: '13px',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  boxShadow: '0 2px 10px rgba(239, 68, 68, 0.3)',
-                  transition: 'all 0.2s'
-                }}
-              >
-                {selectedTopicIndex + 1 < selectedModule.topics.length ? 'Next →' : 'Finish'}
-              </button>
-            </div>
-          </div>
-          )}
-        </div>
-      )}
       </React.Fragment>
     );
   }
