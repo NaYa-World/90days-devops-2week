@@ -1,0 +1,2260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="A beginner-friendly, step-by-step guide to creating an Amazon EKS (Elastic Kubernetes Service) cluster. Learn why each step matters." />
+  <title>EKS for Beginners — Step-by-Step Guide</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg-primary:    #0b0e17;
+      --bg-secondary:  #111827;
+      --bg-card:       rgba(17, 24, 39, .72);
+      --bg-glass:      rgba(255,255,255,.04);
+      --border-glass:  rgba(255,255,255,.08);
+      --text-primary:  #f1f5f9;
+      --text-secondary:#94a3b8;
+      --text-muted:    #64748b;
+      --accent-1:      #6366f1;
+      --accent-2:      #8b5cf6;
+      --accent-3:      #ec4899;
+      --accent-4:      #06b6d4;
+      --accent-5:      #10b981;
+      --accent-warn:   #f59e0b;
+      --gradient-main: linear-gradient(135deg, var(--accent-1), var(--accent-2), var(--accent-3));
+      --gradient-card: linear-gradient(145deg, rgba(99,102,241,.12), rgba(139,92,246,.06));
+      --radius:        16px;
+      --radius-sm:     10px;
+      --shadow-glow:   0 0 60px -12px rgba(99,102,241,.35);
+      --font-sans:     'Inter', system-ui, -apple-system, sans-serif;
+      --font-mono:     'JetBrains Mono', 'Fira Code', monospace;
+      --sidebar-w:     280px;
+      --header-h:      70px;
+    }
+
+    html { scroll-behavior: smooth; font-size: 16px; }
+
+    body {
+      font-family: var(--font-sans);
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.7;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background:
+        radial-gradient(ellipse 80% 50% at 20% 10%, rgba(99,102,241,.12) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 40% at 80% 80%, rgba(236,72,153,.08) 0%, transparent 50%),
+        radial-gradient(ellipse 50% 50% at 50% 50%, rgba(6,182,212,.06) 0%, transparent 55%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--accent-1); border-radius: 8px; }
+
+    .header {
+      position: fixed; top: 0; left: 0; right: 0;
+      height: var(--header-h);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 2rem;
+      background: rgba(11,14,23,.82);
+      backdrop-filter: blur(18px) saturate(1.6);
+      border-bottom: 1px solid var(--border-glass);
+      z-index: 100;
+    }
+    .header__brand {
+      display: flex; align-items: center; gap: .75rem;
+      font-weight: 800; font-size: 1.25rem;
+      background: var(--gradient-main); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .header__brand svg { flex-shrink: 0; }
+    .header__badge {
+      font-size: .65rem; font-weight: 700;
+      padding: .2rem .6rem; border-radius: 999px;
+      background: rgba(99,102,241,.18); color: var(--accent-1);
+      letter-spacing: .06em; text-transform: uppercase;
+    }
+    .header__toggle {
+      display: none; background: none; border: none; color: var(--text-primary);
+      cursor: pointer; font-size: 1.5rem;
+    }
+
+    .sidebar {
+      position: fixed; top: var(--header-h); left: 0; bottom: 0;
+      width: var(--sidebar-w);
+      padding: 1.5rem 1rem;
+      overflow-y: auto;
+      background: rgba(11,14,23,.6);
+      backdrop-filter: blur(12px);
+      border-right: 1px solid var(--border-glass);
+      z-index: 90;
+      transition: transform .35s cubic-bezier(.4,0,.2,1);
+    }
+    .sidebar__heading {
+      font-size: .65rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .12em; color: var(--text-muted); margin-bottom: .75rem;
+      padding-left: .75rem;
+    }
+    .sidebar__link {
+      display: flex; align-items: center; gap: .6rem;
+      padding: .6rem .75rem; margin-bottom: .25rem;
+      border-radius: var(--radius-sm);
+      font-size: .85rem; font-weight: 500;
+      color: var(--text-secondary);
+      text-decoration: none;
+      transition: all .2s;
+    }
+    .sidebar__link:hover,
+    .sidebar__link.active {
+      background: rgba(99,102,241,.1);
+      color: var(--text-primary);
+    }
+    .sidebar__link.active {
+      border-left: 3px solid var(--accent-1);
+      padding-left: calc(.75rem - 3px);
+    }
+    .sidebar__num {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 22px; height: 22px; flex-shrink: 0;
+      border-radius: 6px; font-size: .7rem; font-weight: 700;
+      background: rgba(99,102,241,.15); color: var(--accent-1);
+    }
+
+    .main {
+      margin-left: var(--sidebar-w);
+      margin-top: var(--header-h);
+      padding: 3rem 2.5rem 6rem;
+      max-width: 900px;
+      position: relative; z-index: 1;
+    }
+
+    .hero { text-align: center; padding: 3rem 0 2rem; }
+    .hero__pill {
+      display: inline-flex; align-items: center; gap: .5rem;
+      padding: .35rem 1rem; border-radius: 999px;
+      background: rgba(99,102,241,.12); border: 1px solid rgba(99,102,241,.25);
+      font-size: .75rem; font-weight: 600; color: var(--accent-1);
+      margin-bottom: 1.25rem; letter-spacing: .04em;
+    }
+    .hero__pill .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent-5); animation: pulse-dot 2s infinite; }
+    @keyframes pulse-dot { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.4;transform:scale(.7)} }
+    .hero h1 {
+      font-size: clamp(2rem, 5vw, 3.2rem); font-weight: 900; line-height: 1.15;
+      background: linear-gradient(135deg, #fff 30%, var(--accent-1) 70%, var(--accent-3));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      margin-bottom: 1rem;
+    }
+    .hero p { color: var(--text-secondary); font-size: 1.1rem; max-width: 600px; margin: 0 auto; }
+
+    .arch-diagram {
+      background: var(--gradient-card);
+      border: 1px solid var(--border-glass);
+      border-radius: var(--radius);
+      padding: 2rem; margin: 0 0 2rem;
+      position: relative; overflow: hidden;
+    }
+    .arch-diagram::before {
+      content: ''; position: absolute; top: -50%; right: -30%; width: 300px; height: 300px;
+      background: radial-gradient(circle, rgba(99,102,241,.15), transparent 70%);
+      pointer-events: none;
+    }
+    .arch-diagram h3 { font-size: 1rem; font-weight: 700; margin-bottom: 1.25rem; color: var(--accent-4); }
+    .arch-boxes {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 1rem;
+    }
+    .arch-box {
+      text-align: center; padding: 1.2rem .75rem; border-radius: var(--radius-sm);
+      background: rgba(255,255,255,.03); border: 1px solid var(--border-glass);
+      transition: transform .25s, box-shadow .25s;
+    }
+    .arch-box:hover { transform: translateY(-4px); box-shadow: var(--shadow-glow); }
+    .arch-box__icon { font-size: 1.8rem; margin-bottom: .5rem; }
+    .arch-box__label { font-size: .75rem; font-weight: 600; color: var(--text-secondary); }
+
+    .step {
+      margin-bottom: 3rem;
+      padding: 2rem 2rem 2rem 2.25rem;
+      border-radius: var(--radius);
+      background: var(--bg-card);
+      border: 1px solid var(--border-glass);
+      position: relative;
+      overflow: hidden;
+      transition: border-color .3s;
+    }
+    .step:hover { border-color: rgba(99,102,241,.25); }
+    .step::before {
+      content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%;
+      background: var(--gradient-main); border-radius: 4px 0 0 4px;
+    }
+    .step__header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; flex-wrap: wrap; }
+    .step__number {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 40px; height: 40px; border-radius: 12px; flex-shrink: 0;
+      background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+      font-weight: 800; font-size: 1rem; color: #fff;
+    }
+    .step__title { font-size: 1.35rem; font-weight: 800; }
+    .step__time {
+      margin-left: auto;
+      font-size: .7rem; font-weight: 600; padding: .25rem .7rem;
+      border-radius: 999px; background: rgba(16,185,129,.12); color: var(--accent-5);
+    }
+
+    .why-box {
+      margin: 1.25rem 0;
+      padding: 1rem 1.25rem;
+      border-radius: var(--radius-sm);
+      background: linear-gradient(135deg, rgba(245,158,11,.08), rgba(245,158,11,.03));
+      border-left: 3px solid var(--accent-warn);
+    }
+    .why-box__label {
+      display: inline-flex; align-items: center; gap: .4rem;
+      font-size: .7rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .08em; color: var(--accent-warn); margin-bottom: .4rem;
+    }
+    .why-box p { font-size: .9rem; color: var(--text-secondary); }
+
+    .tip-box {
+      margin: 1rem 0;
+      padding: 1rem 1.25rem;
+      border-radius: var(--radius-sm);
+      background: linear-gradient(135deg, rgba(6,182,212,.08), rgba(6,182,212,.03));
+      border-left: 3px solid var(--accent-4);
+    }
+    .tip-box__label {
+      display: inline-flex; align-items: center; gap: .4rem;
+      font-size: .7rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .08em; color: var(--accent-4); margin-bottom: .4rem;
+    }
+    .tip-box p { font-size: .9rem; color: var(--text-secondary); }
+
+    .warn-box {
+      margin: 1rem 0;
+      padding: 1rem 1.25rem;
+      border-radius: var(--radius-sm);
+      background: linear-gradient(135deg, rgba(239,68,68,.08), rgba(239,68,68,.03));
+      border-left: 3px solid #ef4444;
+    }
+    .warn-box__label {
+      display: inline-flex; align-items: center; gap: .4rem;
+      font-size: .7rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .08em; color: #ef4444; margin-bottom: .4rem;
+    }
+    .warn-box p { font-size: .9rem; color: var(--text-secondary); }
+
+    .code-block {
+      position: relative; margin: 1rem 0; border-radius: var(--radius-sm);
+      background: #0d1117; border: 1px solid rgba(255,255,255,.06);
+      overflow: hidden;
+    }
+    .code-block__bar {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: .5rem 1rem;
+      background: rgba(255,255,255,.04); border-bottom: 1px solid rgba(255,255,255,.06);
+    }
+    .code-block__lang {
+      font-size: .65rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .1em; color: var(--accent-4);
+    }
+    .code-block__copy {
+      font-size: .7rem; font-weight: 600; color: var(--text-muted);
+      background: none; border: 1px solid rgba(255,255,255,.1);
+      padding: .2rem .6rem; border-radius: 6px; cursor: pointer;
+      transition: all .2s;
+    }
+    .code-block__copy:hover { color: var(--text-primary); border-color: var(--accent-1); }
+    .code-block pre {
+      padding: 1rem 1.25rem; overflow-x: auto;
+      font-family: var(--font-mono); font-size: .82rem;
+      line-height: 1.7; color: #c9d1d9;
+    }
+    .code-block .comment { color: #6e7681; }
+    .code-block .cmd { color: #79c0ff; }
+    .code-block .flag { color: #d2a8ff; }
+    .code-block .string { color: #a5d6ff; }
+    .code-block .value { color: #7ee787; }
+
+    .step p { color: var(--text-secondary); font-size: .95rem; margin-bottom: .75rem; }
+    .step p strong { color: var(--text-primary); }
+    .step ul, .step ol { margin: .5rem 0 1rem 1.5rem; }
+    .step li { color: var(--text-secondary); font-size: .9rem; margin-bottom: .35rem; }
+    .step li strong { color: var(--text-primary); }
+
+    .sub-step {
+      margin: 1.25rem 0; padding: 1rem 1.25rem;
+      border-radius: var(--radius-sm);
+      background: var(--bg-glass); border: 1px solid var(--border-glass);
+    }
+    .sub-step__title {
+      font-size: .85rem; font-weight: 700; color: var(--accent-2);
+      margin-bottom: .5rem; display: flex; align-items: center; gap: .4rem;
+    }
+
+    .progress-track {
+      position: fixed; top: var(--header-h); left: 0; right: 0;
+      height: 3px; background: rgba(255,255,255,.05); z-index: 99;
+    }
+    .progress-bar {
+      height: 100%; width: 0;
+      background: var(--gradient-main);
+      transition: width .15s;
+    }
+
+    .cost-table {
+      width: 100%; border-collapse: collapse; margin: 1rem 0;
+      font-size: .85rem;
+    }
+    .cost-table th {
+      text-align: left; padding: .6rem .8rem;
+      background: rgba(99,102,241,.1); color: var(--accent-1);
+      font-weight: 700; font-size: .7rem; text-transform: uppercase; letter-spacing: .08em;
+    }
+    .cost-table td { padding: .6rem .8rem; border-bottom: 1px solid var(--border-glass); color: var(--text-secondary); }
+    .cost-table tr:hover td { background: rgba(255,255,255,.02); }
+
+    .footer {
+      text-align: center; padding: 2rem;
+      color: var(--text-muted); font-size: .8rem;
+      border-top: 1px solid var(--border-glass);
+    }
+
+    .back-top {
+      position: fixed; bottom: 2rem; right: 2rem;
+      width: 44px; height: 44px; border-radius: 12px;
+      background: var(--accent-1); color: #fff; border: none; cursor: pointer;
+      display: none; align-items: center; justify-content: center;
+      box-shadow: 0 4px 20px rgba(99,102,241,.4);
+      transition: transform .2s; z-index: 100; font-size: 1.2rem;
+    }
+    .back-top:hover { transform: translateY(-3px); }
+    .back-top.visible { display: flex; }
+
+    @media (max-width: 900px) {
+      .sidebar { transform: translateX(-100%); }
+      .sidebar.open { transform: translateX(0); }
+      .main { margin-left: 0; padding: 2rem 1.25rem 4rem; }
+      .header__toggle { display: block; }
+    }
+
+    .fade-in {
+      opacity: 0; transform: translateY(24px);
+      transition: opacity .6s ease, transform .6s ease;
+    }
+    .fade-in.visible { opacity: 1; transform: translateY(0); }
+
+    /* UI Steps (Console walkthrough) */
+    .ui-steps {
+      counter-reset: ui-step;
+      list-style: none;
+      margin: 1rem 0; padding: 0;
+    }
+    .ui-steps li {
+      counter-increment: ui-step;
+      position: relative;
+      padding: .75rem .75rem .75rem 3.2rem;
+      margin-bottom: .5rem;
+      border-radius: var(--radius-sm);
+      background: rgba(255,255,255,.02);
+      border: 1px solid var(--border-glass);
+      color: var(--text-secondary); font-size: .9rem;
+      transition: background .2s, border-color .2s;
+    }
+    .ui-steps li:hover {
+      background: rgba(99,102,241,.06);
+      border-color: rgba(99,102,241,.2);
+    }
+    .ui-steps li::before {
+      content: counter(ui-step);
+      position: absolute; left: .75rem; top: .75rem;
+      width: 26px; height: 26px; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+      color: #fff; font-size: .7rem; font-weight: 800;
+    }
+    .ui-steps li strong { color: var(--text-primary); }
+    .ui-steps li code {
+      background: rgba(99,102,241,.12); padding: .1rem .4rem;
+      border-radius: 4px; font-family: var(--font-mono); font-size: .8rem;
+      color: var(--accent-4);
+    }
+    .ui-steps .click-path {
+      display: inline-flex; align-items: center; gap: .3rem;
+      font-weight: 600; color: var(--accent-1);
+    }
+    .console-url {
+      display: inline-block; margin: .5rem 0;
+      padding: .4rem .8rem;
+      background: rgba(99,102,241,.1);
+      border: 1px solid rgba(99,102,241,.2);
+      border-radius: 8px;
+      font-family: var(--font-mono); font-size: .8rem;
+      color: var(--accent-1);
+      word-break: break-all;
+      text-decoration: none;
+      transition: background .2s;
+    }
+    .console-url:hover { background: rgba(99,102,241,.18); }
+    .policy-tag {
+      display: inline-block;
+      padding: .15rem .5rem; margin: .15rem .2rem;
+      background: rgba(16,185,129,.1);
+      border: 1px solid rgba(16,185,129,.25);
+      border-radius: 6px;
+      font-family: var(--font-mono); font-size: .75rem;
+      color: var(--accent-5); font-weight: 600;
+    }
+
+    /* Path Selector */
+    .path-selector {
+      margin: 2rem 0;
+      padding: 2rem;
+      border-radius: var(--radius);
+      background: var(--gradient-card);
+      border: 1px solid var(--border-glass);
+    }
+    .path-selector h3 { font-size: 1.1rem; font-weight: 800; margin-bottom: .5rem; }
+    .path-selector > p { color: var(--text-secondary); font-size: .9rem; margin-bottom: 1.25rem; }
+    .path-btns {
+      display: flex; gap: 1rem; flex-wrap: wrap;
+    }
+    .path-btn {
+      flex: 1; min-width: 200px;
+      padding: 1.25rem 1.5rem;
+      border-radius: var(--radius-sm);
+      border: 2px solid var(--border-glass);
+      background: rgba(255,255,255,.02);
+      cursor: pointer;
+      transition: all .3s;
+      text-align: left;
+    }
+    .path-btn:hover { border-color: rgba(99,102,241,.3); background: rgba(99,102,241,.06); }
+    .path-btn.selected { border-color: var(--accent-1); background: rgba(99,102,241,.1); }
+    .path-btn__label {
+      font-weight: 800; font-size: 1rem; color: var(--text-primary);
+      margin-bottom: .35rem;
+    }
+    .path-btn__desc { font-size: .8rem; color: var(--text-secondary); line-height: 1.5; }
+    .path-btn__badge {
+      display: inline-block; margin-bottom: .5rem;
+      padding: .15rem .5rem; border-radius: 999px;
+      font-size: .6rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em;
+    }
+    .path-btn__badge--easy { background: rgba(16,185,129,.15); color: var(--accent-5); }
+    .path-btn__badge--manual { background: rgba(139,92,246,.15); color: var(--accent-2); }
+
+    /* Path-conditional visibility — only hides INNER content blocks, never entire sections */
+    .path-easy-only, .path-manual-only { display: none; }
+    body.path-easy .path-easy-only { display: block; }
+    body.path-manual .path-manual-only { display: block; }
+    body.path-easy .path-manual-only { display: none; }
+    body.path-manual .path-easy-only { display: none; }
+    /* Path badge on section headers */
+    .path-badge {
+      display: inline-block; padding: .15rem .5rem; border-radius: 999px;
+      font-size: .55rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .06em; margin-left: .5rem; vertical-align: middle;
+    }
+    .path-badge--manual { background: rgba(139,92,246,.15); color: var(--accent-2); }
+
+    /* What is EKS section */
+    .what-is-eks {
+      margin-bottom: 2rem;
+      padding: 2rem;
+      border-radius: var(--radius);
+      background: var(--bg-card);
+      border: 1px solid var(--border-glass);
+    }
+    .what-is-eks h3 { font-size: 1.1rem; font-weight: 800; margin-bottom: 1rem; }
+    .what-is-eks p { color: var(--text-secondary); font-size: .9rem; margin-bottom: .75rem; }
+    .what-is-eks p strong { color: var(--text-primary); }
+    .analogy-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1rem 0;
+    }
+    @media (max-width: 600px) { .analogy-grid { grid-template-columns: 1fr; } }
+    .analogy-card {
+      padding: 1rem; border-radius: var(--radius-sm);
+      background: rgba(255,255,255,.03); border: 1px solid var(--border-glass);
+    }
+    .analogy-card__header {
+      font-size: .75rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .08em; margin-bottom: .5rem;
+    }
+    .analogy-card__header--real { color: var(--accent-4); }
+    .analogy-card__header--k8s { color: var(--accent-2); }
+    .analogy-card p { font-size: .85rem; color: var(--text-secondary); margin-bottom: .35rem; }
+
+    /* Animated Flow Diagram */
+    .animated-flow {
+      margin: 3rem 0; padding: 2.5rem 2rem;
+      border-radius: var(--radius);
+      background: rgba(15, 23, 42, 0.4);
+      border: 1px solid rgba(99, 102, 241, 0.2);
+      box-shadow: inset 0 0 40px rgba(0,0,0,0.5);
+      position: relative;
+    }
+    .flow-title {
+      font-size: 1.1rem; font-weight: 800; margin-bottom: 2.5rem;
+      text-align: center; color: var(--text-primary);
+      text-transform: uppercase; letter-spacing: 0.1em;
+    }
+    .flow-container {
+      display: flex; flex-direction: column; gap: 1.5rem;
+      position: relative; max-width: 600px; margin: 0 auto;
+    }
+    .flow-node {
+      display: flex; align-items: center; gap: 1.5rem;
+      background: var(--bg-card); padding: 1rem 1.5rem;
+      border-radius: 12px; border: 1px solid var(--border-glass);
+      position: relative; z-index: 2;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+      transition: transform 0.3s ease, border-color 0.3s ease;
+    }
+    .flow-node:hover {
+      transform: translateX(10px);
+      border-color: var(--accent-1);
+    }
+    .flow-icon {
+      font-size: 2rem;
+      min-width: 50px; text-align: center;
+      filter: drop-shadow(0 0 8px rgba(99,102,241,0.5));
+    }
+    .flow-text h4 { font-size: 1rem; color: var(--text-primary); margin-bottom: 0.2rem; }
+    .flow-text p { font-size: 0.8rem; color: var(--text-secondary); margin: 0; line-height: 1.4; }
+    
+    /* The animated connecting lines */
+    .flow-line {
+      position: absolute; left: 2.5rem; top: 3.5rem; bottom: -1rem;
+      width: 2px; background: rgba(255,255,255,0.05);
+      z-index: 1;
+    }
+    .flow-particle {
+      position: absolute; top: 0; left: -2px;
+      width: 6px; height: 30px;
+      background: var(--accent-1);
+      border-radius: 10px;
+      box-shadow: 0 0 15px var(--accent-1), 0 0 30px var(--accent-4);
+      animation: flow-down 3s infinite ease-in-out;
+    }
+    
+    @keyframes flow-down {
+      0% { top: 0; opacity: 0; }
+      10% { opacity: 1; }
+      90% { opacity: 1; }
+      100% { top: 100%; opacity: 0; }
+    }
+
+    /* Troubleshooting */
+    .trouble-item {
+      margin: .75rem 0; padding: 1rem 1.25rem;
+      border-radius: var(--radius-sm);
+      background: rgba(255,255,255,.02);
+      border: 1px solid var(--border-glass);
+    }
+    .trouble-item summary {
+      font-weight: 700; font-size: .9rem; color: var(--text-primary);
+      cursor: pointer; list-style: none;
+      display: flex; align-items: center; gap: .5rem;
+    }
+    .trouble-item summary::before {
+      content: '&#9654;'; font-size: .6rem; color: var(--accent-1);
+      transition: transform .2s; display: inline-block;
+    }
+    .trouble-item[open] summary::before { transform: rotate(90deg); }
+    .trouble-item__body { margin-top: .75rem; padding-left: 1.1rem; }
+    .trouble-item__body p { font-size: .85rem; color: var(--text-secondary); margin-bottom: .5rem; }
+    .trouble-item__body code {
+      background: rgba(99,102,241,.12); padding: .1rem .4rem;
+      border-radius: 4px; font-family: var(--font-mono); font-size: .78rem;
+      color: var(--accent-4);
+    }
+
+    .success-indicator {
+      display: inline-flex; align-items: center; gap: .4rem;
+      padding: .3rem .8rem; margin: .5rem 0;
+      border-radius: 999px;
+      background: rgba(16,185,129,.1); border: 1px solid rgba(16,185,129,.2);
+      font-size: .78rem; font-weight: 600; color: var(--accent-5);
+    }
+  </style>
+</head>
+<body class="path-easy">
+
+<div class="progress-track"><div class="progress-bar" id="progressBar"></div></div>
+
+<header class="header">
+  <div class="header__brand">
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><defs><linearGradient id="g1" x1="0" y1="0" x2="28" y2="28"><stop stop-color="#6366f1"/><stop offset="1" stop-color="#ec4899"/></linearGradient></defs><rect width="28" height="28" rx="8" fill="url(#g1)"/><text x="14" y="19.5" text-anchor="middle" fill="#fff" font-size="14" font-weight="800" font-family="Inter,sans-serif">K</text></svg>
+    EKS Beginner Guide
+    <span class="header__badge">2026 Edition</span>
+  </div>
+  <button class="header__toggle" id="menuToggle" aria-label="Toggle menu">&#9776;</button>
+</header>
+
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar__heading">Guide Steps</div>
+  <a href="#overview" class="sidebar__link active"><span class="sidebar__num">0</span> What is EKS?</a>
+  <a href="#path" class="sidebar__link"><span class="sidebar__num">&#9733;</span> Choose Your Path</a>
+  <a href="#step1" class="sidebar__link"><span class="sidebar__num">1</span> Prerequisites</a>
+  <a href="#step2" class="sidebar__link"><span class="sidebar__num">2</span> IAM Roles</a>
+  <a href="#step3" class="sidebar__link"><span class="sidebar__num">3</span> VPC & Networking</a>
+  <a href="#step4" class="sidebar__link"><span class="sidebar__num">4</span> Create EKS Cluster</a>
+  <a href="#step5" class="sidebar__link"><span class="sidebar__num">5</span> Node Group</a>
+  <a href="#step6" class="sidebar__link"><span class="sidebar__num">6</span> Configure kubectl</a>
+  <a href="#step7" class="sidebar__link"><span class="sidebar__num">7</span> Deploy Sample App</a>
+  <a href="#step8" class="sidebar__link"><span class="sidebar__num">8</span> Verify & Monitor</a>
+  <a href="#cheatsheet" class="sidebar__link" style="color: #60a5fa;"><span class="sidebar__num">&#128220;</span> Day 1 Cheat Sheet</a>
+  <a href="#projects" class="sidebar__link"><span class="sidebar__num">&#128736;</span> Practice Projects</a>
+  <a href="#step9" class="sidebar__link" style="color: #fca5a5;"><span class="sidebar__num">&#128689;</span> Stop EKS &amp; Clean Up</a>
+  <a href="#troubleshooting" class="sidebar__link"><span class="sidebar__num">?</span> Troubleshooting</a>
+  <a href="#costs" class="sidebar__link"><span class="sidebar__num">$</span> Cost Breakdown</a>
+  <a href="#next-steps" class="sidebar__link" style="color: #a78bfa;"><span class="sidebar__num">&#128640;</span> Day 2 (Advanced)</a>
+</nav>
+
+<main class="main">
+
+  <!-- Hero -->
+  <section class="hero fade-in" id="overview">
+    <div class="hero__pill"><span class="dot"></span> Amazon Elastic Kubernetes Service</div>
+    <h1>Create Your First EKS Cluster</h1>
+    <p>A beginner-friendly, step-by-step guide that explains <strong>what</strong> you do <em>and</em> <strong>why</strong> you do it — so you actually understand Kubernetes on AWS.</p>
+  </section>
+
+  <!-- What is EKS? -->
+  <div class="what-is-eks fade-in">
+    <h3>&#129300; Wait — What Even IS EKS?</h3>
+    <p><strong>Kubernetes</strong> (K8s) is an open-source system that automatically manages your Docker containers — starting them, restarting them if they crash, scaling them up when traffic increases, and balancing traffic across them.</p>
+    <p><strong>Amazon EKS</strong> (Elastic Kubernetes Service) is AWS's managed Kubernetes. It means AWS runs the "brain" of Kubernetes for you (the control plane), so you don't have to install, patch, or babysit it yourself.</p>
+    <p>Think of it like this:</p>
+
+    <div class="analogy-grid">
+      <div class="analogy-card">
+        <div class="analogy-card__header analogy-card__header--real">&#127859; Restaurant Analogy</div>
+        <p>&#8226; <strong>Head Chef</strong> = Control Plane (decides what gets cooked)</p>
+        <p>&#8226; <strong>Kitchen Staff</strong> = Worker Nodes (actually cook the food)</p>
+        <p>&#8226; <strong>Recipes</strong> = YAML Manifests (instructions for what to make)</p>
+        <p>&#8226; <strong>Dishes</strong> = Pods (the running containers)</p>
+      </div>
+      <div class="analogy-card">
+        <div class="analogy-card__header analogy-card__header--k8s">&#9881;&#65039; In Kubernetes Terms</div>
+        <p>&#8226; <strong>Control Plane</strong> = API Server + Scheduler + etcd (AWS manages this)</p>
+        <p>&#8226; <strong>Worker Nodes</strong> = EC2 instances running your containers</p>
+        <p>&#8226; <strong>Deployment</strong> = "Run 3 copies of this app, always"</p>
+        <p>&#8226; <strong>Service</strong> = A stable URL/IP for your pods</p>
+      </div>
+    </div>
+
+    <p><strong>In short:</strong> EKS lets you run containerized apps at scale without managing Kubernetes infrastructure yourself. You focus on your app — AWS handles the rest.</p>
+  </div>
+
+  <!-- Animated Workflow Diagram -->
+  <div class="animated-flow fade-in">
+    <div class="flow-title">&#9881;&#65039; How Everything Connects</div>
+    <div class="flow-container">
+      <!-- Continuous line connecting all nodes -->
+      <div class="flow-line"><div class="flow-particle"></div></div>
+
+      <div class="flow-node">
+        <div class="flow-icon">&#128187;</div>
+        <div class="flow-text">
+          <h4>1. Your Laptop (Jumpbox)</h4>
+          <p>You install <code>awscli</code>, <code>kubectl</code>, and <code>eksctl</code>. This is your command center.</p>
+        </div>
+      </div>
+
+      <div class="flow-node">
+        <div class="flow-icon">&#128274;</div>
+        <div class="flow-text">
+          <h4>2. AWS IAM</h4>
+          <p>Your laptop authenticates to AWS using your Access Keys (Identity & Access Management).</p>
+        </div>
+      </div>
+
+      <div class="flow-node">
+        <div class="flow-icon">&#127760;</div>
+        <div class="flow-text">
+          <h4>3. EKS Control Plane</h4>
+          <p><code>eksctl</code> tells AWS to create the EKS Master Node and a secure VPC network.</p>
+        </div>
+      </div>
+
+      <div class="flow-node">
+        <div class="flow-icon">&#128421;&#65039;</div>
+        <div class="flow-text">
+          <h4>4. Worker Nodes (EC2)</h4>
+          <p>EC2 instances are launched in your VPC and attached to the EKS Control Plane.</p>
+        </div>
+      </div>
+
+      <div class="flow-node">
+        <div class="flow-icon">&#128230;</div>
+        <div class="flow-text">
+          <h4>5. Your Application (Pods)</h4>
+          <p>You use <code>kubectl</code> to deploy containers (Pods) onto those Worker Nodes!</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Path Selector -->
+  <div class="path-selector fade-in" id="path">
+    <h3>&#127919; Choose Your Path</h3>
+    <p>There are two ways to create an EKS cluster. Pick the one that matches your comfort level:</p>
+    <div class="path-btns">
+      <div class="path-btn selected" onclick="selectPath('easy')" id="pathBtnEasy">
+        <div class="path-btn__badge path-btn__badge--easy">&#9989; RECOMMENDED FOR BEGINNERS</div>
+        <div class="path-btn__label">&#128640; Easy Path (eksctl)</div>
+        <div class="path-btn__desc"><strong>1 command creates everything</strong> — VPC, IAM roles, cluster, and nodes. Just do Steps 1 &#8594; 4 &#8594; 6 &#8594; 7. Skip Steps 2, 3, 5.</div>
+      </div>
+      <div class="path-btn" onclick="selectPath('manual')" id="pathBtnManual">
+        <div class="path-btn__badge path-btn__badge--manual">LEARN THE INTERNALS</div>
+        <div class="path-btn__label">&#128295; Manual Path (Console UI)</div>
+        <div class="path-btn__desc"><strong>Step-by-step in AWS Console</strong> — Create IAM roles, VPC, cluster, and nodes individually. More clicks, but you'll understand every piece.</div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ═══════════════════════════════════════
+       STEP 1 — Prerequisites
+       ═══════════════════════════════════════ -->
+  <section class="step fade-in" id="step1">
+    <div class="step__header">
+      <span class="step__number">1</span>
+      <h2 class="step__title">Install Prerequisites</h2>
+      <span class="step__time">&#9201; ~15 min</span>
+    </div>
+
+    <p>Before touching AWS, you need CLI tools on your local machine. Think of them as your toolkit.</p>
+
+    <div class="sub-step">
+      <div class="sub-step__title">&#127866; 1a — Install Homebrew (macOS only)</div>
+      <p>All Mac install commands below use <strong>Homebrew</strong> — the package manager for macOS. If you don't have it yet:</p>
+      <div class="code-block">
+        <div class="code-block__bar"><span class="code-block__lang">bash — macOS Terminal</span><button class="code-block__copy" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="comment"># Check if Homebrew is already installed</span>
+<span class="cmd">brew</span> <span class="flag">--version</span>
+
+<span class="comment"># If "command not found", install Homebrew with this one-liner:</span>
+<span class="cmd">/bin/bash</span> -c <span class="string">"$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"</span>
+
+<span class="comment"># After install, follow the instructions it prints to add brew to your PATH.</span>
+<span class="comment"># Usually something like:</span>
+<span class="cmd">echo</span> <span class="string">'eval "$(/opt/homebrew/bin/brew shellenv)"'</span> >> ~/.zprofile
+<span class="cmd">eval</span> <span class="string">"$(/opt/homebrew/bin/brew shellenv)"</span>
+
+<span class="comment"># Verify Homebrew works</span>
+<span class="cmd">brew</span> <span class="flag">--version</span></pre>
+      </div>
+      <div class="success-indicator">&#9989; Success: You see <code>Homebrew 4.x.x</code></div>
+      <div class="tip-box">
+        <div class="tip-box__label">&#128142; What is Homebrew?</div>
+        <p>Homebrew is like an app store for your terminal. Instead of downloading installers from websites, you just type <code>brew install &lt;tool&gt;</code> and it handles everything — download, install, and PATH setup. Linux users don't need Homebrew (use <code>apt</code> or <code>curl</code> instead).</p>
+      </div>
+    </div>
+
+    <div class="sub-step">
+      <div class="sub-step__title">&#128295; 1b — Install AWS CLI</div>
+      <p>The <strong>AWS CLI</strong> lets you interact with AWS from your terminal.</p>
+      <div class="code-block">
+        <div class="code-block__bar"><span class="code-block__lang">bash</span><button class="code-block__copy" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="comment"># macOS (Homebrew)</span>
+<span class="cmd">brew</span> install awscli
+
+<span class="comment"># Linux (official installer)</span>
+<span class="cmd">curl</span> <span class="string">"https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip"</span> -o <span class="string">"awscliv2.zip"</span>
+<span class="cmd">unzip</span> awscliv2.zip &amp;&amp; <span class="cmd">sudo</span> ./aws/install
+
+<span class="comment"># Verify</span>
+<span class="cmd">aws</span> <span class="flag">--version</span></pre>
+      </div>
+      <div class="success-indicator">&#9989; Success: You see something like <code>aws-cli/2.x.x</code></div>
+    </div>
+
+    <div class="sub-step">
+      <div class="sub-step__title">&#128295; 1c — Install kubectl</div>
+      <p><strong>kubectl</strong> is the Kubernetes CLI. You'll use it to deploy apps and manage your cluster.</p>
+      <div class="code-block">
+        <div class="code-block__bar"><span class="code-block__lang">bash</span><button class="code-block__copy" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="comment"># macOS</span>
+<span class="cmd">brew</span> install kubectl
+
+<span class="comment"># Linux</span>
+<span class="cmd">curl</span> -LO <span class="string">"https://dl.k8s.io/release/$(curl -sL https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"</span>
+<span class="cmd">chmod</span> +x kubectl &amp;&amp; <span class="cmd">sudo</span> mv kubectl /usr/local/bin/
+
+<span class="comment"># Verify</span>
+<span class="cmd">kubectl</span> version <span class="flag">--client</span></pre>
+      </div>
+      <div class="success-indicator">&#9989; Success: You see <code>Client Version: v1.x.x</code></div>
+    </div>
+
+    <div class="sub-step">
+      <div class="sub-step__title">&#128295; 1d — Install eksctl</div>
+      <p><strong>eksctl</strong> is the official CLI for Amazon EKS. It wraps dozens of API calls into simple commands.</p>
+      <div class="code-block">
+        <div class="code-block__bar"><span class="code-block__lang">bash</span><button class="code-block__copy" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="comment"># macOS</span>
+<span class="cmd">brew</span> tap weaveworks/tap
+<span class="cmd">brew</span> install weaveworks/tap/eksctl
+
+<span class="comment"># Linux</span>
+<span class="cmd">curl</span> <span class="flag">--silent --location</span> \
+  <span class="string">"https://github.com/eksctl-io/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz"</span> \
+  | <span class="cmd">tar</span> xz -C /tmp &amp;&amp; <span class="cmd">sudo</span> mv /tmp/eksctl /usr/local/bin
+
+<span class="comment"># Verify</span>
+<span class="cmd">eksctl</span> version</pre>
+      </div>
+      <div class="success-indicator">&#9989; Success: You see a version number like <code>0.x.x</code></div>
+    </div>
+
+    <div class="sub-step">
+      <div class="sub-step__title">&#128273; 1e — Get Your AWS Access Keys (Console UI)</div>
+      <p>You need an <strong>Access Key ID</strong> and <strong>Secret Access Key</strong> to link the CLI to your AWS account. Here's how to get them:</p>
+      <p><a class="console-url" href="https://console.aws.amazon.com/iam/" target="_blank" rel="noopener">&#128279; https://console.aws.amazon.com/iam/</a></p>
+      <ol class="ui-steps">
+        <li>Log in to the <strong>AWS Management Console</strong> at <strong>console.aws.amazon.com</strong>.</li>
+        <li>In the top search bar, type <strong>IAM</strong> and click on <strong>IAM</strong> from the results.</li>
+        <li>In the left sidebar, click <span class="click-path">Users</span>.</li>
+        <li>Click <strong>Create user</strong> (orange button, top-right).<br>&#8226; <strong>User name:</strong> enter <code>eks-admin</code><br>&#8226; Check <strong>"Provide user access to the AWS Management Console"</strong> if you want console login too.<br>&#8226; Click <strong>Next</strong>.</li>
+        <li>On <strong>Set permissions</strong>:<br>&#8226; Select <strong>"Attach policies directly"</strong>.<br>&#8226; Search and check <code>AdministratorAccess</code> (for learning only!).<br>&#8226; Click <strong>Next</strong> &#8594; <strong>Create user</strong>.</li>
+        <li>Click your new user name (<strong>eks-admin</strong>) to open the details.</li>
+        <li>Go to the <strong>"Security credentials"</strong> tab.</li>
+        <li>Scroll to <strong>"Access keys"</strong> and click <strong>Create access key</strong>.</li>
+        <li>Select <strong>"Command Line Interface (CLI)"</strong>, check confirmation, click <strong>Next</strong>.</li>
+        <li>Click <strong>Create access key</strong>. You'll see:<br>&#8226; <strong>Access Key ID</strong> — e.g., <code>AKIAIOSFODNN7EXAMPLE</code><br>&#8226; <strong>Secret Access Key</strong> — e.g., <code>wJalrXUtnFEMI/K7MDENG/bPxRfi...</code><br><br>&#9888;&#65039; <strong>Copy BOTH values NOW and click "Download .csv"!</strong> The Secret Key is shown only once.</li>
+      </ol>
+    </div>
+
+    <div class="sub-step">
+      <div class="sub-step__title">&#128295; 1f — Configure AWS Credentials (Method 1: aws configure)</div>
+      <p>The easiest way — paste your keys into the interactive prompt:</p>
+      <div class="code-block">
+        <div class="code-block__bar"><span class="code-block__lang">bash</span><button class="code-block__copy" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="cmd">aws</span> configure
+<span class="comment"># Paste when prompted:</span>
+<span class="comment">#   AWS Access Key ID:       AKIAIOSFODNN7EXAMPLE    (from Step 10 above)</span>
+<span class="comment">#   AWS Secret Access Key:   wJalrXUtnFEMI/K7MD...  (from Step 10 above)</span>
+<span class="comment">#   Default region:          us-east-1  (pick the region closest to you)</span>
+<span class="comment">#   Default output format:   json</span>
+
+<span class="comment"># Verify it works:</span>
+<span class="cmd">aws</span> sts get-caller-identity
+<span class="comment"># Should show your Account ID, User ARN, and User ID</span></pre>
+      </div>
+      <div class="success-indicator">&#9989; Success: You see your Account ID and User ARN in the output</div>
+    </div>
+
+    <div class="sub-step">
+      <div class="sub-step__title">&#128295; 1g — Configure AWS Credentials (Method 2: Environment Variables)</div>
+      <p>Alternatively, you can set credentials as <strong>environment variables</strong>. This is useful when switching between multiple AWS accounts or in CI/CD pipelines:</p>
+      <div class="code-block">
+        <div class="code-block__bar"><span class="code-block__lang">bash — set for current terminal session</span><button class="code-block__copy" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="comment"># Set your AWS credentials as environment variables</span>
+<span class="comment"># Replace the values with YOUR actual keys from Step 1e</span>
+<span class="cmd">export</span> <span class="value">AWS_ACCESS_KEY_ID</span>=<span class="string">AKIAIOSFODNN7EXAMPLE</span>
+<span class="cmd">export</span> <span class="value">AWS_SECRET_ACCESS_KEY</span>=<span class="string">wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY</span>
+<span class="cmd">export</span> <span class="value">AWS_DEFAULT_REGION</span>=<span class="string">us-east-1</span>
+
+<span class="comment"># Verify it works</span>
+<span class="cmd">aws</span> sts get-caller-identity</pre>
+      </div>
+
+      <div class="warn-box">
+        <div class="warn-box__label">&#9888;&#65039; Important</div>
+        <p>The <code>export</code> commands above only last for <strong>your current terminal session</strong>. If you close the terminal, they're gone! To make them permanent, add them to your shell profile:</p>
+      </div>
+
+      <div class="code-block">
+        <div class="code-block__bar"><span class="code-block__lang">bash — make persistent on macOS (zsh)</span><button class="code-block__copy" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="comment"># macOS uses zsh by default — add to ~/.zshrc</span>
+<span class="cmd">echo</span> <span class="string">'export AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE'</span> >> ~/.zshrc
+<span class="cmd">echo</span> <span class="string">'export AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY'</span> >> ~/.zshrc
+<span class="cmd">echo</span> <span class="string">'export AWS_DEFAULT_REGION=us-east-1'</span> >> ~/.zshrc
+
+<span class="comment"># Reload your shell config (or just open a new terminal)</span>
+<span class="cmd">source</span> ~/.zshrc
+
+<span class="comment"># Verify it persists</span>
+<span class="cmd">aws</span> sts get-caller-identity
+<span class="cmd">echo</span> <span class="value">$AWS_DEFAULT_REGION</span>   <span class="comment"># Should print: us-east-1</span></pre>
+      </div>
+
+      <div class="code-block">
+        <div class="code-block__bar"><span class="code-block__lang">bash — make persistent on Linux (bash)</span><button class="code-block__copy" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="comment"># Linux uses bash by default — add to ~/.bashrc</span>
+<span class="cmd">echo</span> <span class="string">'export AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE'</span> >> ~/.bashrc
+<span class="cmd">echo</span> <span class="string">'export AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY'</span> >> ~/.bashrc
+<span class="cmd">echo</span> <span class="string">'export AWS_DEFAULT_REGION=us-east-1'</span> >> ~/.bashrc
+
+<span class="comment"># Reload</span>
+<span class="cmd">source</span> ~/.bashrc</pre>
+      </div>
+
+      <div class="tip-box">
+        <div class="tip-box__label">&#128142; Which method should I use?</div>
+        <p style="margin-bottom: .5rem;"><strong>For beginners:</strong> Use <strong>Method 1 (<code>aws configure</code>)</strong> — it's simpler and stores keys in <code>~/.aws/credentials</code> automatically.</p>
+        <p style="margin-bottom: .5rem;"><strong>For DevOps work:</strong> Use <strong>Method 2 (env vars)</strong> — it's the standard for CI/CD pipelines, Docker containers, and switching between multiple AWS accounts.</p>
+        <p><strong>Priority order:</strong> If both are set, environment variables take priority over <code>~/.aws/credentials</code>. This means you can override <code>aws configure</code> settings temporarily with <code>export</code>.</p>
+      </div>
+
+      <div class="success-indicator">&#9989; Success: <code>aws sts get-caller-identity</code> works from any new terminal window</div>
+    </div>
+
+    <div class="why-box">
+      <div class="why-box__label">&#128161; Why this step?</div>
+      <p><strong>Without these tools you literally cannot proceed.</strong> AWS CLI authenticates you, kubectl manages Kubernetes, and eksctl automates EKS provisioning. The Access Keys are like a username/password for the CLI — they prove to AWS who you are.</p>
+    </div>
+
+    <div class="warn-box">
+      <div class="warn-box__label">&#9888;&#65039; Security Warning</div>
+      <p>Never commit your AWS credentials to Git. Use <code>~/.aws/credentials</code> or environment variables only. For production, prefer <strong>IAM Identity Center (SSO)</strong>.</p>
+    </div>
+  </section>
+
+
+  <!-- ═══════════════════════════════════════
+       STEP 2 — IAM Roles (Manual Path Only)
+       ═══════════════════════════════════════ -->
+  <section class="step fade-in" id="step2">
+    <div class="step__header">
+      <span class="step__number">2</span>
+      <h2 class="step__title">Create IAM Roles <span class="path-badge path-badge--manual">Manual Path</span></h2>
+      <span class="step__time">&#9201; ~10 min</span>
+    </div>
+
+    <div class="tip-box path-easy-only">
+      <div class="tip-box__label">&#128161; Easy Path Users</div>
+      <p><strong>You can skip this step!</strong> eksctl creates IAM roles automatically. But reading through it helps you understand what's happening behind the scenes.</p>
+    </div>
+
+    <p>EKS needs <em>two</em> IAM Roles:</p>
+    <ul>
+      <li><strong>Cluster Role</strong> — Lets the EKS control plane manage AWS resources.</li>
+      <li><strong>Node Role</strong> — Lets worker nodes pull images, assign IPs, and register with the cluster.</li>
+    </ul>
+
+    <div class="sub-step">
+      <div class="sub-step__title">&#128274; 2a — Create the EKS Cluster Role (Console UI)</div>
+      <p><a class="console-url" href="https://console.aws.amazon.com/iam/home#/roles" target="_blank" rel="noopener">&#128279; IAM Console &#8594; Roles</a></p>
+      <ol class="ui-steps">
+        <li>Open the <strong>IAM Console</strong>. In the left sidebar, click <span class="click-path">Roles</span>.</li>
+        <li>Click <strong>Create role</strong> (top-right).</li>
+        <li>On <strong>"Select trusted entity"</strong>:<br>&#8226; Choose <strong>"AWS service"</strong><br>&#8226; In <strong>"Use case"</strong>, search and select <strong>EKS</strong><br>&#8226; Select <strong>"EKS - Cluster"</strong><br>&#8226; Click <strong>Next</strong></li>
+        <li>On <strong>"Add permissions"</strong>, <span class="policy-tag">AmazonEKSClusterPolicy</span> is pre-selected. Click <strong>Next</strong>.</li>
+        <li><strong>Role name:</strong> enter <code>myEKSClusterRole</code> &#8594; Click <strong>Create role</strong>.</li>
+        <li class="success-indicator" style="list-style:none; margin-left:-2rem">&#9989; Green banner: "Role myEKSClusterRole created"</li>
+      </ol>
+    </div>
+
+    <div class="sub-step">
+      <div class="sub-step__title">&#128274; 2b — Create the Node Group Role (Console UI)</div>
+      <p><a class="console-url" href="https://console.aws.amazon.com/iam/home#/roles" target="_blank" rel="noopener">&#128279; IAM Console &#8594; Roles</a></p>
+      <ol class="ui-steps">
+        <li>Click <span class="click-path">Roles</span> &#8594; <strong>Create role</strong> again.</li>
+        <li>Trusted entity: <strong>"AWS service"</strong> &#8594; Use case: <strong>EC2</strong> &#8594; Click <strong>Next</strong></li>
+        <li>Search and check <strong>all three policies</strong>:<br><br><span class="policy-tag">AmazonEKSWorkerNodePolicy</span> — Lets nodes register with the cluster<br><span class="policy-tag">AmazonEKS_CNI_Policy</span> — Lets VPC CNI plugin assign pod IPs<br><span class="policy-tag">AmazonEC2ContainerRegistryReadOnly</span> — Lets nodes pull Docker images from ECR<br><br>&#128161; <em>Search one at a time, check the box, clear search, repeat. Checked policies persist.</em><br><br>Click <strong>Next</strong>.</li>
+        <li><strong>Role name:</strong> enter <code>myEKSNodeRole</code> &#8594; Verify 3 policies listed &#8594; Click <strong>Create role</strong>.</li>
+        <li class="success-indicator" style="list-style:none; margin-left:-2rem">&#9989; Green banner: "Role myEKSNodeRole created"</li>
+      </ol>
+    </div>
+
+    <div class="why-box">
+      <div class="why-box__label">&#128161; Why this step?</div>
+      <p><strong>AWS follows the principle of least privilege.</strong> Nothing can do anything without explicit permission. The Cluster Role lets EKS manage networking and logging. The Node Role lets EC2 instances pull images and join the cluster. Without these roles, your cluster cannot start.</p>
+    </div>
+  </section>
+
+
+  <!-- ═══════════════════════════════════════
+       STEP 3 — VPC (Manual Path Only)
+       ═══════════════════════════════════════ -->
+  <section class="step fade-in" id="step3">
+    <div class="step__header">
+      <span class="step__number">3</span>
+      <h2 class="step__title">Set Up VPC & Networking <span class="path-badge path-badge--manual">Manual Path</span></h2>
+      <span class="step__time">&#9201; ~10 min</span>
+    </div>
+
+    <div class="tip-box path-easy-only">
+      <div class="tip-box__label">&#128161; Easy Path Users</div>
+      <p><strong>You can skip this step!</strong> eksctl creates the VPC automatically. But reading through it helps you understand networking.</p>
+    </div>
+
+    <p>A <strong>VPC</strong> (Virtual Private Cloud) is your isolated network in AWS. Your cluster lives inside it. You need public subnets (for load balancers) and private subnets (for worker nodes) across at least 2 Availability Zones.</p>
+
+    <div class="sub-step">
+      <div class="sub-step__title">&#127760; 3a — Create VPC via CloudFormation Console</div>
+      <p><a class="console-url" href="https://console.aws.amazon.com/cloudformation/" target="_blank" rel="noopener">&#128279; CloudFormation Console</a></p>
+      <ol class="ui-steps">
+        <li>Open the <strong>CloudFormation Console</strong>. Click <strong>Create stack</strong> &#8594; <strong>"With new resources (standard)"</strong>.</li>
+        <li>Under <strong>Specify template</strong>:<br>&#8226; Select <strong>"Amazon S3 URL"</strong><br>&#8226; Paste this URL:<br><code>https://s3.us-west-2.amazonaws.com/amazon-eks/cloudformation/2020-10-29/amazon-eks-vpc-private-subnets.yaml</code><br>&#8226; Click <strong>Next</strong></li>
+        <li><strong>Stack name:</strong> enter <code>eks-vpc</code> &#8594; Click <strong>Next</strong></li>
+        <li>Leave all defaults on "Configure stack options" &#8594; Click <strong>Next</strong></li>
+        <li>Review and click <strong>Submit</strong>. Wait ~2-3 minutes until status shows <strong>CREATE_COMPLETE</strong>.</li>
+        <li>Click on your <strong>eks-vpc</strong> stack &#8594; Go to the <strong>"Outputs"</strong> tab.<br>&#8226; <strong>Save these values!</strong> You'll need <code>SubnetIds</code>, <code>SecurityGroups</code>, and <code>VpcId</code> in the next step.</li>
+      </ol>
+      <div class="success-indicator">&#9989; Success: Stack status shows CREATE_COMPLETE and you can see the Outputs tab</div>
+    </div>
+
+    <div class="why-box">
+      <div class="why-box__label">&#128161; Why this step?</div>
+      <p><strong>Kubernetes pods need a network to communicate.</strong> They get IP addresses from the VPC subnet range. Multiple AZs mean if one data center goes down, your app survives. Public/private subnet split keeps your nodes behind a NAT gateway (security best practice).</p>
+    </div>
+  </section>
+
+
+  <!-- ═══════════════════════════════════════
+       STEP 4 — Create EKS Cluster
+       ═══════════════════════════════════════ -->
+  <section class="step fade-in" id="step4">
+    <div class="step__header">
+      <span class="step__number">4</span>
+      <h2 class="step__title">Create the EKS Cluster</h2>
+      <span class="step__time">&#9201; ~15-20 min</span>
+    </div>
+
+    <p>This is the big one — creating the Kubernetes cluster itself.</p>
+
+    <!-- Easy Path -->
+    <div class="path-easy-only">
+      <div class="sub-step">
+        <div class="sub-step__title">&#128640; One Command Does EVERYTHING</div>
+        <p>This single command creates the VPC, IAM roles, EKS cluster, and worker nodes — all at once. Just copy, paste, wait ~15 min:</p>
+        <div class="code-block">
+          <div class="code-block__bar"><span class="code-block__lang">bash</span><button class="code-block__copy" onclick="copyCode(this)">Copy</button></div>
+          <pre><span class="cmd">eksctl</span> create cluster \
+  <span class="flag">--name</span> <span class="value">my-first-cluster</span> \
+  <span class="flag">--region</span> <span class="value">us-east-1</span> \
+  <span class="flag">--version</span> <span class="value">1.30</span> \
+  <span class="flag">--nodegroup-name</span> <span class="value">standard-workers</span> \
+  <span class="flag">--node-type</span> <span class="value">t3.medium</span> \
+  <span class="flag">--nodes</span> <span class="value">2</span> \
+  <span class="flag">--nodes-min</span> <span class="value">1</span> \
+  <span class="flag">--nodes-max</span> <span class="value">3</span> \
+  <span class="flag">--managed</span></pre>
+        </div>
+        <p>&#9203; <strong>This takes ~15-20 minutes.</strong> Go grab a coffee. You'll see log output like:</p>
+        <div class="code-block">
+          <div class="code-block__bar"><span class="code-block__lang">output</span></div>
+          <pre><span class="comment">[&#10003;] EKS cluster "my-first-cluster" in "us-east-1" region is ready</span>
+<span class="comment">[&#10003;] created managed nodegroup "standard-workers"</span>
+<span class="comment">[&#10003;] kubectl configured for "my-first-cluster"</span></pre>
+        </div>
+        <div class="success-indicator">&#9989; Success: You see "EKS cluster is ready" — eksctl also auto-configures kubectl for you!</div>
+
+        <div class="tip-box">
+          <div class="tip-box__label">&#128161; What eksctl created for you</div>
+          <p>&#8226; A VPC with public + private subnets across 2 AZs<br>
+             &#8226; IAM roles for the cluster and nodes<br>
+             &#8226; The EKS control plane<br>
+             &#8226; 2 worker nodes (t3.medium EC2 instances)<br>
+             &#8226; Auto-configured your kubectl<br>
+             <strong>That's why eksctl is amazing for beginners — all of this in one command!</strong></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Manual Path -->
+    <div class="path-manual-only">
+      <div class="sub-step">
+        <div class="sub-step__title">&#128295; 4a — Create Cluster via EKS Console</div>
+        <p><a class="console-url" href="https://console.aws.amazon.com/eks/" target="_blank" rel="noopener">&#128279; EKS Console</a></p>
+        <ol class="ui-steps">
+          <li>Open the <strong>EKS Console</strong>. Click <strong>Add cluster</strong> &#8594; <strong>Create</strong>.</li>
+          <li>On <strong>"Configure cluster"</strong>:<br>&#8226; <strong>Name:</strong> <code>my-first-cluster</code><br>&#8226; <strong>Kubernetes version:</strong> <code>1.30</code> (latest stable)<br>&#8226; <strong>Cluster service role:</strong> select <code>myEKSClusterRole</code> (created in Step 2)<br>&#8226; Click <strong>Next</strong></li>
+          <li>On <strong>"Specify networking"</strong>:<br>&#8226; <strong>VPC:</strong> select the VPC created in Step 3 (look for the eks-vpc stack's VPC ID)<br>&#8226; <strong>Subnets:</strong> select all subnets from your eks-vpc stack<br>&#8226; <strong>Security groups:</strong> select the security group from your eks-vpc Outputs<br>&#8226; <strong>Cluster endpoint access:</strong> select <strong>"Public and private"</strong><br>&#8226; Click <strong>Next</strong></li>
+          <li>On <strong>"Configure observability"</strong>: leave defaults &#8594; Click <strong>Next</strong></li>
+          <li>On <strong>"Select add-ons"</strong>: leave defaults (CoreDNS, kube-proxy, VPC CNI) &#8594; Click <strong>Next</strong></li>
+          <li>On <strong>"Configure selected add-ons settings"</strong>: leave defaults &#8594; Click <strong>Next</strong></li>
+          <li>Review everything &#8594; Click <strong>Create</strong>.</li>
+          <li>&#9203; <strong>Wait ~10-15 minutes</strong> until cluster status changes to <strong>Active</strong>.</li>
+        </ol>
+        <div class="success-indicator">&#9989; Success: Cluster status shows "Active" in the EKS Console</div>
+      </div>
+    </div>
+
+    <div class="why-box">
+      <div class="why-box__label">&#128161; Why this step?</div>
+      <p><strong>This creates the Kubernetes control plane</strong> — the "brain" of your cluster. It includes the API server (where kubectl sends requests), etcd (the cluster database), the scheduler (decides which node runs your pod), and the controller manager. AWS manages ALL of this for you — you never SSH into a master node.</p>
+    </div>
+  </section>
+
+
+  <!-- ═══════════════════════════════════════
+       STEP 5 — Node Group (Manual Path Only)
+       ═══════════════════════════════════════ -->
+  <section class="step fade-in" id="step5">
+    <div class="step__header">
+      <span class="step__number">5</span>
+      <h2 class="step__title">Add a Managed Node Group <span class="path-badge path-badge--manual">Manual Path</span></h2>
+      <span class="step__time">&#9201; ~5 min</span>
+    </div>
+
+    <div class="tip-box path-easy-only">
+      <div class="tip-box__label">&#128161; Easy Path Users</div>
+      <p><strong>You can skip this step!</strong> eksctl already created your nodes. But reading through it helps you understand node groups.</p>
+    </div>
+
+    <p>The control plane is running but has no workers. Now you add EC2 instances where your containers actually run.</p>
+
+    <div class="sub-step">
+      <div class="sub-step__title">&#128421;&#65039; 5a — Add Nodes via EKS Console</div>
+      <p><a class="console-url" href="https://console.aws.amazon.com/eks/" target="_blank" rel="noopener">&#128279; EKS Console &#8594; Clusters</a></p>
+      <ol class="ui-steps">
+        <li>Open the <strong>EKS Console</strong>. Click on your cluster name (<strong>my-first-cluster</strong>).</li>
+        <li>Go to the <strong>"Compute"</strong> tab. Under "Node groups", click <strong>Add node group</strong>.</li>
+        <li>On <strong>"Configure node group"</strong>:<br>&#8226; <strong>Name:</strong> <code>standard-workers</code><br>&#8226; <strong>Node IAM role:</strong> select <code>myEKSNodeRole</code> (created in Step 2)<br>&#8226; Click <strong>Next</strong></li>
+        <li>On <strong>"Set compute and scaling"</strong>:<br>&#8226; <strong>Instance types:</strong> <code>t3.medium</code> (2 vCPU, 4 GB RAM)<br>&#8226; <strong>Minimum size:</strong> <code>1</code><br>&#8226; <strong>Maximum size:</strong> <code>3</code><br>&#8226; <strong>Desired size:</strong> <code>2</code><br>&#8226; Click <strong>Next</strong></li>
+        <li>On <strong>"Specify networking"</strong>: leave the pre-selected subnets &#8594; Click <strong>Next</strong></li>
+        <li>Review &#8594; Click <strong>Create</strong>. Wait ~3-5 minutes until status shows <strong>Active</strong>.</li>
+      </ol>
+      <div class="success-indicator">&#9989; Success: Node group status shows "Active" and you see 2 nodes</div>
+    </div>
+
+    <div class="why-box">
+      <div class="why-box__label">&#128161; Why this step?</div>
+      <p><strong>The control plane alone can't run your apps.</strong> It's like having a manager with no employees. Worker nodes are the EC2 instances where your containers actually execute. A <strong>managed node group</strong> means AWS handles OS patching, graceful draining during updates, and auto-scaling.</p>
+    </div>
+  </section>
+
+
+  <!-- ═══════════════════════════════════════
+       STEP 6 — Configure kubectl
+       ═══════════════════════════════════════ -->
+  <section class="step fade-in" id="step6">
+    <div class="step__header">
+      <span class="step__number">6</span>
+      <h2 class="step__title">Configure kubectl</h2>
+      <span class="step__time">&#9201; ~2 min</span>
+    </div>
+
+    <div class="path-easy-only">
+      <div class="tip-box">
+        <div class="tip-box__label">&#128161; Easy Path Note</div>
+        <p>eksctl already configured kubectl for you! Just run the verification command below to confirm.</p>
+      </div>
+    </div>
+
+    <p>Point your local <code>kubectl</code> at your new cluster:</p>
+
+    <div class="code-block">
+      <div class="code-block__bar"><span class="code-block__lang">bash</span><button class="code-block__copy" onclick="copyCode(this)">Copy</button></div>
+      <pre><span class="comment"># Update kubeconfig (skip if you used eksctl — it did this already)</span>
+<span class="cmd">aws</span> eks update-kubeconfig \
+  <span class="flag">--name</span> <span class="value">my-first-cluster</span> \
+  <span class="flag">--region</span> <span class="value">us-east-1</span>
+
+<span class="comment"># &#9989; VERIFY — you should see your worker nodes listed as "Ready"</span>
+<span class="cmd">kubectl</span> get nodes
+
+<span class="comment"># Expected output:</span>
+<span class="comment"># NAME                             STATUS   ROLES    AGE   VERSION</span>
+<span class="comment"># ip-192-168-xx-xx.ec2.internal    Ready    &lt;none&gt;   5m    v1.30.x</span>
+<span class="comment"># ip-192-168-yy-yy.ec2.internal    Ready    &lt;none&gt;   5m    v1.30.x</span></pre>
+    </div>
+    <div class="success-indicator">&#9989; Success: You see 2 nodes with STATUS "Ready"</div>
+
+    <div class="why-box">
+      <div class="why-box__label">&#128161; Why this step?</div>
+      <p><strong>kubectl uses <code>~/.kube/config</code> to know where your cluster is.</strong> The <code>update-kubeconfig</code> command writes the API server endpoint and authentication config. After this, every <code>kubectl</code> command talks to your EKS cluster.</p>
+    </div>
+  </section>
+
+
+  <!-- ═══════════════════════════════════════
+       STEP 7 — Deploy Sample App
+       ═══════════════════════════════════════ -->
+  <section class="step fade-in" id="step7">
+    <div class="step__header">
+      <span class="step__number">7</span>
+      <h2 class="step__title">Deploy a Sample Application</h2>
+      <span class="step__time">&#9201; ~5 min</span>
+    </div>
+
+    <p>Time to prove it works! You'll deploy Nginx and expose it to the internet.</p>
+
+    <div class="sub-step">
+      <div class="sub-step__title">&#128196; 7a — Create the Deployment File</div>
+      <p>Save this as <code>nginx-deployment.yaml</code> (create the file in any folder):</p>
+      <div class="code-block">
+        <div class="code-block__bar"><span class="code-block__lang">yaml — nginx-deployment.yaml</span><button class="code-block__copy" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="cmd">apiVersion:</span> apps/v1
+<span class="cmd">kind:</span> Deployment
+<span class="cmd">metadata:</span>
+  <span class="flag">name:</span> <span class="value">nginx-deployment</span>
+  <span class="flag">labels:</span>
+    <span class="flag">app:</span> <span class="value">nginx</span>
+<span class="cmd">spec:</span>
+  <span class="flag">replicas:</span> <span class="value">2</span>                  <span class="comment"># Run 2 copies for availability</span>
+  <span class="flag">selector:</span>
+    <span class="flag">matchLabels:</span>
+      <span class="flag">app:</span> <span class="value">nginx</span>
+  <span class="flag">template:</span>
+    <span class="flag">metadata:</span>
+      <span class="flag">labels:</span>
+        <span class="flag">app:</span> <span class="value">nginx</span>
+    <span class="flag">spec:</span>
+      <span class="flag">containers:</span>
+      - <span class="flag">name:</span> <span class="value">nginx</span>
+        <span class="flag">image:</span> <span class="string">nginx:1.25</span>
+        <span class="flag">ports:</span>
+        - <span class="flag">containerPort:</span> <span class="value">80</span>
+        <span class="flag">resources:</span>
+          <span class="flag">requests:</span>
+            <span class="flag">cpu:</span> <span class="string">"100m"</span>
+            <span class="flag">memory:</span> <span class="string">"128Mi"</span>
+          <span class="flag">limits:</span>
+            <span class="flag">cpu:</span> <span class="string">"250m"</span>
+            <span class="flag">memory:</span> <span class="string">"256Mi"</span></pre>
+      </div>
+    </div>
+
+    <div class="sub-step">
+      <div class="sub-step__title">&#127760; 7b — Create the Service File</div>
+      <p>Save this as <code>nginx-service.yaml</code> (same folder):</p>
+      <div class="code-block">
+        <div class="code-block__bar"><span class="code-block__lang">yaml — nginx-service.yaml</span><button class="code-block__copy" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="cmd">apiVersion:</span> v1
+<span class="cmd">kind:</span> Service
+<span class="cmd">metadata:</span>
+  <span class="flag">name:</span> <span class="value">nginx-service</span>
+<span class="cmd">spec:</span>
+  <span class="flag">type:</span> <span class="value">LoadBalancer</span>         <span class="comment"># Creates an AWS Load Balancer automatically</span>
+  <span class="flag">selector:</span>
+    <span class="flag">app:</span> <span class="value">nginx</span>
+  <span class="flag">ports:</span>
+  - <span class="flag">protocol:</span> <span class="value">TCP</span>
+    <span class="flag">port:</span> <span class="value">80</span>
+    <span class="flag">targetPort:</span> <span class="value">80</span></pre>
+      </div>
+    </div>
+
+    <div class="sub-step">
+      <div class="sub-step__title">&#9654;&#65039; 7c — Deploy!</div>
+      <div class="code-block">
+        <div class="code-block__bar"><span class="code-block__lang">bash</span><button class="code-block__copy" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="comment"># Deploy the app</span>
+<span class="cmd">kubectl</span> apply -f nginx-deployment.yaml
+<span class="cmd">kubectl</span> apply -f nginx-service.yaml
+
+<span class="comment"># Watch pods come up (wait for STATUS = Running)</span>
+<span class="cmd">kubectl</span> get pods <span class="flag">-w</span>
+
+<span class="comment"># Get the external URL (wait 1-2 min for AWS to assign it)</span>
+<span class="cmd">kubectl</span> get service nginx-service
+
+<span class="comment"># Copy the EXTERNAL-IP and paste it in your browser!</span>
+<span class="comment"># You should see the "Welcome to nginx!" page &#127881;</span></pre>
+      </div>
+      <div class="success-indicator">&#9989; Success: You see "Welcome to nginx!" in your browser</div>
+    </div>
+
+    <div class="why-box">
+      <div class="why-box__label">&#128161; Why this step?</div>
+      <p><strong>A Deployment tells Kubernetes "always run 2 copies of this container."</strong> If one crashes, K8s creates a replacement. The <code>LoadBalancer</code> Service tells AWS to create an ELB and route internet traffic to your pods. This deploy-then-expose pattern is how every Kubernetes app works.</p>
+    </div>
+  </section>
+
+
+  <!-- ═══════════════════════════════════════
+       STEP 8 — Verify & Monitor
+       ═══════════════════════════════════════ -->
+  <section class="step fade-in" id="step8">
+    <div class="step__header">
+      <span class="step__number">8</span>
+      <h2 class="step__title">Verify & Monitor</h2>
+      <span class="step__time">&#9201; ~5 min</span>
+    </div>
+
+    <p>Essential commands you'll use every day:</p>
+
+    <div class="code-block">
+      <div class="code-block__bar"><span class="code-block__lang">bash — daily kubectl commands</span><button class="code-block__copy" onclick="copyCode(this)">Copy</button></div>
+      <pre><span class="comment"># ──── Cluster Info ────</span>
+<span class="cmd">kubectl</span> cluster-info                    <span class="comment"># API server endpoint</span>
+<span class="cmd">kubectl</span> get nodes -o wide               <span class="comment"># Node details</span>
+
+<span class="comment"># ──── Workload Status ────</span>
+<span class="cmd">kubectl</span> get pods                        <span class="comment"># Your pods</span>
+<span class="cmd">kubectl</span> get pods -A                     <span class="comment"># ALL pods (including system)</span>
+<span class="cmd">kubectl</span> get deployments                 <span class="comment"># Deployment status</span>
+<span class="cmd">kubectl</span> get services                    <span class="comment"># Service endpoints</span>
+
+<span class="comment"># ──── Debugging (your #1 tools!) ────</span>
+<span class="cmd">kubectl</span> describe pod &lt;pod-name&gt;         <span class="comment"># Detailed info + events</span>
+<span class="cmd">kubectl</span> logs &lt;pod-name&gt;                 <span class="comment"># Container stdout/stderr</span>
+<span class="cmd">kubectl</span> logs &lt;pod-name&gt; <span class="flag">-f</span>              <span class="comment"># Stream logs live</span>
+
+<span class="comment"># ──── Shell into a Container ────</span>
+<span class="cmd">kubectl</span> exec -it &lt;pod-name&gt; <span class="flag">--</span> /bin/sh  <span class="comment"># Open shell inside container</span>
+
+<span class="comment"># ──── Resource Usage ────</span>
+<span class="cmd">kubectl</span> top nodes                       <span class="comment"># CPU/Memory per node</span>
+<span class="cmd">kubectl</span> top pods                        <span class="comment"># CPU/Memory per pod</span></pre>
+    </div>
+
+    <div class="why-box">
+      <div class="why-box__label">&#128161; Why this step?</div>
+      <p><strong>Observability is everything.</strong> <code>describe</code> shows events (pull failures, crash loops). <code>logs</code> shows your app's output. <code>top</code> reveals resource usage. Master these now — they save hours of debugging later.</p>
+    </div>
+  </section>
+
+
+  <!-- ═══════════════════════════════════════
+       DAY 1 CHEAT SHEET
+       ═══════════════════════════════════════ -->
+  <section class="step fade-in" id="cheatsheet">
+    <div class="step__header">
+      <span class="step__number">&#128220;</span>
+      <h2 class="step__title">Day 1 Cheat Sheet (eksctl &amp; kubectl)</h2>
+    </div>
+    <p>Here are the core day-to-day commands you will need to manage your EKS cluster and nodes from your laptop.</p>
+
+    <div class="sub-step">
+      <div class="sub-step__title">&#128187; Cluster Management</div>
+      <div class="code-block">
+        <div class="code-block__bar"><span class="code-block__lang">bash</span><button class="code-block__copy" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="comment"># Create cluster AND node group together (Easy Path)</span>
+<span class="cmd">eksctl</span> create cluster --name my-cluster --region us-east-1 --nodegroup-name workers --node-type t3.medium --nodes 2
+
+<span class="comment"># Create ONLY the cluster (No worker nodes yet)</span>
+<span class="cmd">eksctl</span> create cluster --name my-cluster --region us-east-1 --without-nodegroup
+
+<span class="comment"># Update your laptop's config to connect to the cluster</span>
+<span class="cmd">aws</span> eks update-kubeconfig --region us-east-1 --name my-cluster
+
+<span class="comment"># Delete the entire cluster and all nodes</span>
+<span class="cmd">eksctl</span> delete cluster --name my-cluster --region us-east-1</pre>
+      </div>
+    </div>
+
+    <div class="sub-step">
+      <div class="sub-step__title">&#128421;&#65039; Node Group Management (Scaling)</div>
+      <div class="code-block">
+        <div class="code-block__bar"><span class="code-block__lang">bash</span><button class="code-block__copy" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="comment"># Add a NEW node group to an existing cluster</span>
+<span class="cmd">eksctl</span> create nodegroup --cluster my-cluster --region us-east-1 --name more-workers --node-type t3.large --nodes 3
+
+<span class="comment"># Scale an existing node group up or down (e.g., change from 2 nodes to 5)</span>
+<span class="cmd">eksctl</span> scale nodegroup --cluster my-cluster --name workers --nodes 5
+
+<span class="comment"># Delete a node group (removes those specific EC2 instances)</span>
+<span class="cmd">eksctl</span> delete nodegroup --cluster my-cluster --name workers</pre>
+      </div>
+    </div>
+
+    <div class="sub-step">
+      <div class="sub-step__title">&#128230; Application Deployment</div>
+      <div class="code-block">
+        <div class="code-block__bar"><span class="code-block__lang">bash</span><button class="code-block__copy" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="comment"># See all running pods</span>
+<span class="cmd">kubectl</span> get pods -A
+
+<span class="comment"># Deploy an app from a YAML file</span>
+<span class="cmd">kubectl</span> apply -f my-app.yaml
+
+<span class="comment"># Delete that app</span>
+<span class="cmd">kubectl</span> delete -f my-app.yaml</pre>
+      </div>
+    </div>
+    <div class="sub-step">
+      <div class="sub-step__title">&#128269; Troubleshooting Pods</div>
+      <div class="code-block">
+        <div class="code-block__bar"><span class="code-block__lang">bash</span><button class="code-block__copy" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="comment"># Find out WHY a pod is crashing or stuck (e.g., "Insufficient CPU")</span>
+<span class="cmd">kubectl</span> describe pod &lt;pod-name&gt;
+
+<span class="comment"># View the actual console logs from your application code</span>
+<span class="cmd">kubectl</span> logs &lt;pod-name&gt;
+
+<span class="comment"># Stream logs live (like tail -f)</span>
+<span class="cmd">kubectl</span> logs -f &lt;pod-name&gt;</pre>
+      </div>
+    </div>
+
+    <div class="sub-step">
+      <div class="sub-step__title">&#128194; Namespaces (Where is my app?)</div>
+      <p style="font-size: .85rem; color: var(--text-secondary); margin-bottom: .5rem;">If <code>kubectl get pods</code> says "No resources found", you might be in the wrong namespace!</p>
+      <div class="code-block">
+        <div class="code-block__bar"><span class="code-block__lang">bash</span><button class="code-block__copy" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="comment"># See all namespaces</span>
+<span class="cmd">kubectl</span> get namespaces
+
+<span class="comment"># Get pods in a specific namespace</span>
+<span class="cmd">kubectl</span> get pods -n &lt;namespace-name&gt;
+
+<span class="comment"># Get pods across ALL namespaces at once</span>
+<span class="cmd">kubectl</span> get pods -A</pre>
+      </div>
+    </div>
+
+    <div class="sub-step">
+      <div class="sub-step__title">&#127760; Port Forwarding (Quick Testing)</div>
+      <p style="font-size: .85rem; color: var(--text-secondary); margin-bottom: .5rem;">Test your app locally before setting up complex Load Balancers.</p>
+      <div class="code-block">
+        <div class="code-block__bar"><span class="code-block__lang">bash</span><button class="code-block__copy" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="comment"># Forward a local port (8080) to the service port (80)</span>
+<span class="cmd">kubectl</span> port-forward svc/&lt;service-name&gt; 8080:80
+
+<span class="comment"># Now open your browser and go to: http://localhost:8080</span></pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════
+       PRACTICE PROJECTS
+       ═══════════════════════════════════════ -->
+  <section class="step" id="projects">
+    <div class="step__header">
+      <span class="step__number">&#128736;</span>
+      <h2 class="step__title">Practice Projects</h2>
+    </div>
+
+    <p>You've deployed Nginx — great! Now build <strong>real projects</strong> to learn Kubernetes concepts hands-on. Each project teaches new skills and builds on the previous one.</p>
+
+    <!-- ──── PROJECT 1 ──── -->
+    <div class="sub-step" style="border-left: 3px solid var(--accent-5); background: linear-gradient(135deg, rgba(16,185,129,.04), transparent);">
+      <div class="sub-step__title" style="color: var(--accent-5); font-size: .95rem;">&#127793; Project 1 — Custom Portfolio Website (Easy)</div>
+      <p style="color: var(--text-secondary); font-size: .85rem; margin-bottom: .5rem;"><strong>New concepts:</strong> <span class="policy-tag">ConfigMap</span> <span class="policy-tag">Volume Mounts</span> <span class="policy-tag">Custom HTML</span></p>
+      <p>Instead of the default Nginx page, deploy <strong>your own website</strong> using a ConfigMap to inject custom HTML — no Docker image building required!</p>
+
+      <div class="code-block">
+        <div class="code-block__bar"><span class="code-block__lang">yaml — project1-portfolio.yaml</span><button class="code-block__copy" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="comment"># ──── 1. ConfigMap: Your custom HTML page ────</span>
+<span class="cmd">apiVersion:</span> v1
+<span class="cmd">kind:</span> ConfigMap
+<span class="cmd">metadata:</span>
+  <span class="flag">name:</span> <span class="value">portfolio-html</span>
+<span class="cmd">data:</span>
+  <span class="flag">index.html:</span> |
+    &lt;!DOCTYPE html&gt;
+    &lt;html&gt;
+    &lt;head&gt;
+      &lt;title&gt;My Portfolio on EKS&lt;/title&gt;
+      &lt;style&gt;
+        body { font-family: system-ui; background: #0f172a; color: #e2e8f0;
+               display: flex; justify-content: center; align-items: center;
+               min-height: 100vh; margin: 0; }
+        .card { background: #1e293b; padding: 3rem; border-radius: 16px;
+                text-align: center; max-width: 500px; box-shadow: 0 20px 60px rgba(0,0,0,.5); }
+        h1 { color: #818cf8; margin-bottom: 0.5rem; }
+        .badge { background: #10b981; color: #fff; padding: 4px 12px;
+                 border-radius: 999px; font-size: 12px; font-weight: 700; }
+        p { color: #94a3b8; line-height: 1.6; }
+      &lt;/style&gt;
+    &lt;/head&gt;
+    &lt;body&gt;
+      &lt;div class="card"&gt;
+        &lt;span class="badge"&gt;Running on Kubernetes!&lt;/span&gt;
+        &lt;h1&gt;&#128075; Hi, I'm [Your Name]&lt;/h1&gt;
+        &lt;p&gt;This website is running on an Amazon EKS cluster
+           with Kubernetes. I built this as part of my DevOps learning journey.&lt;/p&gt;
+        &lt;p&gt;&lt;strong&gt;Pod:&lt;/strong&gt; served by Nginx in a K8s pod&lt;/p&gt;
+      &lt;/div&gt;
+    &lt;/body&gt;
+    &lt;/html&gt;
+<span class="comment">---</span>
+<span class="comment"># ──── 2. Deployment: Nginx serves the ConfigMap HTML ────</span>
+<span class="cmd">apiVersion:</span> apps/v1
+<span class="cmd">kind:</span> Deployment
+<span class="cmd">metadata:</span>
+  <span class="flag">name:</span> <span class="value">portfolio</span>
+<span class="cmd">spec:</span>
+  <span class="flag">replicas:</span> <span class="value">2</span>
+  <span class="flag">selector:</span>
+    <span class="flag">matchLabels:</span>
+      <span class="flag">app:</span> <span class="value">portfolio</span>
+  <span class="flag">template:</span>
+    <span class="flag">metadata:</span>
+      <span class="flag">labels:</span>
+        <span class="flag">app:</span> <span class="value">portfolio</span>
+    <span class="flag">spec:</span>
+      <span class="flag">containers:</span>
+      - <span class="flag">name:</span> <span class="value">nginx</span>
+        <span class="flag">image:</span> <span class="string">nginx:1.25-alpine</span>
+        <span class="flag">ports:</span>
+        - <span class="flag">containerPort:</span> <span class="value">80</span>
+        <span class="flag">volumeMounts:</span>            <span class="comment"># Mount ConfigMap as a file</span>
+        - <span class="flag">name:</span> <span class="value">html-volume</span>
+          <span class="flag">mountPath:</span> <span class="string">/usr/share/nginx/html</span>
+        <span class="flag">resources:</span>
+          <span class="flag">requests:</span>
+            <span class="flag">cpu:</span> <span class="string">"50m"</span>
+            <span class="flag">memory:</span> <span class="string">"64Mi"</span>
+          <span class="flag">limits:</span>
+            <span class="flag">cpu:</span> <span class="string">"100m"</span>
+            <span class="flag">memory:</span> <span class="string">"128Mi"</span>
+      <span class="flag">volumes:</span>                  <span class="comment"># Define the ConfigMap as a volume</span>
+      - <span class="flag">name:</span> <span class="value">html-volume</span>
+        <span class="flag">configMap:</span>
+          <span class="flag">name:</span> <span class="value">portfolio-html</span>
+<span class="comment">---</span>
+<span class="comment"># ──── 3. Service: Expose to the internet ────</span>
+<span class="cmd">apiVersion:</span> v1
+<span class="cmd">kind:</span> Service
+<span class="cmd">metadata:</span>
+  <span class="flag">name:</span> <span class="value">portfolio-service</span>
+<span class="cmd">spec:</span>
+  <span class="flag">type:</span> <span class="value">LoadBalancer</span>
+  <span class="flag">selector:</span>
+    <span class="flag">app:</span> <span class="value">portfolio</span>
+  <span class="flag">ports:</span>
+  - <span class="flag">port:</span> <span class="value">80</span>
+    <span class="flag">targetPort:</span> <span class="value">80</span></pre>
+      </div>
+
+      <div class="code-block">
+        <div class="code-block__bar"><span class="code-block__lang">bash — deploy & verify</span><button class="code-block__copy" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="comment"># Deploy everything in one file</span>
+<span class="cmd">kubectl</span> apply -f project1-portfolio.yaml
+
+<span class="comment"># Watch pods come up</span>
+<span class="cmd">kubectl</span> get pods -l app=portfolio <span class="flag">-w</span>
+
+<span class="comment"># Get your website URL</span>
+<span class="cmd">kubectl</span> get service portfolio-service
+<span class="comment"># Open the EXTERNAL-IP in your browser! &#127881;</span>
+
+<span class="comment"># &#128161; Try updating the HTML in the ConfigMap and re-applying!</span>
+<span class="comment"># kubectl apply -f project1-portfolio.yaml</span>
+<span class="comment"># kubectl rollout restart deployment portfolio</span></pre>
+      </div>
+
+      <div class="why-box">
+        <div class="why-box__label">&#127891; What you learned</div>
+        <p><strong>ConfigMaps</strong> let you inject configuration (files, env vars) into containers without rebuilding the Docker image. <strong>Volume mounts</strong> make ConfigMap data appear as files inside the container. This pattern is how real teams manage config across environments (dev/staging/prod).</p>
+      </div>
+    </div>
+
+    <!-- ──── PROJECT 2 ──── -->
+    <div class="sub-step" style="border-left: 3px solid var(--accent-4); background: linear-gradient(135deg, rgba(6,182,212,.04), transparent); margin-top: 2rem;">
+      <div class="sub-step__title" style="color: var(--accent-4); font-size: .95rem;">&#128640; Project 2 — Guestbook App with Redis (Medium)</div>
+      <p style="color: var(--text-secondary); font-size: .85rem; margin-bottom: .5rem;"><strong>New concepts:</strong> <span class="policy-tag">Multi-tier Apps</span> <span class="policy-tag">ClusterIP Service</span> <span class="policy-tag">Inter-pod Communication</span> <span class="policy-tag">Replicas</span></p>
+      <p>Build a <strong>2-tier application</strong>: a PHP frontend that talks to a Redis backend. This is the classic Kubernetes tutorial — and it teaches how pods communicate internally.</p>
+
+      <div class="code-block">
+        <div class="code-block__bar"><span class="code-block__lang">yaml — project2-guestbook.yaml</span><button class="code-block__copy" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="comment"># ──── 1. Redis Leader (primary database) ────</span>
+<span class="cmd">apiVersion:</span> apps/v1
+<span class="cmd">kind:</span> Deployment
+<span class="cmd">metadata:</span>
+  <span class="flag">name:</span> <span class="value">redis-leader</span>
+<span class="cmd">spec:</span>
+  <span class="flag">replicas:</span> <span class="value">1</span>
+  <span class="flag">selector:</span>
+    <span class="flag">matchLabels:</span>
+      <span class="flag">app:</span> <span class="value">redis</span>
+      <span class="flag">role:</span> <span class="value">leader</span>
+  <span class="flag">template:</span>
+    <span class="flag">metadata:</span>
+      <span class="flag">labels:</span>
+        <span class="flag">app:</span> <span class="value">redis</span>
+        <span class="flag">role:</span> <span class="value">leader</span>
+    <span class="flag">spec:</span>
+      <span class="flag">containers:</span>
+      - <span class="flag">name:</span> <span class="value">redis</span>
+        <span class="flag">image:</span> <span class="string">redis:7-alpine</span>
+        <span class="flag">ports:</span>
+        - <span class="flag">containerPort:</span> <span class="value">6379</span>
+        <span class="flag">resources:</span>
+          <span class="flag">requests:</span>
+            <span class="flag">cpu:</span> <span class="string">"100m"</span>
+            <span class="flag">memory:</span> <span class="string">"128Mi"</span>
+          <span class="flag">limits:</span>
+            <span class="flag">cpu:</span> <span class="string">"250m"</span>
+            <span class="flag">memory:</span> <span class="string">"256Mi"</span>
+<span class="comment">---</span>
+<span class="comment"># ──── 2. Redis Leader Service (ClusterIP — internal only) ────</span>
+<span class="cmd">apiVersion:</span> v1
+<span class="cmd">kind:</span> Service
+<span class="cmd">metadata:</span>
+  <span class="flag">name:</span> <span class="value">redis-leader</span>
+<span class="cmd">spec:</span>
+  <span class="flag">type:</span> <span class="value">ClusterIP</span>             <span class="comment"># Only accessible INSIDE the cluster</span>
+  <span class="flag">selector:</span>
+    <span class="flag">app:</span> <span class="value">redis</span>
+    <span class="flag">role:</span> <span class="value">leader</span>
+  <span class="flag">ports:</span>
+  - <span class="flag">port:</span> <span class="value">6379</span>
+<span class="comment">---</span>
+<span class="comment"># ──── 3. Redis Followers (read replicas for scaling reads) ────</span>
+<span class="cmd">apiVersion:</span> apps/v1
+<span class="cmd">kind:</span> Deployment
+<span class="cmd">metadata:</span>
+  <span class="flag">name:</span> <span class="value">redis-follower</span>
+<span class="cmd">spec:</span>
+  <span class="flag">replicas:</span> <span class="value">2</span>                  <span class="comment"># 2 read replicas</span>
+  <span class="flag">selector:</span>
+    <span class="flag">matchLabels:</span>
+      <span class="flag">app:</span> <span class="value">redis</span>
+      <span class="flag">role:</span> <span class="value">follower</span>
+  <span class="flag">template:</span>
+    <span class="flag">metadata:</span>
+      <span class="flag">labels:</span>
+        <span class="flag">app:</span> <span class="value">redis</span>
+        <span class="flag">role:</span> <span class="value">follower</span>
+    <span class="flag">spec:</span>
+      <span class="flag">containers:</span>
+      - <span class="flag">name:</span> <span class="value">redis-follower</span>
+        <span class="flag">image:</span> <span class="string">gcr.io/google_samples/gb-redis-follower:v2</span>
+        <span class="flag">ports:</span>
+        - <span class="flag">containerPort:</span> <span class="value">6379</span>
+        <span class="flag">resources:</span>
+          <span class="flag">requests:</span>
+            <span class="flag">cpu:</span> <span class="string">"100m"</span>
+            <span class="flag">memory:</span> <span class="string">"128Mi"</span>
+          <span class="flag">limits:</span>
+            <span class="flag">cpu:</span> <span class="string">"250m"</span>
+            <span class="flag">memory:</span> <span class="string">"256Mi"</span>
+<span class="comment">---</span>
+<span class="comment"># ──── 4. Redis Follower Service ────</span>
+<span class="cmd">apiVersion:</span> v1
+<span class="cmd">kind:</span> Service
+<span class="cmd">metadata:</span>
+  <span class="flag">name:</span> <span class="value">redis-follower</span>
+<span class="cmd">spec:</span>
+  <span class="flag">type:</span> <span class="value">ClusterIP</span>
+  <span class="flag">selector:</span>
+    <span class="flag">app:</span> <span class="value">redis</span>
+    <span class="flag">role:</span> <span class="value">follower</span>
+  <span class="flag">ports:</span>
+  - <span class="flag">port:</span> <span class="value">6379</span>
+<span class="comment">---</span>
+<span class="comment"># ──── 5. Guestbook Frontend (PHP app) ────</span>
+<span class="cmd">apiVersion:</span> apps/v1
+<span class="cmd">kind:</span> Deployment
+<span class="cmd">metadata:</span>
+  <span class="flag">name:</span> <span class="value">guestbook-frontend</span>
+<span class="cmd">spec:</span>
+  <span class="flag">replicas:</span> <span class="value">3</span>
+  <span class="flag">selector:</span>
+    <span class="flag">matchLabels:</span>
+      <span class="flag">app:</span> <span class="value">guestbook</span>
+  <span class="flag">template:</span>
+    <span class="flag">metadata:</span>
+      <span class="flag">labels:</span>
+        <span class="flag">app:</span> <span class="value">guestbook</span>
+    <span class="flag">spec:</span>
+      <span class="flag">containers:</span>
+      - <span class="flag">name:</span> <span class="value">guestbook</span>
+        <span class="flag">image:</span> <span class="string">gcr.io/google_samples/gb-frontend:v5</span>
+        <span class="flag">ports:</span>
+        - <span class="flag">containerPort:</span> <span class="value">80</span>
+        <span class="flag">env:</span>                      <span class="comment"># The app reads these to find Redis</span>
+        - <span class="flag">name:</span> <span class="value">GET_HOSTS_FROM</span>
+          <span class="flag">value:</span> <span class="string">"dns"</span>
+        <span class="flag">resources:</span>
+          <span class="flag">requests:</span>
+            <span class="flag">cpu:</span> <span class="string">"100m"</span>
+            <span class="flag">memory:</span> <span class="string">"128Mi"</span>
+          <span class="flag">limits:</span>
+            <span class="flag">cpu:</span> <span class="string">"250m"</span>
+            <span class="flag">memory:</span> <span class="string">"256Mi"</span>
+<span class="comment">---</span>
+<span class="comment"># ──── 6. Guestbook Service (public) ────</span>
+<span class="cmd">apiVersion:</span> v1
+<span class="cmd">kind:</span> Service
+<span class="cmd">metadata:</span>
+  <span class="flag">name:</span> <span class="value">guestbook-frontend</span>
+<span class="cmd">spec:</span>
+  <span class="flag">type:</span> <span class="value">LoadBalancer</span>
+  <span class="flag">selector:</span>
+    <span class="flag">app:</span> <span class="value">guestbook</span>
+  <span class="flag">ports:</span>
+  - <span class="flag">port:</span> <span class="value">80</span>
+    <span class="flag">targetPort:</span> <span class="value">80</span></pre>
+      </div>
+
+      <div class="code-block">
+        <div class="code-block__bar"><span class="code-block__lang">bash — deploy & verify</span><button class="code-block__copy" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="comment"># Deploy the entire guestbook stack</span>
+<span class="cmd">kubectl</span> apply -f project2-guestbook.yaml
+
+<span class="comment"># Watch all 6 pods come up (1 leader + 2 followers + 3 frontend)</span>
+<span class="cmd">kubectl</span> get pods <span class="flag">-w</span>
+
+<span class="comment"># Get the guestbook URL</span>
+<span class="cmd">kubectl</span> get service guestbook-frontend
+
+<span class="comment"># Open EXTERNAL-IP in browser — type messages in the guestbook!</span>
+<span class="comment"># Messages are stored in Redis and persist across page refreshes.</span>
+
+<span class="comment"># &#128161; Experiment: Scale the frontend and see traffic spread</span>
+<span class="cmd">kubectl</span> scale deployment guestbook-frontend <span class="flag">--replicas=5</span>
+<span class="cmd">kubectl</span> get pods -l app=guestbook</pre>
+      </div>
+
+      <div class="why-box">
+        <div class="why-box__label">&#127891; What you learned</div>
+        <p><strong>ClusterIP Services</strong> expose pods only inside the cluster (Redis doesn't need internet access). The frontend finds Redis using <strong>DNS-based service discovery</strong> — Kubernetes automatically creates DNS entries like <code>redis-leader.default.svc.cluster.local</code>. The <strong>leader/follower pattern</strong> shows how real databases scale reads. This is exactly how production microservices communicate.</p>
+      </div>
+    </div>
+
+    <!-- ──── PROJECT 3 ──── -->
+    <div class="sub-step" style="border-left: 3px solid var(--accent-3); background: linear-gradient(135deg, rgba(236,72,153,.04), transparent); margin-top: 2rem;">
+      <div class="sub-step__title" style="color: var(--accent-3); font-size: .95rem;">&#128293; Project 3 — Microservices with Auto-Scaling (Hard)</div>
+      <p style="color: var(--text-secondary); font-size: .85rem; margin-bottom: .5rem;"><strong>New concepts:</strong> <span class="policy-tag">Namespace</span> <span class="policy-tag">Secret</span> <span class="policy-tag">HPA (Auto-Scaling)</span> <span class="policy-tag">Health Checks</span> <span class="policy-tag">Resource Tuning</span></p>
+      <p>Deploy a production-style app with <strong>Namespaces</strong> for isolation, <strong>Secrets</strong> for passwords, <strong>Health checks</strong> for reliability, and <strong>Horizontal Pod Autoscaler</strong> to handle traffic spikes.</p>
+
+      <div class="code-block">
+        <div class="code-block__bar"><span class="code-block__lang">yaml — project3-microservices.yaml</span><button class="code-block__copy" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="comment"># ──── 1. Namespace: Isolate this project ────</span>
+<span class="cmd">apiVersion:</span> v1
+<span class="cmd">kind:</span> Namespace
+<span class="cmd">metadata:</span>
+  <span class="flag">name:</span> <span class="value">production-app</span>
+<span class="comment">---</span>
+<span class="comment"># ──── 2. Secret: Store the Redis password ────</span>
+<span class="cmd">apiVersion:</span> v1
+<span class="cmd">kind:</span> Secret
+<span class="cmd">metadata:</span>
+  <span class="flag">name:</span> <span class="value">redis-secret</span>
+  <span class="flag">namespace:</span> <span class="value">production-app</span>
+<span class="cmd">type:</span> Opaque
+<span class="cmd">stringData:</span>                   <span class="comment"># K8s will base64-encode for you</span>
+  <span class="flag">redis-password:</span> <span class="string">"MyS3cur3P@ss!"</span>
+<span class="comment">---</span>
+<span class="comment"># ──── 3. Redis with password + health check ────</span>
+<span class="cmd">apiVersion:</span> apps/v1
+<span class="cmd">kind:</span> Deployment
+<span class="cmd">metadata:</span>
+  <span class="flag">name:</span> <span class="value">redis</span>
+  <span class="flag">namespace:</span> <span class="value">production-app</span>
+<span class="cmd">spec:</span>
+  <span class="flag">replicas:</span> <span class="value">1</span>
+  <span class="flag">selector:</span>
+    <span class="flag">matchLabels:</span>
+      <span class="flag">app:</span> <span class="value">redis</span>
+  <span class="flag">template:</span>
+    <span class="flag">metadata:</span>
+      <span class="flag">labels:</span>
+        <span class="flag">app:</span> <span class="value">redis</span>
+    <span class="flag">spec:</span>
+      <span class="flag">containers:</span>
+      - <span class="flag">name:</span> <span class="value">redis</span>
+        <span class="flag">image:</span> <span class="string">redis:7-alpine</span>
+        <span class="flag">command:</span> [<span class="string">"redis-server"</span>, <span class="string">"--requirepass"</span>, <span class="string">"$(REDIS_PASSWORD)"</span>]
+        <span class="flag">env:</span>
+        - <span class="flag">name:</span> <span class="value">REDIS_PASSWORD</span>
+          <span class="flag">valueFrom:</span>             <span class="comment"># Read password from Secret</span>
+            <span class="flag">secretKeyRef:</span>
+              <span class="flag">name:</span> <span class="value">redis-secret</span>
+              <span class="flag">key:</span> <span class="value">redis-password</span>
+        <span class="flag">ports:</span>
+        - <span class="flag">containerPort:</span> <span class="value">6379</span>
+        <span class="flag">readinessProbe:</span>          <span class="comment"># Is it ready to accept traffic?</span>
+          <span class="flag">exec:</span>
+            <span class="flag">command:</span> [<span class="string">"redis-cli"</span>, <span class="string">"-a"</span>, <span class="string">"$(REDIS_PASSWORD)"</span>, <span class="string">"ping"</span>]
+          <span class="flag">initialDelaySeconds:</span> <span class="value">5</span>
+          <span class="flag">periodSeconds:</span> <span class="value">10</span>
+        <span class="flag">livenessProbe:</span>           <span class="comment"># Is it still alive?</span>
+          <span class="flag">exec:</span>
+            <span class="flag">command:</span> [<span class="string">"redis-cli"</span>, <span class="string">"-a"</span>, <span class="string">"$(REDIS_PASSWORD)"</span>, <span class="string">"ping"</span>]
+          <span class="flag">initialDelaySeconds:</span> <span class="value">15</span>
+          <span class="flag">periodSeconds:</span> <span class="value">20</span>
+        <span class="flag">resources:</span>
+          <span class="flag">requests:</span>
+            <span class="flag">cpu:</span> <span class="string">"100m"</span>
+            <span class="flag">memory:</span> <span class="string">"128Mi"</span>
+          <span class="flag">limits:</span>
+            <span class="flag">cpu:</span> <span class="string">"250m"</span>
+            <span class="flag">memory:</span> <span class="string">"256Mi"</span>
+<span class="comment">---</span>
+<span class="cmd">apiVersion:</span> v1
+<span class="cmd">kind:</span> Service
+<span class="cmd">metadata:</span>
+  <span class="flag">name:</span> <span class="value">redis</span>
+  <span class="flag">namespace:</span> <span class="value">production-app</span>
+<span class="cmd">spec:</span>
+  <span class="flag">type:</span> <span class="value">ClusterIP</span>
+  <span class="flag">selector:</span>
+    <span class="flag">app:</span> <span class="value">redis</span>
+  <span class="flag">ports:</span>
+  - <span class="flag">port:</span> <span class="value">6379</span>
+<span class="comment">---</span>
+<span class="comment"># ──── 4. Web App with health checks + auto-scaling ────</span>
+<span class="cmd">apiVersion:</span> apps/v1
+<span class="cmd">kind:</span> Deployment
+<span class="cmd">metadata:</span>
+  <span class="flag">name:</span> <span class="value">web-app</span>
+  <span class="flag">namespace:</span> <span class="value">production-app</span>
+<span class="cmd">spec:</span>
+  <span class="flag">replicas:</span> <span class="value">2</span>
+  <span class="flag">selector:</span>
+    <span class="flag">matchLabels:</span>
+      <span class="flag">app:</span> <span class="value">web-app</span>
+  <span class="flag">template:</span>
+    <span class="flag">metadata:</span>
+      <span class="flag">labels:</span>
+        <span class="flag">app:</span> <span class="value">web-app</span>
+    <span class="flag">spec:</span>
+      <span class="flag">containers:</span>
+      - <span class="flag">name:</span> <span class="value">web</span>
+        <span class="flag">image:</span> <span class="string">nginx:1.25-alpine</span>
+        <span class="flag">ports:</span>
+        - <span class="flag">containerPort:</span> <span class="value">80</span>
+        <span class="flag">readinessProbe:</span>          <span class="comment"># Don't send traffic until ready</span>
+          <span class="flag">httpGet:</span>
+            <span class="flag">path:</span> <span class="string">/</span>
+            <span class="flag">port:</span> <span class="value">80</span>
+          <span class="flag">initialDelaySeconds:</span> <span class="value">3</span>
+          <span class="flag">periodSeconds:</span> <span class="value">5</span>
+        <span class="flag">livenessProbe:</span>           <span class="comment"># Restart if this fails</span>
+          <span class="flag">httpGet:</span>
+            <span class="flag">path:</span> <span class="string">/</span>
+            <span class="flag">port:</span> <span class="value">80</span>
+          <span class="flag">initialDelaySeconds:</span> <span class="value">5</span>
+          <span class="flag">periodSeconds:</span> <span class="value">10</span>
+        <span class="flag">resources:</span>
+          <span class="flag">requests:</span>              <span class="comment"># HPA needs requests to calculate usage %</span>
+            <span class="flag">cpu:</span> <span class="string">"100m"</span>
+            <span class="flag">memory:</span> <span class="string">"128Mi"</span>
+          <span class="flag">limits:</span>
+            <span class="flag">cpu:</span> <span class="string">"300m"</span>
+            <span class="flag">memory:</span> <span class="string">"256Mi"</span>
+<span class="comment">---</span>
+<span class="cmd">apiVersion:</span> v1
+<span class="cmd">kind:</span> Service
+<span class="cmd">metadata:</span>
+  <span class="flag">name:</span> <span class="value">web-app</span>
+  <span class="flag">namespace:</span> <span class="value">production-app</span>
+<span class="cmd">spec:</span>
+  <span class="flag">type:</span> <span class="value">LoadBalancer</span>
+  <span class="flag">selector:</span>
+    <span class="flag">app:</span> <span class="value">web-app</span>
+  <span class="flag">ports:</span>
+  - <span class="flag">port:</span> <span class="value">80</span>
+    <span class="flag">targetPort:</span> <span class="value">80</span>
+<span class="comment">---</span>
+<span class="comment"># ──── 5. HPA: Auto-scale web pods based on CPU ────</span>
+<span class="cmd">apiVersion:</span> autoscaling/v2
+<span class="cmd">kind:</span> HorizontalPodAutoscaler
+<span class="cmd">metadata:</span>
+  <span class="flag">name:</span> <span class="value">web-app-hpa</span>
+  <span class="flag">namespace:</span> <span class="value">production-app</span>
+<span class="cmd">spec:</span>
+  <span class="flag">scaleTargetRef:</span>
+    <span class="flag">apiVersion:</span> <span class="string">apps/v1</span>
+    <span class="flag">kind:</span> <span class="value">Deployment</span>
+    <span class="flag">name:</span> <span class="value">web-app</span>
+  <span class="flag">minReplicas:</span> <span class="value">2</span>              <span class="comment"># Never go below 2</span>
+  <span class="flag">maxReplicas:</span> <span class="value">8</span>              <span class="comment"># Scale up to 8 under load</span>
+  <span class="flag">metrics:</span>
+  - <span class="flag">type:</span> <span class="value">Resource</span>
+    <span class="flag">resource:</span>
+      <span class="flag">name:</span> <span class="value">cpu</span>
+      <span class="flag">target:</span>
+        <span class="flag">type:</span> <span class="value">Utilization</span>
+        <span class="flag">averageUtilization:</span> <span class="value">50</span>  <span class="comment"># Scale up when CPU &gt; 50%</span></pre>
+      </div>
+
+      <div class="code-block">
+        <div class="code-block__bar"><span class="code-block__lang">bash — deploy, verify & stress test</span><button class="code-block__copy" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="comment"># Deploy to the new namespace</span>
+<span class="cmd">kubectl</span> apply -f project3-microservices.yaml
+
+<span class="comment"># Check everything in your namespace</span>
+<span class="cmd">kubectl</span> get all <span class="flag">-n</span> production-app
+
+<span class="comment"># Watch the HPA (it tracks CPU usage and adjusts replicas)</span>
+<span class="cmd">kubectl</span> get hpa <span class="flag">-n</span> production-app <span class="flag">-w</span>
+
+<span class="comment"># Verify health checks are working</span>
+<span class="cmd">kubectl</span> describe pod -l app=web-app <span class="flag">-n</span> production-app | grep -A5 "Conditions"
+
+<span class="comment"># &#128293; STRESS TEST: Generate load to trigger auto-scaling!</span>
+<span class="comment"># Open a new terminal and run:</span>
+<span class="cmd">kubectl</span> run load-gen <span class="flag">--image=busybox</span> <span class="flag">-n</span> production-app <span class="flag">--rm</span> <span class="flag">-it</span> <span class="flag">--</span> \
+  /bin/sh -c "while true; do wget -q -O- http://web-app; done"
+
+<span class="comment"># In your other terminal, watch pods multiply!</span>
+<span class="cmd">kubectl</span> get pods <span class="flag">-n</span> production-app <span class="flag">-w</span>
+<span class="cmd">kubectl</span> get hpa <span class="flag">-n</span> production-app <span class="flag">-w</span>
+
+<span class="comment"># &#9989; You should see replicas go from 2 &#8594; 4 &#8594; 6 &#8594; 8 as CPU spikes!</span>
+<span class="comment"># Stop the load gen (Ctrl+C) and watch pods scale back down.</span>
+
+<span class="comment"># Clean up when done:</span>
+<span class="cmd">kubectl</span> delete namespace production-app</pre>
+      </div>
+
+      <div class="why-box">
+        <div class="why-box__label">&#127891; What you learned</div>
+        <p><strong>Namespaces</strong> isolate resources (teams/environments can share a cluster safely). <strong>Secrets</strong> store sensitive data (passwords, API keys) encoded — never hardcode them in YAML. <strong>Health checks</strong> (<code>readinessProbe</code> + <code>livenessProbe</code>) tell K8s when a pod is ready and when to restart it. <strong>HPA</strong> automatically scales pods based on CPU/memory — this is how Netflix, Spotify, and production apps handle traffic spikes without human intervention.</p>
+      </div>
+    </div>
+
+    <!-- Summary Table -->
+    <div style="margin-top: 2rem;">
+      <table class="cost-table">
+        <thead>
+          <tr><th>Project</th><th>Difficulty</th><th>K8s Concepts Practiced</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>&#127793; Portfolio Website</td><td style="color:var(--accent-5)">Easy</td><td>ConfigMap, Volume Mounts, Deployments, Services</td></tr>
+          <tr><td>&#128640; Guestbook + Redis</td><td style="color:var(--accent-4)">Medium</td><td>Multi-tier apps, ClusterIP, DNS discovery, Scaling replicas</td></tr>
+          <tr><td>&#128293; Microservices + HPA</td><td style="color:var(--accent-3)">Hard</td><td>Namespaces, Secrets, Health checks, HPA auto-scaling, Stress testing</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="warn-box">
+      <div class="warn-box__label">&#9888;&#65039; Don't Forget!</div>
+      <p>Each project creates LoadBalancer Services (~$18/month each). <strong>Delete all projects before deleting your cluster:</strong><br>
+        <code>kubectl delete -f project1-portfolio.yaml</code><br>
+        <code>kubectl delete -f project2-guestbook.yaml</code><br>
+        <code>kubectl delete namespace production-app</code></p>
+    </div>
+  </section>
+
+
+  <!-- ═══════════════════════════════════════
+       STEP 9 — Clean Up
+       ═══════════════════════════════════════ -->
+  <section class="step fade-in" id="step9">
+    <div class="step__header">
+      <span class="step__number">&#128689;</span>
+      <h2 class="step__title">Stop EKS &amp; Clean Up (Avoid Bills!)</h2>
+      <span class="step__time">&#9201; ~10 min</span>
+    </div>
+
+    <div class="warn-box" style="border-left-color: #ef4444; background: rgba(239, 68, 68, 0.05);">
+      <div class="warn-box__label" style="color: #ef4444;">&#128176; FAQ: "Can I just pause or stop my cluster?"</div>
+      <p style="margin-bottom: 0;"><strong>NO!</strong> AWS does not let you "stop" an EKS cluster. The EKS Control Plane runs 24/7 and costs <strong>$0.10/hour (~$72/month)</strong> regardless of whether you have worker nodes running or not. <strong>The only way to stop the charges is to completely delete the cluster.</strong> Because you used IaC (<code>eksctl</code>), recreating it tomorrow is as easy as running one command!</p>
+    </div>
+
+    <p style="margin-top: 1.5rem;"><strong>Always tear down when done learning.</strong> Follow your path below:</p>
+
+    <div class="path-easy-only">
+      <div class="sub-step">
+        <div class="sub-step__title">&#128640; Easy Path Cleanup — One Command</div>
+        <div class="code-block">
+          <div class="code-block__bar"><span class="code-block__lang">bash</span><button class="code-block__copy" onclick="copyCode(this)">Copy</button></div>
+          <pre><span class="comment"># Delete EVERYTHING eksctl created (cluster, nodes, VPC, roles)</span>
+<span class="cmd">eksctl</span> delete cluster \
+  <span class="flag">--name</span> <span class="value">my-first-cluster</span> \
+  <span class="flag">--region</span> <span class="value">us-east-1</span>
+
+<span class="comment"># &#9203; Takes ~5-10 minutes. Wait for "cluster deleted" message.</span></pre>
+        </div>
+        <div class="success-indicator">&#9989; Success: You see "all cluster resources were deleted"</div>
+      </div>
+    </div>
+
+    <div class="path-manual-only">
+      <div class="sub-step">
+        <div class="sub-step__title">&#128295; Manual Path Cleanup — Reverse Order</div>
+        <p><strong>Delete in this exact order</strong> to avoid orphaned resources:</p>
+        <ol class="ui-steps">
+          <li><strong>Delete Kubernetes resources first</strong> (this removes the AWS Load Balancer):<br>
+            <code>kubectl delete service nginx-service</code><br>
+            <code>kubectl delete deployment nginx-deployment</code></li>
+          <li><strong>Delete the Node Group:</strong><br>EKS Console &#8594; Clusters &#8594; my-first-cluster &#8594; Compute tab &#8594; Select <strong>standard-workers</strong> &#8594; Click <strong>Delete</strong>. Wait until deleted.</li>
+          <li><strong>Delete the EKS Cluster:</strong><br>EKS Console &#8594; Clusters &#8594; Select <strong>my-first-cluster</strong> &#8594; Click <strong>Delete</strong>. Type the cluster name to confirm. Wait ~5 min.</li>
+          <li><strong>Delete the VPC Stack:</strong><br>CloudFormation Console &#8594; Select <strong>eks-vpc</strong> stack &#8594; Click <strong>Delete</strong>.</li>
+          <li><strong>Delete IAM Roles:</strong><br>IAM Console &#8594; Roles &#8594; Search "myEKS" &#8594; Select <code>myEKSClusterRole</code> &#8594; Click <strong>Delete</strong>. Repeat for <code>myEKSNodeRole</code>.</li>
+          <li><strong>Delete the IAM User:</strong><br>IAM Console &#8594; Users &#8594; Select <code>eks-admin</code> &#8594; Click <strong>Delete</strong> (if you created one).</li>
+        </ol>
+      </div>
+    </div>
+
+    <div class="warn-box">
+      <div class="warn-box__label">&#9888;&#65039; Critical</div>
+      <p><strong>Delete Services BEFORE the cluster!</strong> LoadBalancer Services create AWS ELBs. If you delete the cluster first, those ELBs become orphaned and charge ~$18/month each. Always: apps &#8594; nodes &#8594; cluster &#8594; VPC &#8594; IAM.</p>
+    </div>
+
+    <div class="why-box">
+      <div class="why-box__label">&#128161; Why this step?</div>
+      <p><strong>EKS charges $0.10/hour for the control plane alone.</strong> Add EC2, NAT, and LBs — a forgotten cluster costs $100+/month. Set a calendar reminder or AWS billing alarm!</p>
+    </div>
+  </section>
+
+
+  <!-- ═══════════════════════════════════════
+       TROUBLESHOOTING
+       ═══════════════════════════════════════ -->
+  <section class="step fade-in" id="troubleshooting">
+    <div class="step__header">
+      <span class="step__number">?</span>
+      <h2 class="step__title">Troubleshooting Common Issues</h2>
+    </div>
+
+    <p>Stuck? Here are the most common problems beginners hit and how to fix them:</p>
+
+    <details class="trouble-item">
+      <summary>&#128308; <code>kubectl get nodes</code> returns "No resources found"</summary>
+      <div class="trouble-item__body">
+        <p><strong>Cause:</strong> Your kubeconfig isn't pointing to the right cluster, or nodes haven't joined yet.</p>
+        <p><strong>Fix:</strong></p>
+        <p>1. Re-run: <code>aws eks update-kubeconfig --name my-first-cluster --region us-east-1</code></p>
+        <p>2. Check cluster status: <code>aws eks describe-cluster --name my-first-cluster --query "cluster.status"</code></p>
+        <p>3. If nodes aren't joining, check the node group status in the EKS Console &#8594; Compute tab.</p>
+      </div>
+    </details>
+
+    <details class="trouble-item">
+      <summary>&#128308; <code>error: You must be logged in to the server (Unauthorized)</code></summary>
+      <div class="trouble-item__body">
+        <p><strong>Cause:</strong> The AWS user in your CLI doesn't have permission to access the cluster.</p>
+        <p><strong>Fix:</strong></p>
+        <p>1. Verify who you are: <code>aws sts get-caller-identity</code></p>
+        <p>2. Make sure this matches the user/role that <em>created</em> the cluster.</p>
+        <p>3. If using a different user, the cluster creator must add you: <code>eksctl create iamidentitymapping --cluster my-first-cluster --arn YOUR_ARN --group system:masters --username admin</code></p>
+      </div>
+    </details>
+
+    <details class="trouble-item">
+      <summary>&#128308; <code>eksctl create cluster</code> fails with "Cannot create cluster"</summary>
+      <div class="trouble-item__body">
+        <p><strong>Cause:</strong> Usually missing IAM permissions or service limits.</p>
+        <p><strong>Fix:</strong></p>
+        <p>1. Ensure your IAM user has <code>AdministratorAccess</code> policy attached.</p>
+        <p>2. Check you're in a supported region (us-east-1, us-west-2, etc.)</p>
+        <p>3. Try a different region if you hit vCPU limits: <code>--region us-west-2</code></p>
+      </div>
+    </details>
+
+    <details class="trouble-item">
+      <summary>&#128308; Service EXTERNAL-IP stuck on <code>&lt;pending&gt;</code></summary>
+      <div class="trouble-item__body">
+        <p><strong>Cause:</strong> The Load Balancer is still provisioning, or nodes are in private subnets without proper tags.</p>
+        <p><strong>Fix:</strong></p>
+        <p>1. Wait 2-3 minutes — AWS LB provisioning takes time.</p>
+        <p>2. Check events: <code>kubectl describe service nginx-service</code></p>
+        <p>3. If using manual VPC, ensure subnets have the tag: <code>kubernetes.io/role/elb = 1</code> (for public subnets).</p>
+      </div>
+    </details>
+
+    <details class="trouble-item">
+      <summary>&#128308; Pods stuck in <code>Pending</code> state</summary>
+      <div class="trouble-item__body">
+        <p><strong>Cause:</strong> Not enough resources on your nodes, or no nodes at all.</p>
+        <p><strong>Fix:</strong></p>
+        <p>1. Check why: <code>kubectl describe pod &lt;pod-name&gt;</code> — look at Events section at the bottom.</p>
+        <p>2. If it says "Insufficient cpu/memory", your nodes are full. Scale up: <code>eksctl scale nodegroup --cluster my-first-cluster --name standard-workers --nodes 3</code></p>
+      </div>
+    </details>
+
+    <details class="trouble-item">
+      <summary>&#128308; Pods in <code>CrashLoopBackOff</code></summary>
+      <div class="trouble-item__body">
+        <p><strong>Cause:</strong> Your container is crashing immediately after starting.</p>
+        <p><strong>Fix:</strong></p>
+        <p>1. Check logs: <code>kubectl logs &lt;pod-name&gt;</code></p>
+        <p>2. Check previous crash logs: <code>kubectl logs &lt;pod-name&gt; --previous</code></p>
+        <p>3. Common causes: wrong image name, missing env vars, or the container process exits immediately.</p>
+      </div>
+    </details>
+
+    <details class="trouble-item">
+      <summary>&#128308; <code>aws configure</code> — "Unable to locate credentials"</summary>
+      <div class="trouble-item__body">
+        <p><strong>Cause:</strong> You haven't run <code>aws configure</code> yet, or credentials are expired.</p>
+        <p><strong>Fix:</strong></p>
+        <p>1. Run <code>aws configure</code> and paste your Access Key + Secret Key.</p>
+        <p>2. If keys are expired, create new ones in IAM Console &#8594; Users &#8594; Security credentials &#8594; Create access key.</p>
+        <p>3. Verify: <code>aws sts get-caller-identity</code></p>
+      </div>
+    </details>
+
+    <details class="trouble-item">
+      <summary>&#128308; <code>eksctl delete cluster</code> hangs or fails</summary>
+      <div class="trouble-item__body">
+        <p><strong>Cause:</strong> Orphaned resources (usually LoadBalancers or security groups with dependencies).</p>
+        <p><strong>Fix:</strong></p>
+        <p>1. Delete all Services first: <code>kubectl delete svc --all</code></p>
+        <p>2. Wait 2-3 min for ELBs to de-provision, then retry delete.</p>
+        <p>3. If still stuck, go to CloudFormation Console and manually delete the eksctl stacks (they start with <code>eksctl-my-first-cluster</code>).</p>
+      </div>
+    </details>
+  </section>
+
+
+  <!-- ═══════════════════════════════════════
+       COST BREAKDOWN
+       ═══════════════════════════════════════ -->
+  <section class="step fade-in" id="costs">
+    <div class="step__header">
+      <span class="step__number">$</span>
+      <h2 class="step__title">Cost Breakdown (Estimated)</h2>
+    </div>
+
+    <p>Understanding costs prevents bill shock. Breakdown for <code>us-east-1</code>:</p>
+
+    <table class="cost-table">
+      <thead>
+        <tr><th>Resource</th><th>Cost</th><th>Notes</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>EKS Control Plane</td><td>$0.10 / hr</td><td>~$73/month. Unavoidable.</td></tr>
+        <tr><td>2x t3.medium Nodes</td><td>$0.0416 / hr each</td><td>~$60/month for both.</td></tr>
+        <tr><td>NAT Gateway</td><td>$0.045 / hr + data</td><td>~$33/month.</td></tr>
+        <tr><td>Load Balancer</td><td>$0.025 / hr</td><td>~$18/month.</td></tr>
+        <tr><td><strong>Total (left running)</strong></td><td colspan="2"><strong>~$180-200 / month</strong></td></tr>
+        <tr><td><strong>Total (4 hrs learning)</strong></td><td colspan="2"><strong>~$1-2</strong> &#8212; Very affordable!</td></tr>
+      </tbody>
+    </table>
+
+    <div class="tip-box">
+      <div class="tip-box__label">&#128142; Cost-Saving Tips</div>
+      <p>&#8226; Use <strong>Spot Instances</strong> (up to 90% cheaper): add <code>--spot</code> to eksctl<br>
+         &#8226; Use <strong>Fargate</strong> for serverless pricing (pay per pod)<br>
+         &#8226; Set up <strong>AWS Billing Alarms</strong> in the Billing Console<br>
+         &#8226; Always <strong>delete your cluster</strong> when you're done for the day</p>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <p>Built with &#10084;&#65039; for DevOps beginners &#183; EKS Guide 2026 Edition</p>
+  </footer>
+
+  <!-- ═══════════════════════════════════════
+       NEXT STEPS (Advanced Concepts)
+       ═══════════════════════════════════════ -->
+  <section class="step fade-in" id="next-steps">
+    <div class="step__header">
+      <span class="step__number">&#128640;</span>
+      <h2 class="step__title">Where to go next? (Day 2 Operations)</h2>
+    </div>
+
+    <p>This guide covers the foundations of EKS. In a real production environment, you will need to learn the following advanced concepts (often called "Day 2 Operations"). Once you've mastered this guide, search for these terms to level up your skills:</p>
+
+    <div class="sub-step" style="margin-top: 1.5rem;">
+      <div class="sub-step__title">&#128274; Security & Routing</div>
+      <ul style="color: var(--text-secondary); font-size: .9rem; padding-left: 1.5rem; line-height: 1.6;">
+        <li><strong>Ingress Controllers (AWS ALB):</strong> Instead of classic LoadBalancers, use Ingress to route HTTP/HTTPS traffic to multiple apps through a single IP.</li>
+        <li><strong>Secrets Management:</strong> Storing passwords securely using AWS Secrets Manager + Kubernetes CSI driver (never put passwords in plain text YAML!).</li>
+        <li><strong>Network Policies & RBAC:</strong> Securing who can talk to whom inside the cluster, and mapping AWS IAM roles to Kubernetes Service Accounts (IRSA).</li>
+      </ul>
+    </div>
+
+    <div class="sub-step">
+      <div class="sub-step__title">&#128230; Advanced Workloads & Tools</div>
+      <ul style="color: var(--text-secondary); font-size: .9rem; padding-left: 1.5rem; line-height: 1.6;">
+        <li><strong>Helm:</strong> The package manager for Kubernetes. Used for installing complex, multi-component apps easily.</li>
+        <li><strong>StatefulSets:</strong> Running stateful applications (like databases) where data persistence across pod restarts is critical.</li>
+        <li><strong>DaemonSets:</strong> Running exactly one pod on every single worker node (used for logging or monitoring agents).</li>
+      </ul>
+    </div>
+
+    <div class="sub-step">
+      <div class="sub-step__title">&#128200; Observability & Automation</div>
+      <ul style="color: var(--text-secondary); font-size: .9rem; padding-left: 1.5rem; line-height: 1.6;">
+        <li><strong>Prometheus & Grafana:</strong> The industry standard for monitoring cluster health and creating beautiful metrics dashboards.</li>
+        <li><strong>GitOps (ArgoCD / Flux):</strong> Automating deployments so that whenever you push code to GitHub, the cluster updates itself automatically.</li>
+        <li><strong>Istio (Service Mesh):</strong> Highly advanced traffic routing, mutual TLS encryption between pods, and circuit breaking.</li>
+      </ul>
+    </div>
+
+    <div class="tip-box">
+      <div class="tip-box__label">&#127942; Congratulations!</div>
+      <p>If you've made it this far, you are well on your way to becoming a Kubernetes Engineer. Remember, don't try to learn all of the advanced topics at once. Pick one (like Helm), master it, and move to the next!</p>
+    </div>
+  </section>
+
+</main>
+
+<button class="back-top" id="backTop" aria-label="Back to top">&#8593;</button>
+
+<script>
+  // ── Path Selector ──
+  function selectPath(path) {
+    document.body.classList.remove('path-easy', 'path-manual');
+    document.body.classList.add('path-' + path);
+    document.getElementById('pathBtnEasy').classList.toggle('selected', path === 'easy');
+    document.getElementById('pathBtnManual').classList.toggle('selected', path === 'manual');
+    // Re-observe for fade-in since hidden elements might now be visible
+    document.querySelectorAll('.fade-in:not(.visible)').forEach(el => fadeObserver.observe(el));
+  }
+
+  // ── Copy Code ──
+  function copyCode(btn) {
+    const pre = btn.closest('.code-block').querySelector('pre');
+    const text = pre.innerText;
+    navigator.clipboard.writeText(text).then(() => {
+      btn.textContent = 'Copied!';
+      setTimeout(() => btn.textContent = 'Copy', 1800);
+    });
+  }
+
+  // ── Progress Bar ──
+  const progressBar = document.getElementById('progressBar');
+  window.addEventListener('scroll', () => {
+    const scrollTop = window.scrollY;
+    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+    progressBar.style.width = Math.min((scrollTop / docHeight) * 100, 100) + '%';
+  });
+
+  // ── Sidebar Active Link ──
+  const sections = document.querySelectorAll('.step, .hero, .arch-diagram, .what-is-eks, .path-selector');
+  const navLinks = document.querySelectorAll('.sidebar__link');
+
+  // Prevent iframe hash changes from bubbling up to React router
+  navLinks.forEach(link => {
+    link.addEventListener('click', e => {
+      e.preventDefault();
+      const targetId = link.getAttribute('href').substring(1);
+      const targetEl = document.getElementById(targetId);
+      if (targetEl) {
+        targetEl.scrollIntoView({ behavior: 'smooth' });
+      }
+    });
+  });
+
+  const observerOptions = { root: null, rootMargin: '-30% 0px -60% 0px', threshold: 0 };
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const id = entry.target.id;
+        navLinks.forEach(link => {
+          link.classList.toggle('active', link.getAttribute('href') === '#' + id);
+        });
+      }
+    });
+  }, observerOptions);
+  sections.forEach(sec => { if (sec.id) observer.observe(sec); });
+
+  // ── Fade-in on scroll ──
+  const fadeEls = document.querySelectorAll('.fade-in');
+  const fadeObserver = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); fadeObserver.unobserve(e.target); } });
+  }, { threshold: 0.01, rootMargin: '100px' });
+  fadeEls.forEach(el => fadeObserver.observe(el));
+  // Immediately reveal any fade-in elements already in viewport on page load
+  requestAnimationFrame(() => {
+    fadeEls.forEach(el => {
+      const rect = el.getBoundingClientRect();
+      if (rect.top < window.innerHeight && rect.bottom > 0) {
+        el.classList.add('visible');
+      }
+    });
+  });
+
+  // ── Mobile Menu Toggle ──
+  const sidebar = document.getElementById('sidebar');
+  document.getElementById('menuToggle').addEventListener('click', () => {
+    sidebar.classList.toggle('open');
+  });
+  navLinks.forEach(link => link.addEventListener('click', () => sidebar.classList.remove('open')));
+
+  // ── Back to Top ──
+  const backTop = document.getElementById('backTop');
+  window.addEventListener('scroll', () => {
+    backTop.classList.toggle('visible', window.scrollY > 600);
+  });
+  backTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+</script>
+
+</body>
+</html>

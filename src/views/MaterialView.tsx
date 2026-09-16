@@ -491,7 +491,7 @@ const ArrowUpRight = () => (
 // COMPONENTS
 // ─────────────────────────────────────────────
 
-export const MaterialView: React.FC = () => {
+export const MaterialView: React.FC<{ switchView?: (v: string) => void }> = ({ switchView }) => {
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [selectedGuideUrl, setSelectedGuideUrl] = useState<string | null>(null);
   const [selectedTopicIndex, setSelectedTopicIndex] = useState<number>(0);
@@ -821,7 +821,13 @@ export const MaterialView: React.FC = () => {
           {MODULES.map((m) => (
             <div
               key={m.id}
-              onClick={() => setSelectedId(m.id)}
+              onClick={() => {
+                if (m.id === 10 && switchView) {
+                  switchView('knowledge-kubernetes');
+                } else {
+                  setSelectedId(m.id);
+                }
+              }}
               style={{
                 border: '1px solid #1f1f1f',
                 borderRadius: 12,
