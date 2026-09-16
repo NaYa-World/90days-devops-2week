@@ -590,7 +590,8 @@
 
   <body>
     <!-- Navigation -->
-    <nav class="sidebar">
+    <nav class="sidebar" id="sidebar">
+      <button class="header__toggle" id="menuToggle" aria-label="Toggle menu">&#9776;</button>
       <div class="sidebar__logo">
         <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
@@ -999,10 +1000,7 @@ CMD ["python", "app.py"]</pre>
 
 <div style="height: 100px;"></div>
     </main>
-  </body>
-</html>
-
-<script>
+  <script>
   // ── Path Selector ──
   function selectPath(path) {
     document.body.classList.remove('path-easy', 'path-manual');
@@ -1091,5 +1089,6 @@ CMD ["python", "app.py"]</pre>
   backTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
 </script>
 
+<button class="back-top" id="backTop" aria-label="Back to top">&#8593;</button>
 </body>
 </html>
