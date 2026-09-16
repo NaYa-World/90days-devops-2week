@@ -824,6 +824,8 @@ export const MaterialView: React.FC<{ switchView?: (v: string) => void }> = ({ s
               onClick={() => {
                 if (m.id === 10 && switchView) {
                   switchView('knowledge-kubernetes');
+                } else if (m.id === 8 && switchView) {
+                  switchView('docker-library');
                 } else {
                   setSelectedId(m.id);
                 }

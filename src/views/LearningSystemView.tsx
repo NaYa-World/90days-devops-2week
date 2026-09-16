@@ -432,7 +432,12 @@ export const LearningSystemView: React.FC<{ switchView?: (v: string) => void }> 
         </div>
 
         {selectedId !== null && (
-          <DetailPanel node={NODES[selectedId]} status={getStatus(selectedId, ts)} onClose={() => setSelectedId(null)} onNavigate={() => { setSelectedId(null); switchView?.(selectedId === 9 ? 'knowledge-kubernetes' : 'tracker'); }} />
+          <DetailPanel node={NODES[selectedId]} status={getStatus(selectedId, ts)} onClose={() => setSelectedId(null)} onNavigate={() => { 
+            setSelectedId(null); 
+            if (selectedId === 9) switchView?.('knowledge-kubernetes');
+            else if (selectedId === 7) switchView?.('docker-library');
+            else switchView?.('tracker'); 
+          }} />
         )}
 
         <div style={{ position:'absolute', bottom:16, left:16, display:'flex', flexDirection:'column', gap:2, background:'#111111', border:`1px solid ${C.border}`, borderRadius:8, overflow:'hidden' }}>

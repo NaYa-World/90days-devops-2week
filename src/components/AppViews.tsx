@@ -30,6 +30,7 @@ const SettingsView = React.lazy(() => import('../views/SettingsView').then(m => 
 const DevOpsTracker = React.lazy(() => import('../views/DevOpsTracker'));
 const LearningSystemView = React.lazy(() => import('../views/LearningSystemView').then(m => ({ default: m.LearningSystemView })));
 const KubernetesLibraryView = React.lazy(() => import('../views/KubernetesLibraryView').then(m => ({ default: m.KubernetesLibraryView })));
+const DockerLibraryView = React.lazy(() => import('../views/DockerLibraryView').then(m => ({ default: m.DockerLibraryView })));
 const MaterialView = React.lazy(() => import('../views/MaterialView').then(m => ({ default: m.MaterialView })));
 const DailyTasksView = React.lazy(() => import('../views/DailyTasksView').then(m => ({ default: m.DailyTasksView })));
 const PracticeTerminalView = React.lazy(() => import('../views/PracticeTerminalView').then(m => ({ default: m.PracticeTerminalView })));
@@ -214,6 +215,12 @@ export const AppViews: React.FC<AppViewsProps> = (props) => {
             return (
               <ErrorBoundary name="Kubernetes Knowledge Library">
                 <KubernetesLibraryView switchView={props.setCurrentView} />
+              </ErrorBoundary>
+            );
+          case 'docker-library':
+            return (
+              <ErrorBoundary name="Docker Knowledge Library">
+                <DockerLibraryView switchView={props.setCurrentView} />
               </ErrorBoundary>
             );
           case 'daily-tasks':
