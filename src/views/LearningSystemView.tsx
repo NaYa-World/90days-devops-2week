@@ -88,8 +88,14 @@ const NODES: NodeDef[] = [
     labs: ['Lab A: Create EKS cluster with eksctl','Lab B: Deploy payment-service to dev namespace','Lab C: Configure HPA and simulate load','Lab D: Deploy broken version and rollback','Lab E: Set up Ingress with AWS ALB'],
   },
   {
-    id: 10, label: 'Splunk & Grafana', sublabel: 'Module 11', deps: [9],
-    x: COL_W * 10, y: ROW1_Y, lessons: 7,
+    id: 17, label: 'Advanced K8s & GitOps', sublabel: 'Module 10.5', deps: [9],
+    x: COL_W * 10, y: ROW1_Y, lessons: 8,
+    topics: ['GitOps Concepts & ArgoCD Architecture','Application CRD & Sync Policies','Helm & Kustomize in GitOps','Secret Management (Sealed Secrets, External Secrets)','Progressive Delivery (Argo Rollouts)','Multi-cluster Management'],
+    labs: ['Lab A: Install ArgoCD on EKS','Lab B: Deploy app via ArgoCD Application CRD','Lab C: Configure automated sync and healing','Lab D: Canary deployment with Argo Rollouts'],
+  },
+  {
+    id: 10, label: 'Splunk & Grafana', sublabel: 'Module 11', deps: [17],
+    x: COL_W * 11, y: ROW2_Y, lessons: 7,
     topics: ['Grafana + Prometheus Setup','Metrics Collection','Dashboard Creation','Alerting Configuration','Splunk Log Management','SPL (Splunk Processing Language)','Real-time Incident Investigation'],
     labs: ['Lab A: Install Prometheus + Grafana on EKS using Helm','Lab B: Import Kubernetes cluster dashboard','Lab C: Create custom panel for payment-service HTTP errors','Lab D: Configure Slack alerts for CPU spikes'],
   },
@@ -436,6 +442,7 @@ export const LearningSystemView: React.FC<{ switchView?: (v: string) => void }> 
             setSelectedId(null); 
             if (selectedId === 9) switchView?.('knowledge-kubernetes');
             else if (selectedId === 7) switchView?.('docker-library');
+            else if (selectedId === 17) switchView?.('k8s-advanced-library');
             else switchView?.('tracker'); 
           }} />
         )}

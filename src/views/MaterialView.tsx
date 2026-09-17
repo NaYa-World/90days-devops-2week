@@ -284,6 +284,33 @@ const MODULES: ModuleData[] = [
     ],
   },
   {
+    id: 17,
+    title: 'Advanced Kubernetes & GitOps',
+    description: 'Master StatefulSets, Autoscaling, RBAC, Istio, and GitOps deployments with ArgoCD.',
+    lessons: 8,
+    authored: 8,
+    topics: [
+      { title: 'Advanced Workloads', subtitle: 'StatefulSets & DaemonSets' },
+      { title: 'Configuration & Security', subtitle: 'ConfigMaps & Secrets deep dive' },
+      { title: 'Autoscaling', subtitle: 'HPA and VPA' },
+      { title: 'RBAC', subtitle: 'Roles and RoleBindings' },
+      { title: 'Network Policies', subtitle: 'Restricting pod traffic' },
+      { title: 'Istio Service Mesh', subtitle: 'mTLS and Traffic routing' },
+      { title: 'GitOps Concepts', subtitle: 'Declarative infrastructure' },
+      { title: 'ArgoCD', subtitle: 'Automated sync and rollouts' },
+    ],
+    labs: [
+      'Lab A: Install ArgoCD on EKS',
+      'Lab B: Deploy app via ArgoCD Application CRD',
+      'Lab C: Configure automated sync and healing',
+      'Lab D: Canary deployment with Argo Rollouts'
+    ],
+    resources: [
+      { title: 'ArgoCD Official Docs', type: 'DOCS', url: '#' },
+      { title: 'Istio Docs', type: 'DOCS', url: '#' },
+    ],
+  },
+  {
     id: 11,
     title: 'Splunk & Grafana',
     description: 'Monitoring, logging, dashboarding, and alerting for infrastructure.',
@@ -826,6 +853,8 @@ export const MaterialView: React.FC<{ switchView?: (v: string) => void }> = ({ s
                   switchView('knowledge-kubernetes');
                 } else if (m.id === 8 && switchView) {
                   switchView('docker-library');
+                } else if (m.id === 17 && switchView) {
+                  switchView('k8s-advanced-library');
                 } else {
                   setSelectedId(m.id);
                 }

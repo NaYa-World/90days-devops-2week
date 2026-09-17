@@ -31,6 +31,7 @@ const DevOpsTracker = React.lazy(() => import('../views/DevOpsTracker'));
 const LearningSystemView = React.lazy(() => import('../views/LearningSystemView').then(m => ({ default: m.LearningSystemView })));
 const KubernetesLibraryView = React.lazy(() => import('../views/KubernetesLibraryView').then(m => ({ default: m.KubernetesLibraryView })));
 const DockerLibraryView = React.lazy(() => import('../views/DockerLibraryView').then(m => ({ default: m.DockerLibraryView })));
+const K8sAdvancedLibraryView = React.lazy(() => import('../views/K8sAdvancedLibraryView').then(m => ({ default: m.K8sAdvancedLibraryView })));
 const MaterialView = React.lazy(() => import('../views/MaterialView').then(m => ({ default: m.MaterialView })));
 const DailyTasksView = React.lazy(() => import('../views/DailyTasksView').then(m => ({ default: m.DailyTasksView })));
 const PracticeTerminalView = React.lazy(() => import('../views/PracticeTerminalView').then(m => ({ default: m.PracticeTerminalView })));
@@ -221,6 +222,12 @@ export const AppViews: React.FC<AppViewsProps> = (props) => {
             return (
               <ErrorBoundary name="Docker Knowledge Library">
                 <DockerLibraryView switchView={props.setCurrentView} />
+              </ErrorBoundary>
+            );
+          case 'k8s-advanced-library':
+            return (
+              <ErrorBoundary name="Advanced Kubernetes Knowledge Library">
+                <K8sAdvancedLibraryView switchView={props.setCurrentView} />
               </ErrorBoundary>
             );
           case 'daily-tasks':

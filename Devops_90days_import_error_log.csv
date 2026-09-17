@@ -1,0 +1,2 @@
+"TimeStamp","Error Details","Solution"
+"2026-08-16 04:47:32","Error in issue status ""to do"" — not found in target jira project ""Devops 90days""","Issue status to do is missing in your Jira project. Create a new issue status to do in Jira and import your data once again. Visit this page to learn how to create a new issue status option: https://support.atlassian.com/jira-software-cloud/docs/create-edit-and-delete-statuses-in-team-managed-projects/"
