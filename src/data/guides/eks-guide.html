@@ -618,6 +618,10 @@
   <a href="#troubleshooting" class="sidebar__link"><span class="sidebar__num">?</span> Troubleshooting</a>
   <a href="#costs" class="sidebar__link"><span class="sidebar__num">$</span> Cost Breakdown</a>
   <a href="#next-steps" class="sidebar__link" style="color: #a78bfa;"><span class="sidebar__num">&#128640;</span> Day 2 (Advanced)</a>
+  <div style="padding: 15px 20px 5px; color: #a1a1aa; font-size: 11px; text-transform: uppercase; font-weight: 800; letter-spacing: 1px;">Practice Projects</div>
+  <a href="#proj-level1" class="sidebar__link" style="color: #4ade80;"><span class="sidebar__num">L1</span> Beginner: Nginx Server</a>
+  <a href="#proj-level2" class="sidebar__link" style="color: #fbbf24;"><span class="sidebar__num">L2</span> Intermediate: WordPress</a>
+  <a href="#proj-level3" class="sidebar__link" style="color: #f87171;"><span class="sidebar__num">L3</span> Advanced: Microservices</a>
 </nav>
 
 <main class="main">
@@ -2274,6 +2278,61 @@ helm install prometheus prometheus-community/kube-prometheus-stack -n monitoring
     </div>
   </section>
 
+
+
+  <!-- ═══════════════════════════════════════
+       PROJECTS
+       ═══════════════════════════════════════ -->
+  <section class="step fade-in" id="proj-level1">
+    <div class="step__header">
+      <span class="step__number" style="background: #22c55e;">L1</span>
+      <h2 class="step__title" style="color: #4ade80;">Beginner: Highly Available Nginx</h2>
+    </div>
+    <div class="card">
+      <p>Deploy a simple stateless web server to understand Deployments, Replicas, and LoadBalancers.</p>
+      <ol style="margin-top: 15px; margin-left: 20px; line-height: 1.6; color: #a1a1aa;">
+        <li>Create a Deployment for <code>nginx:latest</code> with 3 replicas.</li>
+        <li>Create a Service of type <code>LoadBalancer</code> to expose it to the internet.</li>
+        <li>Use <code>kubectl get svc</code> to find the AWS Load Balancer URL.</li>
+        <li>Access the URL in your browser to see the default Nginx page.</li>
+        <li>Scale the deployment down to 1 replica using <code>kubectl scale deployment ... --replicas=1</code>.</li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="step fade-in" id="proj-level2">
+    <div class="step__header">
+      <span class="step__number" style="background: #eab308;">L2</span>
+      <h2 class="step__title" style="color: #fbbf24;">Intermediate: Stateful WordPress & MySQL</h2>
+    </div>
+    <div class="card">
+      <p>Deploy a stateful application. This tests your knowledge of Persistent Volumes and Kubernetes Secrets.</p>
+      <ol style="margin-top: 15px; margin-left: 20px; line-height: 1.6; color: #a1a1aa;">
+        <li>Create a <code>Secret</code> containing the MySQL root password.</li>
+        <li>Create a <code>PersistentVolumeClaim</code> (PVC) of 20Gi to store the database data.</li>
+        <li>Deploy a MySQL pod, mounting the PVC and passing the Secret as an environment variable.</li>
+        <li>Deploy a WordPress pod that connects to the MySQL service.</li>
+        <li>Expose WordPress via a LoadBalancer and complete the initial setup in your browser.</li>
+        <li>Delete the MySQL pod (<code>kubectl delete pod</code>) and let it recreate. Verify that your WordPress site still has its data!</li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="step fade-in" id="proj-level3">
+    <div class="step__header">
+      <span class="step__number" style="background: #ef4444;">L3</span>
+      <h2 class="step__title" style="color: #f87171;">Advanced: Fargate Microservices with ALB</h2>
+    </div>
+    <div class="card">
+      <p>Combine serverless nodes with advanced layer-7 routing.</p>
+      <ul style="margin-top: 15px; margin-left: 20px; line-height: 1.6; color: #a1a1aa;">
+        <li><strong>Fargate Profiles:</strong> Create two Fargate profiles: one for namespace <code>frontend</code> and one for <code>backend</code>.</li>
+        <li><strong>Deploy Apps:</strong> Deploy a React container in the frontend namespace, and a Node API in the backend namespace.</li>
+        <li><strong>ALB Ingress:</strong> Write an Ingress rule that routes traffic for <code>/api</code> to the backend service, and all other traffic (<code>/</code>) to the frontend service.</li>
+        <li><strong>Validation:</strong> Ensure your ALB provisions successfully in the AWS console and correctly routes traffic to the two completely isolated Fargate applications.</li>
+      </ul>
+    </div>
+  </section>
 
 </main>
 
