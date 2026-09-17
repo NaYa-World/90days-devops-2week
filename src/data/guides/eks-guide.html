@@ -2119,49 +2119,161 @@
     <p>Built with &#10084;&#65039; for DevOps beginners &#183; EKS Guide 2026 Edition</p>
   </footer>
 
-  <!-- ═══════════════════════════════════════
-       NEXT STEPS (Advanced Concepts)
+    <!-- ═══════════════════════════════════════
+       DAY 2: ALB INGRESS CONTROLLER
        ═══════════════════════════════════════ -->
-  <section class="step fade-in" id="next-steps">
+  <section class="step fade-in" id="day2-ingress">
     <div class="step__header">
-      <span class="step__number">&#128640;</span>
-      <h2 class="step__title">Where to go next? (Day 2 Operations)</h2>
+      <span class="step__number" style="background: #a855f7;">D2</span>
+      <h2 class="step__title" style="color: #c084fc;">AWS ALB Ingress Controller</h2>
     </div>
 
-    <p>This guide covers the foundations of EKS. In a real production environment, you will need to learn the following advanced concepts (often called "Day 2 Operations"). Once you've mastered this guide, search for these terms to level up your skills:</p>
+    <p>By default, exposing a service via <code>type: LoadBalancer</code> creates a brand new AWS Classic/Network Load Balancer for <em>every single app</em>. This is extremely expensive! The <strong>AWS Load Balancer Controller</strong> allows you to use a single Application Load Balancer (ALB) to route traffic to dozens of apps using path-based routing (an <strong>Ingress</strong>).</p>
 
     <div class="sub-step" style="margin-top: 1.5rem;">
-      <div class="sub-step__title">&#128274; Security & Routing</div>
-      <ul style="color: var(--text-secondary); font-size: .9rem; padding-left: 1.5rem; line-height: 1.6;">
-        <li><strong>Ingress Controllers (AWS ALB):</strong> Instead of classic LoadBalancers, use Ingress to route HTTP/HTTPS traffic to multiple apps through a single IP.</li>
-        <li><strong>Secrets Management:</strong> Storing passwords securely using AWS Secrets Manager + Kubernetes CSI driver (never put passwords in plain text YAML!).</li>
-        <li><strong>Network Policies & RBAC:</strong> Securing who can talk to whom inside the cluster, and mapping AWS IAM roles to Kubernetes Service Accounts (IRSA).</li>
-      </ul>
+      <div class="sub-step__title">Step 1: Create IAM OIDC Provider</div>
+      <p>Your cluster needs an IAM OIDC provider so that Kubernetes service accounts can assume AWS IAM roles (IRSA).</p>
+      <div class="code-block">
+        <div class="code-header">Terminal <button class="btn btn-outline" onclick="copyCode(this)">Copy</button></div>
+        <pre>eksctl utils associate-iam-oidc-provider \
+    --cluster my-eks-cluster \
+    --approve</pre>
+      </div>
     </div>
 
     <div class="sub-step">
-      <div class="sub-step__title">&#128230; Advanced Workloads & Tools</div>
-      <ul style="color: var(--text-secondary); font-size: .9rem; padding-left: 1.5rem; line-height: 1.6;">
-        <li><strong>Helm:</strong> The package manager for Kubernetes. Used for installing complex, multi-component apps easily.</li>
-        <li><strong>StatefulSets:</strong> Running stateful applications (like databases) where data persistence across pod restarts is critical.</li>
-        <li><strong>DaemonSets:</strong> Running exactly one pod on every single worker node (used for logging or monitoring agents).</li>
-      </ul>
+      <div class="sub-step__title">Step 2: Create IAM Policy and Role</div>
+      <p>Download the IAM policy for the AWS Load Balancer Controller and create the IAM role.</p>
+      <div class="code-block">
+        <div class="code-header">Terminal <button class="btn btn-outline" onclick="copyCode(this)">Copy</button></div>
+        <pre># Download IAM policy
+curl -O https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.5.4/docs/install/iam_policy.json
+
+# Create IAM policy
+aws iam create-policy \
+    --policy-name AWSLoadBalancerControllerIAMPolicy \
+    --policy-document file://iam_policy.json
+
+# Create IAM Service Account (IRSA)
+eksctl create iamserviceaccount \
+  --cluster=my-eks-cluster \
+  --namespace=kube-system \
+  --name=aws-load-balancer-controller \
+  --role-name AmazonEKSLoadBalancerControllerRole \
+  --attach-policy-arn=arn:aws:iam::YOUR_ACCOUNT_ID:policy/AWSLoadBalancerControllerIAMPolicy \
+  --approve</pre>
+      </div>
+      <div class="alert alert-warning" style="margin-top: 1rem;">
+        &#9888; <strong>IMPORTANT:</strong> Replace <code>YOUR_ACCOUNT_ID</code> with your actual 12-digit AWS account ID.
+      </div>
     </div>
 
     <div class="sub-step">
-      <div class="sub-step__title">&#128200; Observability & Automation</div>
-      <ul style="color: var(--text-secondary); font-size: .9rem; padding-left: 1.5rem; line-height: 1.6;">
-        <li><strong>Prometheus & Grafana:</strong> The industry standard for monitoring cluster health and creating beautiful metrics dashboards.</li>
-        <li><strong>GitOps (ArgoCD / Flux):</strong> Automating deployments so that whenever you push code to GitHub, the cluster updates itself automatically.</li>
-        <li><strong>Istio (Service Mesh):</strong> Highly advanced traffic routing, mutual TLS encryption between pods, and circuit breaking.</li>
-      </ul>
+      <div class="sub-step__title">Step 3: Install the Controller using Helm</div>
+      <p>Helm is the package manager for Kubernetes. We will use it to install the controller.</p>
+      <div class="code-block">
+        <div class="code-header">Terminal <button class="btn btn-outline" onclick="copyCode(this)">Copy</button></div>
+        <pre># Add the EKS Helm repo
+helm repo add eks https://aws.github.io/eks-charts
+helm repo update
+
+# Install the controller
+helm install aws-load-balancer-controller eks/aws-load-balancer-controller \
+  -n kube-system \
+  --set clusterName=my-eks-cluster \
+  --set serviceAccount.create=false \
+  --set serviceAccount.name=aws-load-balancer-controller \
+  --set region=us-east-1 \
+  --set vpcId=YOUR_VPC_ID</pre>
+      </div>
     </div>
 
-    <div class="tip-box">
-      <div class="tip-box__label">&#127942; Congratulations!</div>
-      <p>If you've made it this far, you are well on your way to becoming a Kubernetes Engineer. Remember, don't try to learn all of the advanced topics at once. Pick one (like Helm), master it, and move to the next!</p>
+    <div class="sub-step">
+      <div class="sub-step__title">Step 4: Create an Ingress for 2048</div>
+      <p>Now, instead of <code>type: LoadBalancer</code>, create an <strong>Ingress</strong> rule to route traffic to your 2048 game.</p>
+      <div class="code-block">
+        <div class="code-header">ingress-2048.yaml <button class="btn btn-outline" onclick="copyCode(this)">Copy</button></div>
+        <pre>apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  namespace: game-2048
+  name: ingress-2048
+  annotations:
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+spec:
+  ingressClassName: alb
+  rules:
+    - http:
+        paths:
+        - path: /
+          pathType: Prefix
+          backend:
+            service:
+              name: service-2048
+              port:
+                number: 80</pre>
+      </div>
+      <div class="code-block" style="margin-top: 10px;">
+        <div class="code-header">Terminal <button class="btn btn-outline" onclick="copyCode(this)">Copy</button></div>
+        <pre>kubectl apply -f ingress-2048.yaml
+kubectl get ingress/ingress-2048 -n game-2048</pre>
+      </div>
+      <p style="margin-top: 10px;">Wait a few minutes, copy the ADDRESS from the output, and paste it into your browser!</p>
     </div>
   </section>
+
+  <!-- ═══════════════════════════════════════
+       DAY 2: HELM & PROMETHEUS
+       ═══════════════════════════════════════ -->
+  <section class="step fade-in" id="day2-helm">
+    <div class="step__header">
+      <span class="step__number" style="background: #db2777;">D2</span>
+      <h2 class="step__title" style="color: #f472b6;">Observability: Helm & Prometheus</h2>
+    </div>
+
+    <p>A production cluster isn't complete without monitoring. <strong>Prometheus</strong> scrapes metrics (CPU, memory, HTTP requests) from your cluster, and <strong>Grafana</strong> visualizes them in beautiful dashboards. We will install the entire stack using <strong>Helm</strong> in one command!</p>
+
+    <div class="sub-step" style="margin-top: 1.5rem;">
+      <div class="sub-step__title">Step 1: Add the Prometheus Helm Repo</div>
+      <div class="code-block">
+        <div class="code-header">Terminal <button class="btn btn-outline" onclick="copyCode(this)">Copy</button></div>
+        <pre>helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm repo update</pre>
+      </div>
+    </div>
+
+    <div class="sub-step">
+      <div class="sub-step__title">Step 2: Install the Stack</div>
+      <p>This installs Prometheus, Grafana, Alertmanager, and Node Exporters into a new namespace called <code>monitoring</code>.</p>
+      <div class="code-block">
+        <div class="code-header">Terminal <button class="btn btn-outline" onclick="copyCode(this)">Copy</button></div>
+        <pre>kubectl create namespace monitoring
+helm install prometheus prometheus-community/kube-prometheus-stack -n monitoring</pre>
+      </div>
+      <p style="margin-top: 10px;">Verify the pods are running (it may take 2-3 minutes):</p>
+      <div class="code-block">
+        <div class="code-header">Terminal <button class="btn btn-outline" onclick="copyCode(this)">Copy</button></div>
+        <pre>kubectl get pods -n monitoring</pre>
+      </div>
+    </div>
+
+    <div class="sub-step">
+      <div class="sub-step__title">Step 3: Access Grafana locally</div>
+      <p>Instead of exposing Grafana to the public internet, use <code>port-forward</code> to securely access it on your local machine.</p>
+      <div class="code-block">
+        <div class="code-header">Terminal <button class="btn btn-outline" onclick="copyCode(this)">Copy</button></div>
+        <pre>kubectl port-forward svc/prometheus-grafana 8080:80 -n monitoring</pre>
+      </div>
+      <p style="margin-top: 15px;">Open <code>http://localhost:8080</code> in your browser.</p>
+      <ul style="color: var(--text-secondary); font-size: .9rem; padding-left: 1.5rem; line-height: 1.6; margin-top: 10px;">
+        <li><strong>Username:</strong> admin</li>
+        <li><strong>Password:</strong> prom-operator</li>
+      </ul>
+      <p style="margin-top: 10px;">Navigate to <em>Dashboards &rarr; Kubernetes / Compute Resources / Cluster</em> to see your cluster's vital stats!</p>
+    </div>
+  </section>
+
 
 </main>
 
