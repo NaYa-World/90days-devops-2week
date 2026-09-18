@@ -2348,13 +2348,14 @@ helm install prometheus prometheus-community/kube-prometheus-stack -n monitoring
       <h2 class="step__title" style="color: #4ade80;">Beginner: Highly Available Nginx</h2>
     </div>
     <div class="card">
-      <p>Deploy a simple stateless web server to understand Deployments, Replicas, and LoadBalancers.</p>
+      <p>Deploy a simple stateless web server using Namespaces to keep it isolated from other projects.</p>
       <ol style="margin-top: 15px; margin-left: 20px; line-height: 1.6; color: #a1a1aa;">
-        <li>Create a Deployment for <code>nginx:latest</code> with 3 replicas.</li>
-        <li>Create a Service of type <code>LoadBalancer</code> to expose it to the internet.</li>
-        <li>Use <code>kubectl get svc</code> to find the AWS Load Balancer URL.</li>
+        <li>Create a new namespace: <code>kubectl create namespace project-nginx</code></li>
+        <li>Create a Deployment for <code>nginx:latest</code> with 3 replicas. (Make sure to add <code>namespace: project-nginx</code> under <code>metadata</code> in your YAML).</li>
+        <li>Create a Service of type <code>LoadBalancer</code> in the same namespace to expose it to the internet.</li>
+        <li>Use <code>kubectl get svc -n project-nginx</code> to find the AWS Load Balancer URL.</li>
         <li>Access the URL in your browser to see the default Nginx page.</li>
-        <li>Scale the deployment down to 1 replica using <code>kubectl scale deployment ... --replicas=1</code>.</li>
+        <li>Scale the deployment down to 1 replica using <code>kubectl scale deployment nginx-deployment -n project-nginx --replicas=1</code>.</li>
       </ol>
     </div>
   </section>
@@ -2365,7 +2366,8 @@ helm install prometheus prometheus-community/kube-prometheus-stack -n monitoring
       <h2 class="step__title" style="color: #fbbf24;">Intermediate: Stateful WordPress & MySQL</h2>
     </div>
     <div class="card">
-      <p>Deploy a stateful application. This tests your knowledge of Persistent Volumes and Kubernetes Secrets.</p>
+      <p>Deploy a stateful application using Namespaces. This tests your knowledge of Persistent Volumes and Kubernetes Secrets.</p>
+      <p style="margin-top: 15px;">First, create a namespace to keep WordPress isolated: <code>kubectl create namespace project-wordpress</code></p>
       <p style="margin-top: 15px;">Instead of putting passwords in plain text inside your deployment files, create a Kubernetes <code>Secret</code>.</p>
       <div class="code-block" style="margin-top:10px">
         <div class="code-header">mysql-secret.yaml <button class="btn btn-outline" onclick="copyCode(this)">Copy</button></div>
@@ -2373,6 +2375,7 @@ helm install prometheus prometheus-community/kube-prometheus-stack -n monitoring
 kind: Secret
 metadata:
   name: mysql-pass
+  namespace: project-wordpress
 type: Opaque
 stringData:
   password: "super-secure-password"</pre>
@@ -2385,6 +2388,7 @@ stringData:
 kind: PersistentVolumeClaim
 metadata:
   name: mysql-pv-claim
+  namespace: project-wordpress
 spec:
   accessModes:
     - ReadWriteOnce
@@ -2396,6 +2400,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: wordpress-mysql
+  namespace: project-wordpress
 spec:
   ports:
     - port: 3306
@@ -2407,6 +2412,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: wordpress-mysql
+  namespace: project-wordpress
 spec:
   selector:
     matchLabels:
@@ -2448,6 +2454,7 @@ spec:
 kind: PersistentVolumeClaim
 metadata:
   name: wp-pv-claim
+  namespace: project-wordpress
 spec:
   accessModes:
     - ReadWriteOnce
@@ -2459,6 +2466,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: wordpress
+  namespace: project-wordpress
 spec:
   type: LoadBalancer
   ports:
@@ -2471,6 +2479,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: wordpress
+  namespace: project-wordpress
 spec:
   selector:
     matchLabels:
@@ -2506,7 +2515,7 @@ spec:
         persistentVolumeClaim:
           claimName: wp-pv-claim</pre>
       </div>
-      <p style="margin-top: 15px; color: #a1a1aa;">Apply all three files using <code>kubectl apply -f [filename.yaml]</code>. Then run <code>kubectl get svc wordpress</code> and grab the EXTERNAL-IP to complete the WordPress installation in your browser!</p>
+      <p style="margin-top: 15px; color: #a1a1aa;">Apply all three files using <code>kubectl apply -f [filename.yaml]</code>. Then run <code>kubectl get svc wordpress -n project-wordpress</code> and grab the EXTERNAL-IP to complete the WordPress installation in your browser!</p>
     </div>
   </section>
 
