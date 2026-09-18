@@ -145,35 +145,61 @@ export const YamlPracticeTerminalView: React.FC<{ switchView?: (v: string) => vo
           />
         </div>
 
-        {/* Right: Terminal Pane */}
+        {/* Right: Split Pane (Terminal + Learning) */}
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: '#050505' }}>
-          <div style={{ padding: '12px 16px', background: '#0a0a0a', borderBottom: '1px solid #1f1f1f', fontSize: '12px', color: '#a1a1aa', display: 'flex', alignItems: 'center', gap: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-            <Terminal size={14} color="#4ade80" /> Output Console
+          
+          {/* Top Right: Terminal Pane */}
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+            <div style={{ padding: '12px 16px', background: '#0a0a0a', borderBottom: '1px solid #1f1f1f', fontSize: '12px', color: '#a1a1aa', display: 'flex', alignItems: 'center', gap: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              <Terminal size={14} color="#4ade80" /> Output Console
+            </div>
+            <div style={{ flex: 1, padding: '16px', overflowY: 'auto', fontFamily: 'JetBrains Mono, monospace', fontSize: '13px', lineHeight: 1.6 }}>
+              {lines.map((line, i) => (
+                <div key={i} style={{ marginBottom: '6px' }}>
+                  {line.type === 'prompt' && (
+                    <div><span style={{ color: '#4ade80', fontWeight: 'bold' }}>user@eks-cluster:~$</span> {line.text}</div>
+                  )}
+                  {line.type === 'output' && <div style={{ color: '#e2e8f0' }}>{line.text}</div>}
+                  {line.type === 'error' && (
+                    <div style={{ color: '#f87171', display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+                      <AlertTriangle size={14} style={{ marginTop: '3px', flexShrink: 0 }} />
+                      <span>{line.text}</span>
+                    </div>
+                  )}
+                  {line.type === 'success' && (
+                    <div style={{ color: '#4ade80', display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+                      <CheckCircle size={14} style={{ marginTop: '3px', flexShrink: 0 }} />
+                      <span>{line.text}</span>
+                    </div>
+                  )}
+                  {line.type === 'info' && <div style={{ color: '#60a5fa' }}>{line.text}</div>}
+                </div>
+              ))}
+              <div ref={endOfTerminalRef} />
+            </div>
           </div>
-          <div style={{ flex: 1, padding: '16px', overflowY: 'auto', fontFamily: 'JetBrains Mono, monospace', fontSize: '13px', lineHeight: 1.6 }}>
-            {lines.map((line, i) => (
-              <div key={i} style={{ marginBottom: '6px' }}>
-                {line.type === 'prompt' && (
-                  <div><span style={{ color: '#4ade80', fontWeight: 'bold' }}>user@eks-cluster:~$</span> {line.text}</div>
-                )}
-                {line.type === 'output' && <div style={{ color: '#e2e8f0' }}>{line.text}</div>}
-                {line.type === 'error' && (
-                  <div style={{ color: '#f87171', display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
-                    <AlertTriangle size={14} style={{ marginTop: '3px', flexShrink: 0 }} />
-                    <span>{line.text}</span>
-                  </div>
-                )}
-                {line.type === 'success' && (
-                  <div style={{ color: '#4ade80', display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
-                    <CheckCircle size={14} style={{ marginTop: '3px', flexShrink: 0 }} />
-                    <span>{line.text}</span>
-                  </div>
-                )}
-                {line.type === 'info' && <div style={{ color: '#60a5fa' }}>{line.text}</div>}
-              </div>
-            ))}
-            <div ref={endOfTerminalRef} />
+
+          {/* Bottom Right: Learning Section */}
+          <div style={{ flex: 1, borderTop: '1px solid #1f1f1f', background: '#0a0a0a', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+            <div style={{ padding: '12px 16px', background: '#111111', borderBottom: '1px solid #1f1f1f', fontSize: '12px', color: '#a1a1aa', display: 'flex', alignItems: 'center', gap: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              <span style={{ fontSize: '14px' }}>📚</span> Learning Section
+            </div>
+            <div style={{ padding: '16px', overflowY: 'auto', fontSize: '14px', lineHeight: 1.6, color: '#e2e8f0' }}>
+              <h3 style={{ margin: '0 0 12px 0', fontSize: '16px', color: '#3b82f6' }}>Practice Tasks</h3>
+              <ul style={{ margin: 0, paddingLeft: '20px', color: '#a1a1aa' }}>
+                <li style={{ marginBottom: '8px' }}><strong>Task 1:</strong> Try deleting the <code>kind: Pod</code> line and clicking "Validate & Apply". Notice how it complains about the missing required field.</li>
+                <li style={{ marginBottom: '8px' }}><strong>Task 2:</strong> Try breaking the indentation. Move the <code>image: nginx</code> line all the way to the left edge and apply.</li>
+                <li style={{ marginBottom: '8px' }}><strong>Task 3:</strong> Change the resource to a <code>Deployment</code>. You will need to add a <code>selector</code> and <code>template</code> inside the <code>spec</code>.</li>
+              </ul>
+              
+              <h3 style={{ margin: '20px 0 12px 0', fontSize: '16px', color: '#10b981' }}>Pro-Tips</h3>
+              <ul style={{ margin: 0, paddingLeft: '20px', color: '#a1a1aa' }}>
+                <li style={{ marginBottom: '8px' }}>Always use <strong>spaces</strong> for indentation in YAML, never tabs. Standard practice is 2 spaces per indentation level.</li>
+                <li>You can include multiple Kubernetes objects in a single YAML file by separating them with <code>---</code> on a new line.</li>
+              </ul>
+            </div>
           </div>
+
         </div>
 
       </div>
