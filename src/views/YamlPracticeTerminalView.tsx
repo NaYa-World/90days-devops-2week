@@ -43,7 +43,7 @@ export const YamlPracticeTerminalView: React.FC<{ switchView?: (v: string) => vo
       docs.forEach((doc: any, index: number) => {
         if (!doc || typeof doc !== 'object') return; // Skip empty documents
 
-        const missingFields = [];
+        const missingFields: string[] = [];
         if (!doc.apiVersion) missingFields.push('apiVersion');
         if (!doc.kind) missingFields.push('kind');
         if (!doc.metadata) missingFields.push('metadata');
