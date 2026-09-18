@@ -300,6 +300,16 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ appState, switchVi
             <div style={{ fontSize: '20px', marginBottom: '4px' }}>🖥️</div>
             <div style={{ fontSize: '13px', fontWeight: 600 }}>Practice Terminal</div>
           </button>
+
+          <button 
+            onClick={() => switchView('yaml-practice')}
+            style={{ background: 'var(--s2, #1a1d2d)', border: '1px solid #a855f744', borderRadius: '8px', padding: '12px', cursor: 'pointer', textAlign: 'center', transition: 'all 0.2s', color: '#a855f7' }}
+            onMouseEnter={e => e.currentTarget.style.background = '#2a1a3a'}
+            onMouseLeave={e => e.currentTarget.style.background = '#1a1d2d'}
+          >
+            <div style={{ fontSize: '20px', marginBottom: '4px' }}>📝</div>
+            <div style={{ fontSize: '13px', fontWeight: 600 }}>YAML Practice</div>
+          </button>
         </div>
       </div>
 

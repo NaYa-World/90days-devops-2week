@@ -35,6 +35,7 @@ const K8sAdvancedLibraryView = React.lazy(() => import('../views/K8sAdvancedLibr
 const MaterialView = React.lazy(() => import('../views/MaterialView').then(m => ({ default: m.MaterialView })));
 const DailyTasksView = React.lazy(() => import('../views/DailyTasksView').then(m => ({ default: m.DailyTasksView })));
 const PracticeTerminalView = React.lazy(() => import('../views/PracticeTerminalView').then(m => ({ default: m.PracticeTerminalView })));
+const YamlPracticeTerminalView = React.lazy(() => import('../views/YamlPracticeTerminalView').then(m => ({ default: m.YamlPracticeTerminalView })));
 interface AppViewsProps {
   currentView: string;
   setCurrentView: (view: string) => void;
@@ -240,6 +241,12 @@ export const AppViews: React.FC<AppViewsProps> = (props) => {
             return (
               <ErrorBoundary name="Practice Terminal">
                 <PracticeTerminalView switchView={props.setCurrentView} />
+              </ErrorBoundary>
+            );
+          case 'yaml-practice':
+            return (
+              <ErrorBoundary name="YAML Practice Terminal">
+                <YamlPracticeTerminalView switchView={props.setCurrentView} />
               </ErrorBoundary>
             );
           default:
