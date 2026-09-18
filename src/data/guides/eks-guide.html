@@ -610,6 +610,7 @@
   <a href="#step4" class="sidebar__link"><span class="sidebar__num">4</span> Create EKS Cluster</a>
   <a href="#step5" class="sidebar__link"><span class="sidebar__num">5</span> Node Group</a>
   <a href="#step6" class="sidebar__link"><span class="sidebar__num">6</span> Configure kubectl</a>
+  <a href="#yaml-basics" class="sidebar__link" style="color: #60a5fa;"><span class="sidebar__num">&#128221;</span> YAML Basics</a>
   <a href="#step7" class="sidebar__link"><span class="sidebar__num">7</span> Deploy Sample App</a>
   <a href="#step8" class="sidebar__link"><span class="sidebar__num">8</span> Verify & Monitor</a>
   <a href="#cheatsheet" class="sidebar__link" style="color: #60a5fa;"><span class="sidebar__num">&#128220;</span> Day 1 Cheat Sheet</a>
@@ -1181,6 +1182,62 @@
   <!-- ═══════════════════════════════════════
        STEP 7 — Deploy Sample App
        ═══════════════════════════════════════ -->
+
+  <!-- ═══════════════════════════════════════
+       YAML BASICS
+       ═══════════════════════════════════════ -->
+  <section class="step fade-in" id="yaml-basics">
+    <div class="step__header">
+      <span class="step__number" style="background: #3b82f6;">&#128221;</span>
+      <h2 class="step__title" style="color: #60a5fa;">How to Write Kubernetes YAML</h2>
+    </div>
+    
+    <p>Writing Kubernetes YAML files can seem intimidating, but every valid file is built using the exact same <strong>four root sections</strong>.</p>
+    
+    <div class="card">
+      <h3>The 4 Required Root Fields</h3>
+      <ol style="margin-left: 20px; line-height: 1.6; color: #a1a1aa; margin-top: 10px;">
+        <li><strong><code>apiVersion</code></strong>: Which version of the API are you talking to? (e.g., <code>v1</code>, <code>apps/v1</code>)</li>
+        <li><strong><code>kind</code></strong>: What object are you trying to create? (e.g., <code>Pod</code>, <code>Deployment</code>, <code>Service</code>)</li>
+        <li><strong><code>metadata</code></strong>: Data that uniquely identifies the object (e.g., <code>name</code>, <code>labels</code>).</li>
+        <li><strong><code>spec</code></strong>: The "Specification". Here you tell Kubernetes exactly how you want this object to behave.</li>
+      </ol>
+    </div>
+
+    <div class="sub-step">
+      <div class="sub-step__title">Let's Build a Pod YAML</div>
+      <div class="code-block" style="margin-top:10px">
+        <div class="code-header">pod.yaml <button class="btn btn-outline" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="comment"># 1. The API version</span>
+<span class="cmd">apiVersion:</span> v1
+<span class="comment"># 2. The kind of object</span>
+<span class="cmd">kind:</span> Pod
+<span class="comment"># 3. Identity data</span>
+<span class="cmd">metadata:</span>
+  <span class="flag">name:</span> <span class="value">my-first-pod</span>
+  <span class="flag">labels:</span>
+    <span class="flag">app:</span> <span class="value">webserver</span>
+<span class="comment"># 4. The Specification</span>
+<span class="cmd">spec:</span>
+  <span class="flag">containers:</span>
+    - <span class="flag">name:</span> <span class="value">nginx-container</span>
+      <span class="flag">image:</span> <span class="string">nginx:latest</span>
+      <span class="flag">ports:</span>
+        - <span class="flag">containerPort:</span> <span class="value">80</span></pre>
+      </div>
+    </div>
+    
+    <div class="card" style="margin-top: 20px;">
+      <h3 style="color: #f472b6;">&#128161; Pro-Tip: The "Dry Run" Generator</h3>
+      <p style="margin-top: 10px; color: #a1a1aa;">Even Senior DevOps Engineers do not memorize YAML files. You can ask <code>kubectl</code> to generate the YAML for you without deploying it!</p>
+      <div class="code-block" style="margin-top:10px">
+        <div class="code-header">Terminal <button class="btn btn-outline" onclick="copyCode(this)">Copy</button></div>
+        <pre>kubectl create deployment my-app --image=nginx --dry-run=client -o yaml > my-deployment.yaml</pre>
+      </div>
+      <p style="margin-top: 10px; color: #a1a1aa; font-size: 13px;">This command creates a perfect Deployment YAML and saves it to a file. You can then open it and tweak the values!</p>
+    </div>
+  </section>
+
   <section class="step fade-in" id="step7">
     <div class="step__header">
       <span class="step__number">7</span>
@@ -2309,14 +2366,147 @@ helm install prometheus prometheus-community/kube-prometheus-stack -n monitoring
     </div>
     <div class="card">
       <p>Deploy a stateful application. This tests your knowledge of Persistent Volumes and Kubernetes Secrets.</p>
-      <ol style="margin-top: 15px; margin-left: 20px; line-height: 1.6; color: #a1a1aa;">
-        <li>Create a <code>Secret</code> containing the MySQL root password.</li>
-        <li>Create a <code>PersistentVolumeClaim</code> (PVC) of 20Gi to store the database data.</li>
-        <li>Deploy a MySQL pod, mounting the PVC and passing the Secret as an environment variable.</li>
-        <li>Deploy a WordPress pod that connects to the MySQL service.</li>
-        <li>Expose WordPress via a LoadBalancer and complete the initial setup in your browser.</li>
-        <li>Delete the MySQL pod (<code>kubectl delete pod</code>) and let it recreate. Verify that your WordPress site still has its data!</li>
-      </ol>
+      <p style="margin-top: 15px;">Instead of putting passwords in plain text inside your deployment files, create a Kubernetes <code>Secret</code>.</p>
+      <div class="code-block" style="margin-top:10px">
+        <div class="code-header">mysql-secret.yaml <button class="btn btn-outline" onclick="copyCode(this)">Copy</button></div>
+        <pre>apiVersion: v1
+kind: Secret
+metadata:
+  name: mysql-pass
+type: Opaque
+stringData:
+  password: "super-secure-password"</pre>
+      </div>
+
+      <p style="margin-top: 15px;">Deploy the database with a PersistentVolumeClaim (PVC) so the data isn't deleted if the pod restarts.</p>
+      <div class="code-block" style="margin-top:10px">
+        <div class="code-header">mysql.yaml <button class="btn btn-outline" onclick="copyCode(this)">Copy</button></div>
+        <pre>apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mysql-pv-claim
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: wordpress-mysql
+spec:
+  ports:
+    - port: 3306
+  selector:
+    app: wordpress
+    tier: mysql
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wordpress-mysql
+spec:
+  selector:
+    matchLabels:
+      app: wordpress
+      tier: mysql
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: wordpress
+        tier: mysql
+    spec:
+      containers:
+      - image: mysql:8.0
+        name: mysql
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mysql-pass
+              key: password
+        ports:
+        - containerPort: 3306
+          name: mysql
+        volumeMounts:
+        - name: mysql-persistent-storage
+          mountPath: /var/lib/mysql
+      volumes:
+      - name: mysql-persistent-storage
+        persistentVolumeClaim:
+          claimName: mysql-pv-claim</pre>
+      </div>
+
+      <p style="margin-top: 15px;">Finally, deploy the WordPress web server and expose it via a LoadBalancer!</p>
+      <div class="code-block" style="margin-top:10px">
+        <div class="code-header">wordpress.yaml <button class="btn btn-outline" onclick="copyCode(this)">Copy</button></div>
+        <pre>apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: wp-pv-claim
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: wordpress
+spec:
+  type: LoadBalancer
+  ports:
+    - port: 80
+  selector:
+    app: wordpress
+    tier: frontend
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wordpress
+spec:
+  selector:
+    matchLabels:
+      app: wordpress
+      tier: frontend
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: wordpress
+        tier: frontend
+    spec:
+      containers:
+      - image: wordpress:6.2.1-apache
+        name: wordpress
+        env:
+        - name: WORDPRESS_DB_HOST
+          value: wordpress-mysql
+        - name: WORDPRESS_DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mysql-pass
+              key: password
+        ports:
+        - containerPort: 80
+          name: wordpress
+        volumeMounts:
+        - name: wordpress-persistent-storage
+          mountPath: /var/www/html
+      volumes:
+      - name: wordpress-persistent-storage
+        persistentVolumeClaim:
+          claimName: wp-pv-claim</pre>
+      </div>
+      <p style="margin-top: 15px; color: #a1a1aa;">Apply all three files using <code>kubectl apply -f [filename.yaml]</code>. Then run <code>kubectl get svc wordpress</code> and grab the EXTERNAL-IP to complete the WordPress installation in your browser!</p>
     </div>
   </section>
 
