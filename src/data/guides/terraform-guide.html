@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Terraform Knowledge Library</title>
+  <style>
+    /* Reset & Base */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: #0f1117;
+      color: #e2e8f0;
+      line-height: 1.6;
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
+    
+    /* Layout */
+    .sidebar {
+      width: 280px;
+      background: #151822;
+      border-right: 1px solid #2d3748;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      padding: 20px 0;
+    }
+    .content-area {
+      flex: 1;
+      overflow-y: auto;
+      padding: 40px;
+      scroll-behavior: smooth;
+    }
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    /* Sidebar Styles */
+    .sidebar__header {
+      padding: 0 20px 15px;
+      border-bottom: 1px solid #2d3748;
+      margin-bottom: 15px;
+    }
+    .sidebar__title {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .sidebar__section {
+      margin-bottom: 20px;
+    }
+    .sidebar__section-title {
+      padding: 0 20px;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #a0aec0;
+      margin-bottom: 10px;
+      font-weight: 600;
+    }
+    .sidebar__link {
+      display: flex;
+      align-items: center;
+      padding: 8px 20px;
+      color: #cbd5e0;
+      text-decoration: none;
+      font-size: 0.95rem;
+      transition: all 0.2s;
+    }
+    .sidebar__link:hover, .sidebar__link.active {
+      background: #2d3748;
+      color: #fff;
+    }
+    .sidebar__num {
+      width: 24px;
+      height: 24px;
+      border-radius: 4px;
+      background: #4fd1c5;
+      color: #151822;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: 700;
+      margin-right: 12px;
+    }
+
+    /* Content Styles */
+    .hero {
+      background: linear-gradient(135deg, #2b6cb0 0%, #2c5282 100%);
+      border-radius: 12px;
+      padding: 40px;
+      margin-bottom: 40px;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::after {
+      content: '';
+      position: absolute;
+      top: 0; right: 0; bottom: 0; left: 0;
+      background: url('data:image/svg+xml;utf8,<svg width="20" height="20" xmlns="http://www.w3.org/2000/svg"><circle cx="2" cy="2" r="2" fill="rgba(255,255,255,0.05)"/></svg>');
+      pointer-events: none;
+    }
+    .hero__title {
+      font-size: 2.5rem;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 10px;
+    }
+    .hero__subtitle {
+      font-size: 1.1rem;
+      color: #e2e8f0;
+      max-width: 600px;
+    }
+
+    /* Sections */
+    .step {
+      margin-bottom: 60px;
+      scroll-margin-top: 40px;
+    }
+    .step__header {
+      display: flex;
+      align-items: center;
+      margin-bottom: 20px;
+      gap: 15px;
+    }
+    .step__number {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      background: #4fd1c5;
+      color: #151822;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      font-weight: 700;
+    }
+    .step__title {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    /* Cards & Blocks */
+    .card {
+      background: #1a202c;
+      border: 1px solid #2d3748;
+      border-radius: 8px;
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+    
+    /* Code Blocks */
+    .code-block {
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      overflow: hidden;
+      margin: 16px 0;
+    }
+    .code-block__bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 16px;
+      background: #161b22;
+      border-bottom: 1px solid #30363d;
+      font-size: 0.8rem;
+      color: #8b949e;
+    }
+    .code-block__copy {
+      background: none;
+      border: 1px solid #30363d;
+      color: #8b949e;
+      padding: 4px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .code-block__copy:hover {
+      background: #30363d;
+      color: #c9d1d9;
+    }
+    pre {
+      padding: 16px;
+      overflow-x: auto;
+      font-family: 'JetBrains Mono', Consolas, Monaco, monospace;
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+    code {
+      font-family: 'JetBrains Mono', Consolas, Monaco, monospace;
+      background: #2d3748;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.9em;
+      color: #4fd1c5;
+    }
+
+    /* Syntax Highlighting */
+    .keyword { color: #ff7b72; }
+    .string { color: #a5d6ff; }
+    .function { color: #d2a8ff; }
+    .comment { color: #8b949e; }
+    .variable { color: #79c0ff; }
+    .property { color: #7ee787; }
+
+    /* Highlights & Badges */
+    .highlight-box {
+      border-left: 4px solid #4fd1c5;
+      background: rgba(79, 209, 197, 0.1);
+      padding: 16px 20px;
+      border-radius: 0 8px 8px 0;
+      margin: 20px 0;
+    }
+    
+    /* Animations */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .fade-in {
+      animation: fadeIn 0.5s ease forwards;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar__header">
+      <div class="sidebar__title">
+        <span style="font-size: 1.5rem;">🏗️</span> Terraform Library
+      </div>
+    </div>
+
+    <div class="sidebar__section">
+      <div class="sidebar__section-title">Day 1: Basics</div>
+      <a href="#step1" class="sidebar__link"><span class="sidebar__num">1</span> What is Terraform?</a>
+      <a href="#step2" class="sidebar__link"><span class="sidebar__num">2</span> The Core Workflow</a>
+      <a href="#step3" class="sidebar__link"><span class="sidebar__num">3</span> HCL Syntax & AWS</a>
+    </div>
+
+    <div class="sidebar__section">
+      <div class="sidebar__section-title">Day 2: State Management</div>
+      <a href="#step4" class="sidebar__link"><span class="sidebar__num">4</span> Remote State (S3)</a>
+      <a href="#step5" class="sidebar__link"><span class="sidebar__num">5</span> State Locking (DynamoDB)</a>
+    </div>
+
+    <div class="sidebar__section">
+      <div class="sidebar__section-title">Day 3: Advanced</div>
+      <a href="#step6" class="sidebar__link"><span class="sidebar__num">6</span> Modules (DRY Code)</a>
+      <a href="#step7" class="sidebar__link"><span class="sidebar__num">7</span> Workspaces (Environments)</a>
+    </div>
+
+    <div class="sidebar__section">
+      <div class="sidebar__section-title">Practice Projects</div>
+      <a href="#proj-level1" class="sidebar__link" style="color: #4ade80;"><span class="sidebar__num" style="background: #22c55e;">L1</span> EC2 & SecGroup</a>
+      <a href="#proj-level2" class="sidebar__link" style="color: #fbbf24;"><span class="sidebar__num" style="background: #eab308;">L2</span> Custom VPC</a>
+      <a href="#proj-level3" class="sidebar__link" style="color: #f87171;"><span class="sidebar__num" style="background: #ef4444;">L3</span> S3 + CloudFront Module</a>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="content-area">
+    <div class="container">
+      
+      <!-- HERO -->
+      <div class="hero fade-in">
+        <h1 class="hero__title">Infrastructure as Code</h1>
+        <p class="hero__subtitle">Master HashiCorp Terraform. Automate your cloud infrastructure with declarative configuration, state management, and reusable modules.</p>
+      </div>
+
+      <!-- STEP 1 -->
+      <section class="step fade-in" id="step1">
+        <div class="step__header">
+          <span class="step__number">1</span>
+          <h2 class="step__title">What is Terraform?</h2>
+        </div>
+        <p>Terraform is an open-source Infrastructure as Code (IaC) software tool that provides a consistent CLI workflow to manage hundreds of cloud services. It uses a declarative configuration language called HashiCorp Configuration Language (HCL).</p>
+        
+        <div class="highlight-box">
+          <strong>Declarative vs Imperative:</strong> In an imperative approach (like bash scripts), you say <em>how</em> to do it ("create EC2, then attach SG"). In a declarative approach (Terraform), you declare <em>what</em> you want ("I want an EC2 with this SG attached"), and Terraform figures out the API calls and execution order to make reality match your declaration.
+        </div>
+      </section>
+
+      <!-- STEP 2 -->
+      <section class="step fade-in" id="step2">
+        <div class="step__header">
+          <span class="step__number">2</span>
+          <h2 class="step__title">The Core Workflow</h2>
+        </div>
+        <div class="card">
+          <p>The standard Terraform workflow consists of three core commands:</p>
+          <ul style="margin-top: 15px; margin-left: 20px; line-height: 1.8;">
+            <li><code>terraform init</code>: Initializes the working directory. Downloads required providers (like the AWS plugin).</li>
+            <li><code>terraform plan</code>: Creates an execution plan. It shows you exactly what Terraform <em>will</em> do without actually doing it. (Always run this!).</li>
+            <li><code>terraform apply</code>: Executes the actions proposed in a Terraform plan.</li>
+            <li><code>terraform destroy</code>: Deletes all infrastructure managed by your configuration.</li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- STEP 3 -->
+      <section class="step fade-in" id="step3">
+        <div class="step__header">
+          <span class="step__number">3</span>
+          <h2 class="step__title">HCL Syntax & Connecting to AWS</h2>
+        </div>
+        <p>A Terraform file typically ends in <code>.tf</code>. To provision infrastructure, you first declare a <strong>provider</strong>, and then you define <strong>resources</strong>.</p>
+        
+        <div class="code-block">
+          <div class="code-block__bar"><span class="code-block__lang">hcl — main.tf</span><button class="code-block__copy" onclick="copyCode(this)">Copy</button></div>
+          <pre><span class="comment"># 1. Define the Provider</span>
+<span class="keyword">provider</span> <span class="string">"aws"</span> {
+  <span class="property">region</span> = <span class="string">"us-east-1"</span>
+}
+
+<span class="comment"># 2. Define a Resource: BlockType "Provider_ResourceType" "LocalName"</span>
+<span class="keyword">resource</span> <span class="string">"aws_instance"</span> <span class="string">"web_server"</span> {
+  <span class="property">ami</span>           = <span class="string">"ami-0c55b159cbfafe1f0"</span>
+  <span class="property">instance_type</span> = <span class="string">"t2.micro"</span>
+
+  <span class="property">tags</span> = {
+    <span class="property">Name</span> = <span class="string">"MyFirstTerraformEC2"</span>
+  }
+}</pre>
+        </div>
+      </section>
+
+      <!-- STEP 4 -->
+      <section class="step fade-in" id="step4">
+        <div class="step__header">
+          <span class="step__number">4</span>
+          <h2 class="step__title">Remote State (AWS S3)</h2>
+        </div>
+        <p>Terraform keeps track of the real-world infrastructure in a file called <code>terraform.tfstate</code>. By default, it saves this locally. If you work on a team, you <strong>must</strong> store this file remotely so everyone shares the same source of truth.</p>
+        
+        <div class="code-block">
+          <div class="code-block__bar"><span class="code-block__lang">hcl — backend.tf</span><button class="code-block__copy" onclick="copyCode(this)">Copy</button></div>
+          <pre><span class="keyword">terraform</span> {
+  <span class="keyword">backend</span> <span class="string">"s3"</span> {
+    <span class="property">bucket</span>         = <span class="string">"my-company-terraform-state-bucket"</span>
+    <span class="property">key</span>            = <span class="string">"network/terraform.tfstate"</span>
+    <span class="property">region</span>         = <span class="string">"us-east-1"</span>
+  }
+}</pre>
+        </div>
+      </section>
+
+      <!-- STEP 5 -->
+      <section class="step fade-in" id="step5">
+        <div class="step__header">
+          <span class="step__number">5</span>
+          <h2 class="step__title">State Locking (DynamoDB)</h2>
+        </div>
+        <p>What happens if two DevOps engineers run <code>terraform apply</code> at the exact same time? The state file gets corrupted. To prevent this, we use a DynamoDB table to "lock" the state file.</p>
+        
+        <div class="code-block">
+          <div class="code-block__bar"><span class="code-block__lang">hcl — backend.tf</span><button class="code-block__copy" onclick="copyCode(this)">Copy</button></div>
+          <pre><span class="keyword">terraform</span> {
+  <span class="keyword">backend</span> <span class="string">"s3"</span> {
+    <span class="property">bucket</span>         = <span class="string">"my-company-terraform-state-bucket"</span>
+    <span class="property">key</span>            = <span class="string">"global/s3/terraform.tfstate"</span>
+    <span class="property">region</span>         = <span class="string">"us-east-1"</span>
+    
+    <span class="comment"># Enable State Locking</span>
+    <span class="property">dynamodb_table</span> = <span class="string">"terraform-locks"</span>
+    <span class="property">encrypt</span>        = <span class="keyword">true</span>
+  }
+}</pre>
+        </div>
+      </section>
+
+      <!-- STEP 6 -->
+      <section class="step fade-in" id="step6">
+        <div class="step__header">
+          <span class="step__number">6</span>
+          <h2 class="step__title">Modules (DRY Code)</h2>
+        </div>
+        <p>Modules are containers for multiple resources that are used together. They allow you to write reusable infrastructure code. If you need to spin up 5 identical VPCs, you write a VPC module once, and call it 5 times.</p>
+        
+        <div class="code-block">
+          <div class="code-block__bar"><span class="code-block__lang">hcl — main.tf</span><button class="code-block__copy" onclick="copyCode(this)">Copy</button></div>
+          <pre><span class="comment"># Calling a local module</span>
+<span class="keyword">module</span> <span class="string">"web_cluster"</span> {
+  <span class="property">source</span>        = <span class="string">"../modules/web-server-cluster"</span>
+  
+  <span class="comment"># Passing variables to the module</span>
+  <span class="property">cluster_name</span>  = <span class="string">"production-cluster"</span>
+  <span class="property">instance_type</span> = <span class="string">"t3.medium"</span>
+  <span class="property">min_size</span>      = <span class="string">2</span>
+  <span class="property">max_size</span>      = <span class="string">10</span>
+}</pre>
+        </div>
+      </section>
+
+      <!-- STEP 7 -->
+      <section class="step fade-in" id="step7">
+        <div class="step__header">
+          <span class="step__number">7</span>
+          <h2 class="step__title">Workspaces (Environments)</h2>
+        </div>
+        <p>Workspaces allow you to manage multiple environments (dev, staging, prod) using the exact same configuration files. Each workspace gets its own isolated state file in your S3 bucket.</p>
+        
+        <div class="card">
+          <ul style="margin-left: 20px; line-height: 1.8;">
+            <li><code>terraform workspace new dev</code>: Creates a new workspace.</li>
+            <li><code>terraform workspace select prod</code>: Switches to the prod environment.</li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- PROJECTS -->
+      <div style="margin: 80px 0 40px; border-bottom: 2px solid #2d3748;"></div>
+
+      <section class="step fade-in" id="proj-level1">
+        <div class="step__header">
+          <span class="step__number" style="background: #22c55e;">L1</span>
+          <h2 class="step__title" style="color: #4ade80;">Beginner: EC2 & Security Group</h2>
+        </div>
+        <div class="card">
+          <p>Your first Terraform project. Provision a web server and open port 80 to the internet.</p>
+          <div class="code-block" style="margin-top:10px">
+            <div class="code-header">main.tf <button class="code-block__copy" onclick="copyCode(this)">Copy</button></div>
+            <pre><span class="keyword">provider</span> <span class="string">"aws"</span> {
+  <span class="property">region</span> = <span class="string">"us-east-1"</span>
+}
+
+<span class="keyword">resource</span> <span class="string">"aws_security_group"</span> <span class="string">"web_sg"</span> {
+  <span class="property">name</span> = <span class="string">"allow_http"</span>
+  <span class="keyword">ingress</span> {
+    <span class="property">from_port</span>   = <span class="string">80</span>
+    <span class="property">to_port</span>     = <span class="string">80</span>
+    <span class="property">protocol</span>    = <span class="string">"tcp"</span>
+    <span class="property">cidr_blocks</span> = [<span class="string">"0.0.0.0/0"</span>]
+  }
+}
+
+<span class="keyword">resource</span> <span class="string">"aws_instance"</span> <span class="string">"web"</span> {
+  <span class="property">ami</span>                    = <span class="string">"ami-0c55b159cbfafe1f0"</span>
+  <span class="property">instance_type</span>          = <span class="string">"t2.micro"</span>
+  <span class="property">vpc_security_group_ids</span> = [aws_security_group.web_sg.id]
+}</pre>
+          </div>
+        </div>
+      </section>
+
+      <section class="step fade-in" id="proj-level2">
+        <div class="step__header">
+          <span class="step__number" style="background: #eab308;">L2</span>
+          <h2 class="step__title" style="color: #fbbf24;">Intermediate: Custom VPC Architecture</h2>
+        </div>
+        <div class="card">
+          <p>Provision the foundation for EKS or ECS. Create a VPC with 2 public subnets, an Internet Gateway, and Route Tables.</p>
+          <div class="code-block" style="margin-top:10px">
+            <div class="code-header">network.tf <button class="code-block__copy" onclick="copyCode(this)">Copy</button></div>
+            <pre><span class="keyword">resource</span> <span class="string">"aws_vpc"</span> <span class="string">"main"</span> {
+  <span class="property">cidr_block</span>           = <span class="string">"10.0.0.0/16"</span>
+  <span class="property">enable_dns_hostnames</span> = <span class="keyword">true</span>
+}
+
+<span class="keyword">resource</span> <span class="string">"aws_subnet"</span> <span class="string">"public"</span> {
+  <span class="property">vpc_id</span>                  = aws_vpc.main.id
+  <span class="property">cidr_block</span>              = <span class="string">"10.0.1.0/24"</span>
+  <span class="property">map_public_ip_on_launch</span> = <span class="keyword">true</span>
+  <span class="property">availability_zone</span>       = <span class="string">"us-east-1a"</span>
+}
+
+<span class="keyword">resource</span> <span class="string">"aws_internet_gateway"</span> <span class="string">"igw"</span> {
+  <span class="property">vpc_id</span> = aws_vpc.main.id
+}
+
+<span class="keyword">resource</span> <span class="string">"aws_route_table"</span> <span class="string">"public_rt"</span> {
+  <span class="property">vpc_id</span> = aws_vpc.main.id
+  <span class="keyword">route</span> {
+    <span class="property">cidr_block</span> = <span class="string">"0.0.0.0/0"</span>
+    <span class="property">gateway_id</span> = aws_internet_gateway.igw.id
+  }
+}</pre>
+          </div>
+        </div>
+      </section>
+
+      <section class="step fade-in" id="proj-level3">
+        <div class="step__header">
+          <span class="step__number" style="background: #ef4444;">L3</span>
+          <h2 class="step__title" style="color: #f87171;">Advanced: S3 + CloudFront Static Site Module</h2>
+        </div>
+        <div class="card">
+          <p>Create a highly available, globally distributed static website using Terraform Modules.</p>
+          <ul style="margin-top: 15px; margin-left: 20px; line-height: 1.6; color: #a1a1aa;">
+            <li>Create a reusable module in a <code>/modules/static-site</code> directory.</li>
+            <li>Provision an S3 bucket configured for web hosting.</li>
+            <li>Provision an AWS CloudFront Distribution targeting the S3 bucket.</li>
+            <li>Configure Origin Access Control (OAC) so the bucket is private and only accessible via CloudFront.</li>
+            <li>Create a <code>main.tf</code> at the root that calls your module and passes the desired domain name as a variable.</li>
+          </ul>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <script>
+    // Smooth scrolling & active state for sidebar links
+    document.querySelectorAll('.sidebar__link').forEach(link => {
+      link.addEventListener('click', function(e) {
+        document.querySelectorAll('.sidebar__link').forEach(l => l.classList.remove('active'));
+        this.classList.add('active');
+        
+        // Let standard hash navigation happen, or manually scroll if needed
+      });
+    });
+
+    function copyCode(btn) {
+      const codeBlock = btn.closest('.code-block').querySelector('pre');
+      const textToCopy = codeBlock.innerText;
+      
+      navigator.clipboard.writeText(textToCopy).then(() => {
+        const originalText = btn.innerText;
+        btn.innerText = 'Copied!';
+        btn.style.color = '#4fd1c5';
+        setTimeout(() => {
+          btn.innerText = originalText;
+          btn.style.color = '#8b949e';
+        }, 2000);
+      }).catch(err => {
+        console.error('Failed to copy: ', err);
+      });
+    }
+  </script>
+</body>
+</html>

@@ -36,6 +36,7 @@ const MaterialView = React.lazy(() => import('../views/MaterialView').then(m => 
 const DailyTasksView = React.lazy(() => import('../views/DailyTasksView').then(m => ({ default: m.DailyTasksView })));
 const PracticeTerminalView = React.lazy(() => import('../views/PracticeTerminalView').then(m => ({ default: m.PracticeTerminalView })));
 const YamlPracticeTerminalView = React.lazy(() => import('../views/YamlPracticeTerminalView').then(m => ({ default: m.YamlPracticeTerminalView })));
+const TerraformLibraryView = React.lazy(() => import('../views/TerraformLibraryView').then(m => ({ default: m.TerraformLibraryView })));
 interface AppViewsProps {
   currentView: string;
   setCurrentView: (view: string) => void;
@@ -247,6 +248,12 @@ export const AppViews: React.FC<AppViewsProps> = (props) => {
             return (
               <ErrorBoundary name="YAML Practice Terminal">
                 <YamlPracticeTerminalView switchView={props.setCurrentView} />
+              </ErrorBoundary>
+            );
+          case 'terraform-library':
+            return (
+              <ErrorBoundary name="Terraform Library">
+                <TerraformLibraryView switchView={props.setCurrentView} />
               </ErrorBoundary>
             );
           default:

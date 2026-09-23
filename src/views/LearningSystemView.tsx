@@ -443,6 +443,7 @@ export const LearningSystemView: React.FC<{ switchView?: (v: string) => void }> 
             if (selectedId === 9) switchView?.('knowledge-kubernetes');
             else if (selectedId === 7) switchView?.('docker-library');
             else if (selectedId === 17) switchView?.('k8s-advanced-library');
+            else if (selectedId === 12) switchView?.('terraform-library');
             else switchView?.('tracker'); 
           }} />
         )}

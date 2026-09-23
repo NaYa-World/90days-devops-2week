@@ -855,6 +855,8 @@ export const MaterialView: React.FC<{ switchView?: (v: string) => void }> = ({ s
                   switchView('docker-library');
                 } else if (m.id === 17 && switchView) {
                   switchView('k8s-advanced-library');
+                } else if (m.id === 13 && switchView) {
+                  switchView('terraform-library');
                 } else {
                   setSelectedId(m.id);
                 }
