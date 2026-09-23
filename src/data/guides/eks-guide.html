@@ -75,7 +75,7 @@
     .header__brand {
       display: flex; align-items: center; gap: .75rem;
       font-weight: 800; font-size: 1.25rem;
-      background: var(--gradient-main); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background: var(--gradient-main); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
     }
     .header__brand svg { flex-shrink: 0; }
     .header__badge {
@@ -151,7 +151,7 @@
     .hero h1 {
       font-size: clamp(2rem, 5vw, 3.2rem); font-weight: 900; line-height: 1.15;
       background: linear-gradient(135deg, #fff 30%, var(--accent-1) 70%, var(--accent-3));
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
       margin-bottom: 1rem;
     }
     .hero p { color: var(--text-secondary); font-size: 1.1rem; max-width: 600px; margin: 0 auto; }
