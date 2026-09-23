@@ -310,6 +310,46 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ appState, switchVi
             <div style={{ fontSize: '20px', marginBottom: '4px' }}>📝</div>
             <div style={{ fontSize: '13px', fontWeight: 600 }}>YAML Practice</div>
           </button>
+          
+          <button 
+            onClick={() => switchView('cheatsheet-docker')}
+            style={{ background: 'var(--s2, #1a1d2d)', border: '1px solid #2496ed44', borderRadius: '8px', padding: '12px', cursor: 'pointer', textAlign: 'center', transition: 'all 0.2s', color: '#2496ed' }}
+            onMouseEnter={e => e.currentTarget.style.background = '#1a243d'}
+            onMouseLeave={e => e.currentTarget.style.background = '#1a1d2d'}
+          >
+            <div style={{ fontSize: '20px', marginBottom: '4px' }}>🐳</div>
+            <div style={{ fontSize: '13px', fontWeight: 600 }}>Docker Cheatsheet</div>
+          </button>
+          
+          <button 
+            onClick={() => switchView('cheatsheet-k8s')}
+            style={{ background: 'var(--s2, #1a1d2d)', border: '1px solid #326ce544', borderRadius: '8px', padding: '12px', cursor: 'pointer', textAlign: 'center', transition: 'all 0.2s', color: '#326ce5' }}
+            onMouseEnter={e => e.currentTarget.style.background = '#1a213d'}
+            onMouseLeave={e => e.currentTarget.style.background = '#1a1d2d'}
+          >
+            <div style={{ fontSize: '20px', marginBottom: '4px' }}>☸️</div>
+            <div style={{ fontSize: '13px', fontWeight: 600 }}>K8s Cheatsheet</div>
+          </button>
+
+          <button 
+            onClick={() => switchView('cheatsheet-monitoring')}
+            style={{ background: 'var(--s2, #1a1d2d)', border: '1px solid #ff4a0044', borderRadius: '8px', padding: '12px', cursor: 'pointer', textAlign: 'center', transition: 'all 0.2s', color: '#ff4a00' }}
+            onMouseEnter={e => e.currentTarget.style.background = '#2a191d'}
+            onMouseLeave={e => e.currentTarget.style.background = '#1a1d2d'}
+          >
+            <div style={{ fontSize: '20px', marginBottom: '4px' }}>📊</div>
+            <div style={{ fontSize: '13px', fontWeight: 600 }}>Monitoring</div>
+          </button>
+          
+          <button 
+            onClick={() => switchView('cheatsheet-eks')}
+            style={{ background: 'var(--s2, #1a1d2d)', border: '1px solid #ff990044', borderRadius: '8px', padding: '12px', cursor: 'pointer', textAlign: 'center', transition: 'all 0.2s', color: '#ff9900' }}
+            onMouseEnter={e => e.currentTarget.style.background = '#2a2015'}
+            onMouseLeave={e => e.currentTarget.style.background = '#1a1d2d'}
+          >
+            <div style={{ fontSize: '20px', marginBottom: '4px' }}>☁️</div>
+            <div style={{ fontSize: '13px', fontWeight: 600 }}>EKS Cheatsheet</div>
+          </button>
         </div>
       </div>
 

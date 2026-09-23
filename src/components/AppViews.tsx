@@ -37,6 +37,7 @@ const DailyTasksView = React.lazy(() => import('../views/DailyTasksView').then(m
 const PracticeTerminalView = React.lazy(() => import('../views/PracticeTerminalView').then(m => ({ default: m.PracticeTerminalView })));
 const YamlPracticeTerminalView = React.lazy(() => import('../views/YamlPracticeTerminalView').then(m => ({ default: m.YamlPracticeTerminalView })));
 const TerraformLibraryView = React.lazy(() => import('../views/TerraformLibraryView').then(m => ({ default: m.TerraformLibraryView })));
+const CheatsheetView = React.lazy(() => import('../views/CheatsheetView').then(m => ({ default: m.CheatsheetView })));
 interface AppViewsProps {
   currentView: string;
   setCurrentView: (view: string) => void;
@@ -254,6 +255,30 @@ export const AppViews: React.FC<AppViewsProps> = (props) => {
             return (
               <ErrorBoundary name="Terraform Library">
                 <TerraformLibraryView switchView={props.setCurrentView} />
+              </ErrorBoundary>
+            );
+          case 'cheatsheet-docker':
+            return (
+              <ErrorBoundary name="Docker Cheatsheet">
+                <CheatsheetView topic="docker" switchView={props.setCurrentView} />
+              </ErrorBoundary>
+            );
+          case 'cheatsheet-k8s':
+            return (
+              <ErrorBoundary name="Kubernetes Cheatsheet">
+                <CheatsheetView topic="k8s" switchView={props.setCurrentView} />
+              </ErrorBoundary>
+            );
+          case 'cheatsheet-monitoring':
+            return (
+              <ErrorBoundary name="Monitoring Cheatsheet">
+                <CheatsheetView topic="monitoring" switchView={props.setCurrentView} />
+              </ErrorBoundary>
+            );
+          case 'cheatsheet-eks':
+            return (
+              <ErrorBoundary name="EKS Cheatsheet">
+                <CheatsheetView topic="eks" switchView={props.setCurrentView} />
               </ErrorBoundary>
             );
           default:
