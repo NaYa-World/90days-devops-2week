@@ -1,426 +1,511 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Terraform Knowledge Library</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="A beginner-friendly, step-by-step guide to Terraform and Infrastructure as Code. Learn HCL, state, modules, and AWS provisioning." />
+  <title>Terraform for Beginners — Step-by-Step Guide</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
   <style>
-    /* Reset & Base */
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      background-color: #0f1117;
-      color: #e2e8f0;
-      line-height: 1.6;
-      display: flex;
-      height: 100vh;
-      overflow: hidden;
-    }
-    
-    /* Layout */
-    .sidebar {
-      width: 280px;
-      background: #151822;
-      border-right: 1px solid #2d3748;
-      display: flex;
-      flex-direction: column;
-      overflow-y: auto;
-      padding: 20px 0;
-    }
-    .content-area {
-      flex: 1;
-      overflow-y: auto;
-      padding: 40px;
-      scroll-behavior: smooth;
-    }
-    .container {
-      max-width: 900px;
-      margin: 0 auto;
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg-primary:    #0b0e17;
+      --bg-secondary:  #111827;
+      --bg-card:       rgba(17, 24, 39, .72);
+      --bg-glass:      rgba(255,255,255,.04);
+      --border-glass:  rgba(255,255,255,.08);
+      --text-primary:  #f1f5f9;
+      --text-secondary:#94a3b8;
+      --text-muted:    #64748b;
+      --accent-1:      #6366f1;
+      --accent-2:      #8b5cf6;
+      --accent-3:      #ec4899;
+      --accent-4:      #06b6d4;
+      --accent-5:      #10b981;
+      --accent-warn:   #f59e0b;
+      --gradient-main: linear-gradient(135deg, var(--accent-1), var(--accent-2), var(--accent-3));
+      --gradient-card: linear-gradient(145deg, rgba(99,102,241,.12), rgba(139,92,246,.06));
+      --radius:        16px;
+      --radius-sm:     10px;
+      --shadow-glow:   0 0 60px -12px rgba(99,102,241,.35);
+      --font-sans:     'Inter', system-ui, -apple-system, sans-serif;
+      --font-mono:     'JetBrains Mono', 'Fira Code', monospace;
+      --sidebar-w:     280px;
+      --header-h:      70px;
     }
 
-    /* Sidebar Styles */
-    .sidebar__header {
-      padding: 0 20px 15px;
-      border-bottom: 1px solid #2d3748;
-      margin-bottom: 15px;
+    html { scroll-behavior: smooth; font-size: 16px; }
+
+    body {
+      font-family: var(--font-sans);
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.7;
+      overflow-x: hidden;
     }
-    .sidebar__title {
-      font-size: 1.2rem;
-      font-weight: 700;
-      color: #fff;
-      display: flex;
-      align-items: center;
-      gap: 10px;
+
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background:
+        radial-gradient(ellipse 80% 50% at 20% 10%, rgba(99,102,241,.12) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 40% at 80% 80%, rgba(236,72,153,.08) 0%, transparent 50%),
+        radial-gradient(ellipse 50% 50% at 50% 50%, rgba(6,182,212,.06) 0%, transparent 55%);
+      pointer-events: none;
+      z-index: 0;
     }
-    .sidebar__section {
-      margin-bottom: 20px;
+
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--accent-1); border-radius: 8px; }
+
+    /* ── Header ─────────────────────────────── */
+    .header {
+      position: fixed; top: 0; left: 0; right: 0;
+      height: var(--header-h);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 2rem;
+      background: rgba(11,14,23,.82);
+      backdrop-filter: blur(18px) saturate(1.6);
+      border-bottom: 1px solid var(--border-glass);
+      z-index: 100;
     }
-    .sidebar__section-title {
-      padding: 0 20px;
-      font-size: 0.75rem;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: #a0aec0;
-      margin-bottom: 10px;
-      font-weight: 600;
+    .header__brand {
+      display: flex; align-items: center; gap: .75rem;
+      font-weight: 800; font-size: 1.25rem;
+      background: var(--gradient-main); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .header__badge {
+      font-size: .65rem; font-weight: 700;
+      padding: .2rem .6rem; border-radius: 999px;
+      background: rgba(99,102,241,.18); color: var(--accent-1);
+      letter-spacing: .06em; text-transform: uppercase;
+    }
+    .header__toggle {
+      display: none; background: none; border: none; color: var(--text-primary);
+      cursor: pointer; font-size: 1.5rem;
+    }
+
+    /* ── Sidebar ────────────────────────────── */
+    .sidebar {
+      position: fixed; top: var(--header-h); left: 0; bottom: 0;
+      width: var(--sidebar-w);
+      padding: 1.5rem 1rem;
+      overflow-y: auto;
+      background: rgba(11,14,23,.6);
+      backdrop-filter: blur(12px);
+      border-right: 1px solid var(--border-glass);
+      z-index: 90;
+      transition: transform .35s cubic-bezier(.4,0,.2,1);
+    }
+    .sidebar__heading {
+      font-size: .65rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .12em; color: var(--text-muted); margin-bottom: .75rem;
+      padding-left: .75rem;
     }
     .sidebar__link {
-      display: flex;
-      align-items: center;
-      padding: 8px 20px;
-      color: #cbd5e0;
+      display: flex; align-items: center; gap: .6rem;
+      padding: .6rem .75rem; margin-bottom: .25rem;
+      border-radius: var(--radius-sm);
+      font-size: .85rem; font-weight: 500;
+      color: var(--text-secondary);
       text-decoration: none;
-      font-size: 0.9rem;
-      transition: all 0.2s;
+      transition: all .2s;
     }
-    .sidebar__link:hover, .sidebar__link.active {
-      background: #2d3748;
-      color: #fff;
+    .sidebar__link:hover,
+    .sidebar__link.active {
+      background: rgba(99,102,241,.1);
+      color: var(--text-primary);
+    }
+    .sidebar__link.active {
+      border-left: 3px solid var(--accent-1);
+      padding-left: calc(.75rem - 3px);
     }
     .sidebar__num {
-      width: 24px;
-      height: 24px;
-      border-radius: 4px;
-      background: #4fd1c5;
-      color: #151822;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 0.75rem;
-      font-weight: 700;
-      margin-right: 12px;
-      flex-shrink: 0;
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 22px; height: 22px; flex-shrink: 0;
+      border-radius: 6px; font-size: .7rem; font-weight: 700;
+      background: rgba(99,102,241,.15); color: var(--accent-1);
     }
 
-    /* Content Styles */
-    .hero {
-      background: linear-gradient(135deg, #2b6cb0 0%, #2c5282 50%, #553c9a 100%);
-      border-radius: 12px;
-      padding: 40px;
-      margin-bottom: 40px;
-      position: relative;
-      overflow: hidden;
+    /* ── Main Content ───────────────────────── */
+    .main {
+      margin-left: var(--sidebar-w);
+      margin-top: var(--header-h);
+      padding: 3rem 2.5rem 6rem;
+      max-width: 900px;
+      position: relative; z-index: 1;
     }
-    .hero::after {
-      content: '';
-      position: absolute;
-      top: 0; right: 0; bottom: 0; left: 0;
-      background: url('data:image/svg+xml;utf8,<svg width="20" height="20" xmlns="http://www.w3.org/2000/svg"><circle cx="2" cy="2" r="2" fill="rgba(255,255,255,0.05)"/></svg>');
+
+    .hero { text-align: center; padding: 3rem 0 2rem; }
+    .hero__pill {
+      display: inline-flex; align-items: center; gap: .5rem;
+      padding: .35rem 1rem; border-radius: 999px;
+      background: rgba(99,102,241,.12); border: 1px solid rgba(99,102,241,.25);
+      font-size: .75rem; font-weight: 600; color: var(--accent-1);
+      margin-bottom: 1.25rem; letter-spacing: .04em;
+    }
+    .hero__pill .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent-5); animation: pulse-dot 2s infinite; }
+    @keyframes pulse-dot { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.4;transform:scale(.7)} }
+    .hero h1 {
+      font-size: clamp(2rem, 5vw, 3.2rem); font-weight: 900; line-height: 1.15;
+      background: linear-gradient(135deg, #fff 30%, var(--accent-1) 70%, var(--accent-3));
+      -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+      margin-bottom: 1rem;
+    }
+    .hero p { color: var(--text-secondary); font-size: 1.1rem; max-width: 600px; margin: 0 auto; }
+
+    /* ── Architecture Boxes ──────────────────── */
+    .arch-diagram {
+      background: var(--gradient-card);
+      border: 1px solid var(--border-glass);
+      border-radius: var(--radius);
+      padding: 2rem; margin: 0 0 2rem;
+      position: relative; overflow: hidden;
+    }
+    .arch-diagram::before {
+      content: ''; position: absolute; top: -50%; right: -30%; width: 300px; height: 300px;
+      background: radial-gradient(circle, rgba(99,102,241,.15), transparent 70%);
       pointer-events: none;
     }
-    .hero__title {
-      font-size: 2.5rem;
-      font-weight: 800;
-      color: #fff;
-      margin-bottom: 10px;
+    .arch-diagram h3 { font-size: 1rem; font-weight: 700; margin-bottom: 1.25rem; color: var(--accent-4); }
+    .arch-boxes {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 1rem;
     }
-    .hero__subtitle {
-      font-size: 1.1rem;
-      color: #e2e8f0;
-      max-width: 600px;
+    .arch-box {
+      text-align: center; padding: 1.2rem .75rem; border-radius: var(--radius-sm);
+      background: rgba(255,255,255,.03); border: 1px solid var(--border-glass);
+      transition: transform .25s, box-shadow .25s;
     }
-    .hero__badge {
-      display: inline-block;
-      background: rgba(255,255,255,0.15);
-      color: #fff;
-      padding: 4px 12px;
-      border-radius: 20px;
-      font-size: 0.8rem;
-      font-weight: 600;
-      margin-bottom: 16px;
-    }
+    .arch-box:hover { transform: translateY(-4px); box-shadow: var(--shadow-glow); }
+    .arch-box__icon { font-size: 1.8rem; margin-bottom: .5rem; }
+    .arch-box__label { font-size: .75rem; font-weight: 600; color: var(--text-secondary); }
 
-    /* Sections */
+    /* ── Step Cards ──────────────────────────── */
     .step {
-      margin-bottom: 60px;
-      scroll-margin-top: 40px;
+      margin-bottom: 3rem;
+      padding: 2rem 2rem 2rem 2.25rem;
+      border-radius: var(--radius);
+      background: var(--bg-card);
+      border: 1px solid var(--border-glass);
+      position: relative;
+      overflow: hidden;
+      transition: border-color .3s;
     }
-    .step__header {
-      display: flex;
-      align-items: center;
-      margin-bottom: 20px;
-      gap: 15px;
+    .step:hover { border-color: rgba(99,102,241,.25); }
+    .step::before {
+      content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%;
+      background: var(--gradient-main); border-radius: 4px 0 0 4px;
     }
+    .step__header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; flex-wrap: wrap; }
     .step__number {
-      width: 36px;
-      height: 36px;
-      border-radius: 8px;
-      background: #4fd1c5;
-      color: #151822;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.2rem;
-      font-weight: 700;
-      flex-shrink: 0;
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 40px; height: 40px; border-radius: 12px; flex-shrink: 0;
+      background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+      font-weight: 800; font-size: 1rem; color: #fff;
     }
-    .step__title {
-      font-size: 1.8rem;
-      font-weight: 700;
-      color: #fff;
+    .step__title { font-size: 1.35rem; font-weight: 800; }
+    .step__time {
+      margin-left: auto;
+      font-size: .7rem; font-weight: 600; padding: .25rem .7rem;
+      border-radius: 999px; background: rgba(16,185,129,.12); color: var(--accent-5);
     }
 
-    /* Cards & Blocks */
-    .card {
-      background: #1a202c;
-      border: 1px solid #2d3748;
-      border-radius: 8px;
-      padding: 24px;
-      margin-bottom: 20px;
+    .step p { color: var(--text-secondary); font-size: .95rem; margin-bottom: .75rem; }
+    .step p strong { color: var(--text-primary); }
+    .step ul, .step ol { margin: .5rem 0 1rem 1.5rem; }
+    .step li { color: var(--text-secondary); font-size: .9rem; margin-bottom: .35rem; }
+    .step li strong { color: var(--text-primary); }
+
+    /* ── Info Boxes ──────────────────────────── */
+    .why-box {
+      margin: 1.25rem 0;
+      padding: 1rem 1.25rem;
+      border-radius: var(--radius-sm);
+      background: linear-gradient(135deg, rgba(245,158,11,.08), rgba(245,158,11,.03));
+      border-left: 3px solid var(--accent-warn);
     }
-    
-    /* Code Blocks */
+    .why-box__label {
+      display: inline-flex; align-items: center; gap: .4rem;
+      font-size: .7rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .08em; color: var(--accent-warn); margin-bottom: .4rem;
+    }
+    .why-box p { font-size: .9rem; color: var(--text-secondary); }
+
+    .tip-box {
+      margin: 1rem 0;
+      padding: 1rem 1.25rem;
+      border-radius: var(--radius-sm);
+      background: linear-gradient(135deg, rgba(6,182,212,.08), rgba(6,182,212,.03));
+      border-left: 3px solid var(--accent-4);
+    }
+    .tip-box__label {
+      display: inline-flex; align-items: center; gap: .4rem;
+      font-size: .7rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .08em; color: var(--accent-4); margin-bottom: .4rem;
+    }
+    .tip-box p { font-size: .9rem; color: var(--text-secondary); }
+
+    .warn-box {
+      margin: 1rem 0;
+      padding: 1rem 1.25rem;
+      border-radius: var(--radius-sm);
+      background: linear-gradient(135deg, rgba(239,68,68,.08), rgba(239,68,68,.03));
+      border-left: 3px solid #ef4444;
+    }
+    .warn-box__label {
+      display: inline-flex; align-items: center; gap: .4rem;
+      font-size: .7rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .08em; color: #ef4444; margin-bottom: .4rem;
+    }
+    .warn-box p { font-size: .9rem; color: var(--text-secondary); }
+
+    .success-box {
+      margin: 1rem 0;
+      padding: 1rem 1.25rem;
+      border-radius: var(--radius-sm);
+      background: linear-gradient(135deg, rgba(16,185,129,.08), rgba(16,185,129,.03));
+      border-left: 3px solid var(--accent-5);
+    }
+    .success-box__label {
+      display: inline-flex; align-items: center; gap: .4rem;
+      font-size: .7rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .08em; color: var(--accent-5); margin-bottom: .4rem;
+    }
+    .success-box p { font-size: .9rem; color: var(--text-secondary); }
+
+    /* ── Code Blocks ─────────────────────────── */
     .code-block {
-      background: #0d1117;
-      border: 1px solid #30363d;
-      border-radius: 8px;
+      position: relative; margin: 1rem 0; border-radius: var(--radius-sm);
+      background: #0d1117; border: 1px solid rgba(255,255,255,.06);
       overflow: hidden;
-      margin: 16px 0;
     }
     .code-block__bar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 8px 16px;
-      background: #161b22;
-      border-bottom: 1px solid #30363d;
-      font-size: 0.8rem;
-      color: #8b949e;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: .5rem 1rem;
+      background: rgba(255,255,255,.04); border-bottom: 1px solid rgba(255,255,255,.06);
+    }
+    .code-block__lang {
+      font-size: .65rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .1em; color: var(--accent-4);
     }
     .code-block__copy {
-      background: none;
-      border: 1px solid #30363d;
-      color: #8b949e;
-      padding: 4px 8px;
-      border-radius: 4px;
-      cursor: pointer;
-      transition: all 0.2s;
+      font-size: .7rem; font-weight: 600; color: var(--text-muted);
+      background: none; border: 1px solid rgba(255,255,255,.1);
+      padding: .2rem .6rem; border-radius: 6px; cursor: pointer;
+      transition: all .2s;
     }
-    .code-block__copy:hover {
-      background: #30363d;
-      color: #c9d1d9;
+    .code-block__copy:hover { color: var(--text-primary); border-color: var(--accent-1); }
+    .code-block pre {
+      padding: 1rem 1.25rem; overflow-x: auto;
+      font-family: var(--font-mono); font-size: .82rem;
+      line-height: 1.7; color: #c9d1d9;
     }
-    pre {
-      padding: 16px;
-      overflow-x: auto;
-      font-family: 'JetBrains Mono', Consolas, Monaco, monospace;
-      font-size: 0.9rem;
-      line-height: 1.5;
-    }
+    .code-block .comment { color: #6e7681; }
+    .code-block .cmd { color: #79c0ff; }
+    .code-block .flag { color: #d2a8ff; }
+    .code-block .string { color: #a5d6ff; }
+    .code-block .value { color: #7ee787; }
+    .code-block .keyword { color: #ff7b72; }
+
     code {
-      font-family: 'JetBrains Mono', Consolas, Monaco, monospace;
-      background: #2d3748;
-      padding: 2px 6px;
-      border-radius: 4px;
-      font-size: 0.9em;
-      color: #4fd1c5;
+      background: rgba(99,102,241,.12); padding: .1rem .4rem;
+      border-radius: 4px; font-family: var(--font-mono); font-size: .8rem;
+      color: var(--accent-4);
     }
 
-    /* Syntax Highlighting */
-    .keyword { color: #ff7b72; }
-    .string { color: #a5d6ff; }
-    .function { color: #d2a8ff; }
-    .comment { color: #8b949e; }
-    .variable { color: #79c0ff; }
-    .property { color: #7ee787; }
+    /* ── Tables ───────────────────────────────── */
+    .cost-table {
+      width: 100%; border-collapse: collapse; margin: 1rem 0;
+      font-size: .85rem;
+    }
+    .cost-table th {
+      text-align: left; padding: .6rem .8rem;
+      background: rgba(99,102,241,.1); color: var(--accent-1);
+      font-weight: 700; font-size: .7rem; text-transform: uppercase; letter-spacing: .08em;
+    }
+    .cost-table td { padding: .6rem .8rem; border-bottom: 1px solid var(--border-glass); color: var(--text-secondary); }
+    .cost-table tr:hover td { background: rgba(255,255,255,.02); }
 
-    /* Highlights & Badges */
-    .highlight-box {
-      border-left: 4px solid #4fd1c5;
-      background: rgba(79, 209, 197, 0.1);
-      padding: 16px 20px;
-      border-radius: 0 8px 8px 0;
-      margin: 20px 0;
+    /* ── Sub-steps ────────────────────────────── */
+    .sub-step {
+      margin: 1.25rem 0; padding: 1rem 1.25rem;
+      border-radius: var(--radius-sm);
+      background: var(--bg-glass); border: 1px solid var(--border-glass);
     }
-    .highlight-box.warning {
-      border-left-color: #eab308;
-      background: rgba(234, 179, 8, 0.08);
-    }
-    .highlight-box.danger {
-      border-left-color: #ef4444;
-      background: rgba(239, 68, 68, 0.08);
-    }
-    .highlight-box.success {
-      border-left-color: #22c55e;
-      background: rgba(34, 197, 94, 0.08);
+    .sub-step__title {
+      font-size: .85rem; font-weight: 700; color: var(--accent-2);
+      margin-bottom: .5rem; display: flex; align-items: center; gap: .4rem;
     }
 
-    /* Analogy Box */
-    .analogy {
-      background: linear-gradient(135deg, rgba(99,102,241,0.1) 0%, rgba(168,85,247,0.1) 100%);
-      border: 1px solid rgba(99,102,241,0.25);
-      border-radius: 8px;
-      padding: 20px;
-      margin: 20px 0;
+    /* ── Progress & Footer ────────────────────── */
+    .progress-track {
+      position: fixed; top: var(--header-h); left: 0; right: 0;
+      height: 3px; background: rgba(255,255,255,.05); z-index: 99;
     }
-    .analogy__label {
-      display: inline-block;
-      background: rgba(99,102,241,0.2);
-      color: #a5b4fc;
-      padding: 2px 10px;
-      border-radius: 12px;
-      font-size: 0.75rem;
-      font-weight: 600;
-      margin-bottom: 10px;
-      letter-spacing: 0.05em;
+    .progress-bar {
+      height: 100%; width: 0;
+      background: var(--gradient-main);
+      transition: width .15s;
     }
 
-    /* Cheatsheet table */
-    .cheat-table {
-      width: 100%;
-      border-collapse: collapse;
-      margin: 16px 0;
-      font-size: 0.9rem;
-    }
-    .cheat-table th {
-      background: #1a202c;
-      color: #4fd1c5;
-      text-align: left;
-      padding: 12px 16px;
-      border-bottom: 2px solid #2d3748;
-      font-weight: 700;
-    }
-    .cheat-table td {
-      padding: 10px 16px;
-      border-bottom: 1px solid #2d3748;
-      color: #e2e8f0;
-    }
-    .cheat-table tr:hover td {
-      background: rgba(79, 209, 197, 0.05);
-    }
-    .cheat-table code {
-      font-size: 0.85em;
+    .footer {
+      text-align: center; padding: 2rem;
+      color: var(--text-muted); font-size: .8rem;
+      border-top: 1px solid var(--border-glass);
     }
 
-    /* Divider */
-    .section-divider {
-      margin: 80px 0 40px;
-      border: none;
-      border-bottom: 2px solid #2d3748;
+    .back-top {
+      position: fixed; bottom: 2rem; right: 2rem;
+      width: 44px; height: 44px; border-radius: 12px;
+      background: var(--accent-1); color: #fff; border: none; cursor: pointer;
+      display: none; align-items: center; justify-content: center;
+      box-shadow: 0 4px 20px rgba(99,102,241,.4);
+      transition: transform .2s; z-index: 100; font-size: 1.2rem;
+    }
+    .back-top:hover { transform: translateY(-3px); }
+    .back-top.visible { display: flex; }
+
+    @media (max-width: 900px) {
+      .sidebar { transform: translateX(-100%); }
+      .sidebar.open { transform: translateX(0); }
+      .main { margin-left: 0; padding: 2rem 1.25rem 4rem; }
+      .header__toggle { display: block; }
     }
 
-    /* Animations */
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
     .fade-in {
-      animation: fadeIn 0.5s ease forwards;
+      opacity: 0; transform: translateY(24px);
+      transition: opacity .6s ease, transform .6s ease;
     }
+    .fade-in.visible { opacity: 1; transform: translateY(0); }
   </style>
 </head>
 <body>
 
-  <!-- SIDEBAR -->
-  <aside class="sidebar">
-    <div class="sidebar__header">
-      <div class="sidebar__title">
-        <span style="font-size: 1.5rem;">🏗️</span> Terraform Library
+  <!-- ═══ HEADER ═══ -->
+  <header class="header">
+    <div class="header__brand">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="url(#g)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><defs><linearGradient id="g" x1="0" y1="0" x2="24" y2="24"><stop stop-color="#6366f1"/><stop offset="1" stop-color="#ec4899"/></linearGradient></defs><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+      Terraform Guide
+      <span class="header__badge">Beginner Friendly</span>
+    </div>
+    <button class="header__toggle" onclick="document.querySelector('.sidebar').classList.toggle('open')">☰</button>
+  </header>
+
+  <!-- ═══ PROGRESS BAR ═══ -->
+  <div class="progress-track"><div class="progress-bar" id="progressBar"></div></div>
+
+  <!-- ═══ SIDEBAR ═══ -->
+  <nav class="sidebar">
+    <div class="sidebar__heading">Day 1 — Foundations</div>
+    <a href="#step1" class="sidebar__link"><span class="sidebar__num">1</span> What is Terraform?</a>
+    <a href="#step2" class="sidebar__link"><span class="sidebar__num">2</span> Installation</a>
+    <a href="#step3" class="sidebar__link"><span class="sidebar__num">3</span> Core Workflow</a>
+    <a href="#step4" class="sidebar__link"><span class="sidebar__num">4</span> HCL Deep Dive</a>
+    <a href="#step5" class="sidebar__link"><span class="sidebar__num">5</span> Variables & Outputs</a>
+
+    <div class="sidebar__heading" style="margin-top: 1.5rem;">Day 2 — State</div>
+    <a href="#step6" class="sidebar__link"><span class="sidebar__num">6</span> What is State?</a>
+    <a href="#step7" class="sidebar__link"><span class="sidebar__num">7</span> Remote State (S3)</a>
+    <a href="#step8" class="sidebar__link"><span class="sidebar__num">8</span> State Locking</a>
+
+    <div class="sidebar__heading" style="margin-top: 1.5rem;">Day 3 — Advanced</div>
+    <a href="#step9" class="sidebar__link"><span class="sidebar__num">9</span> Modules</a>
+    <a href="#step10" class="sidebar__link"><span class="sidebar__num">10</span> Workspaces</a>
+
+    <div class="sidebar__heading" style="margin-top: 1.5rem;">Projects</div>
+    <a href="#proj-level1" class="sidebar__link" style="color: #4ade80;"><span class="sidebar__num" style="background: rgba(34,197,94,.2); color: #4ade80;">L1</span> EC2 & SecGroup</a>
+    <a href="#proj-level2" class="sidebar__link" style="color: #fbbf24;"><span class="sidebar__num" style="background: rgba(234,179,8,.2); color: #fbbf24;">L2</span> Custom VPC</a>
+    <a href="#proj-level3" class="sidebar__link" style="color: #f87171;"><span class="sidebar__num" style="background: rgba(239,68,68,.2); color: #f87171;">L3</span> S3 + CloudFront</a>
+
+    <div class="sidebar__heading" style="margin-top: 1.5rem;">Reference</div>
+    <a href="#cheatsheet" class="sidebar__link"><span class="sidebar__num" style="background: rgba(59,130,246,.2); color: #60a5fa;">📋</span> Cheatsheet</a>
+    <a href="#commands" class="sidebar__link"><span class="sidebar__num" style="background: rgba(139,92,246,.2); color: #c084fc;">⌨️</span> All Commands</a>
+    <a href="#troubleshooting" class="sidebar__link"><span class="sidebar__num" style="background: rgba(249,115,22,.2); color: #fb923c;">🔧</span> Troubleshooting</a>
+  </nav>
+
+  <!-- ═══ MAIN CONTENT ═══ -->
+  <main class="main">
+
+    <!-- Hero -->
+    <div class="hero fade-in">
+      <div class="hero__pill"><span class="dot"></span> Infrastructure as Code</div>
+      <h1>Terraform for Beginners</h1>
+      <p>Learn Terraform from absolute zero. No prior IaC experience needed. Build real AWS infrastructure using simple, human-readable configuration files.</p>
+    </div>
+
+    <!-- Architecture Overview -->
+    <div class="arch-diagram fade-in">
+      <h3>🏗️ How Terraform Works</h3>
+      <div class="arch-boxes">
+        <div class="arch-box"><div class="arch-box__icon">📝</div><div class="arch-box__label">.tf Files<br><small>Your code</small></div></div>
+        <div class="arch-box"><div class="arch-box__icon">⚙️</div><div class="arch-box__label">Terraform CLI<br><small>init / plan / apply</small></div></div>
+        <div class="arch-box"><div class="arch-box__icon">🔌</div><div class="arch-box__label">Provider<br><small>AWS Plugin</small></div></div>
+        <div class="arch-box"><div class="arch-box__icon">☁️</div><div class="arch-box__label">AWS API<br><small>Creates resources</small></div></div>
+        <div class="arch-box"><div class="arch-box__icon">💾</div><div class="arch-box__label">State File<br><small>Tracks everything</small></div></div>
       </div>
     </div>
 
-    <div class="sidebar__section">
-      <div class="sidebar__section-title">Day 1: Foundations</div>
-      <a href="#step1" class="sidebar__link"><span class="sidebar__num">1</span> What is Terraform?</a>
-      <a href="#step2" class="sidebar__link"><span class="sidebar__num">2</span> Installation</a>
-      <a href="#step3" class="sidebar__link"><span class="sidebar__num">3</span> Core Workflow</a>
-      <a href="#step4" class="sidebar__link"><span class="sidebar__num">4</span> HCL Syntax Deep Dive</a>
-      <a href="#step5" class="sidebar__link"><span class="sidebar__num">5</span> Variables & Outputs</a>
-    </div>
 
-    <div class="sidebar__section">
-      <div class="sidebar__section-title">Day 2: State & Backend</div>
-      <a href="#step6" class="sidebar__link"><span class="sidebar__num">6</span> What is State?</a>
-      <a href="#step7" class="sidebar__link"><span class="sidebar__num">7</span> Remote State (S3)</a>
-      <a href="#step8" class="sidebar__link"><span class="sidebar__num">8</span> State Locking</a>
-    </div>
+    <!-- ═══════════════════════════════════════
+         DAY 1: FOUNDATIONS
+         ═══════════════════════════════════════ -->
 
-    <div class="sidebar__section">
-      <div class="sidebar__section-title">Day 3: Advanced</div>
-      <a href="#step9" class="sidebar__link"><span class="sidebar__num">9</span> Modules</a>
-      <a href="#step10" class="sidebar__link"><span class="sidebar__num">10</span> Workspaces</a>
-    </div>
+    <!-- STEP 1 -->
+    <section class="step fade-in" id="step1">
+      <div class="step__header">
+        <span class="step__number">1</span>
+        <h2 class="step__title">What is Terraform?</h2>
+        <span class="step__time">📖 5 min read</span>
+      </div>
+      <p>Terraform is a free, open-source tool by HashiCorp that lets you define cloud infrastructure (servers, databases, networks) in <strong>simple text files</strong>. Instead of clicking around the AWS Console, you write a file that says "I want an EC2 instance" and Terraform creates it for you.</p>
 
-    <div class="sidebar__section">
-      <div class="sidebar__section-title">Practice Projects</div>
-      <a href="#proj-level1" class="sidebar__link" style="color: #4ade80;"><span class="sidebar__num" style="background: #22c55e;">L1</span> EC2 & SecGroup</a>
-      <a href="#proj-level2" class="sidebar__link" style="color: #fbbf24;"><span class="sidebar__num" style="background: #eab308;">L2</span> Custom VPC</a>
-      <a href="#proj-level3" class="sidebar__link" style="color: #f87171;"><span class="sidebar__num" style="background: #ef4444;">L3</span> S3 + CloudFront</a>
-    </div>
-
-    <div class="sidebar__section">
-      <div class="sidebar__section-title">Reference</div>
-      <a href="#cheatsheet" class="sidebar__link" style="color: #60a5fa;"><span class="sidebar__num" style="background: #3b82f6;">📋</span> Cheatsheet</a>
-      <a href="#commands" class="sidebar__link" style="color: #c084fc;"><span class="sidebar__num" style="background: #8b5cf6;">⌨️</span> All Commands</a>
-      <a href="#troubleshooting" class="sidebar__link" style="color: #fb923c;"><span class="sidebar__num" style="background: #f97316;">🔧</span> Troubleshooting</a>
-    </div>
-  </aside>
-
-  <!-- MAIN CONTENT -->
-  <main class="content-area">
-    <div class="container">
-      
-      <!-- HERO -->
-      <div class="hero fade-in">
-        <span class="hero__badge">🧑‍💻 Beginner Friendly</span>
-        <h1 class="hero__title">Infrastructure as Code with Terraform</h1>
-        <p class="hero__subtitle">Learn Terraform from absolute zero. No prior IaC experience needed. Build real AWS infrastructure using simple, human-readable configuration files.</p>
+      <div class="why-box">
+        <div class="why-box__label">💡 Real-World Analogy</div>
+        <p>Imagine you're ordering food. The <strong>imperative</strong> way: "Go to the kitchen, boil water, add pasta, strain it, add sauce…" You describe every step. The <strong>declarative</strong> way (Terraform): "I want a plate of pasta bolognese." You describe <em>what</em> you want, and Terraform figures out how to make it happen.</p>
       </div>
 
-      <!-- ═══════════════════════════════════════
-           DAY 1: FOUNDATIONS
-           ═══════════════════════════════════════ -->
+      <div class="sub-step">
+        <div class="sub-step__title">📌 Why should you learn Terraform?</div>
+        <ul>
+          <li><strong>Reproducible:</strong> Run the same file 100 times → same infrastructure. No more "it works on my account."</li>
+          <li><strong>Version Controlled:</strong> Store infrastructure in Git. Review changes in PRs before applying.</li>
+          <li><strong>Automated:</strong> No more clicking through the AWS Console. One command creates everything.</li>
+          <li><strong>Multi-Cloud:</strong> Works with AWS, Azure, GCP, Kubernetes, and 3000+ providers.</li>
+        </ul>
+      </div>
 
-      <!-- STEP 1: What is Terraform? -->
-      <section class="step fade-in" id="step1">
-        <div class="step__header">
-          <span class="step__number">1</span>
-          <h2 class="step__title">What is Terraform?</h2>
-        </div>
-        
-        <div class="analogy">
-          <span class="analogy__label">💡 Real-World Analogy</span>
-          <p>Imagine you're ordering food. The <strong>imperative</strong> way is: "Go to the kitchen, boil water, add pasta, strain it, add sauce..." — you describe every single step. The <strong>declarative</strong> way (Terraform) is: "I want a plate of pasta bolognese." You describe <em>what</em> you want, and Terraform figures out all the steps to make it happen.</p>
-        </div>
+      <div class="tip-box">
+        <div class="tip-box__label">💡 Key Terms for Beginners</div>
+        <p><strong>Provider</strong> = The cloud platform (AWS, Azure, GCP).<br>
+        <strong>Resource</strong> = A thing you create (EC2, S3, VPC).<br>
+        <strong>State</strong> = Terraform's memory — it remembers what it created.<br>
+        <strong>HCL</strong> = HashiCorp Configuration Language — the simple language Terraform uses.</p>
+      </div>
+    </section>
 
-        <p>Terraform is a free, open-source tool by HashiCorp that lets you define cloud infrastructure (servers, databases, networks) in simple text files. Instead of clicking around the AWS Console, you write a file that says "I want an EC2 instance" and Terraform creates it for you.</p>
-        
-        <div class="card" style="margin-top: 20px;">
-          <h3 style="color: #4fd1c5; margin-bottom: 12px;">Why should you learn Terraform?</h3>
-          <ul style="margin-left: 20px; line-height: 1.8; color: #a1a1aa;">
-            <li><strong style="color: #e2e8f0;">Reproducible:</strong> Run the same file 100 times and get the same infrastructure. No more "it works on my account" problems.</li>
-            <li><strong style="color: #e2e8f0;">Version Controlled:</strong> Store your infrastructure in Git, just like application code. Review changes in PRs before applying them.</li>
-            <li><strong style="color: #e2e8f0;">Automated:</strong> No more clicking through the AWS console. One command creates everything.</li>
-            <li><strong style="color: #e2e8f0;">Multi-Cloud:</strong> Works with AWS, Azure, GCP, Kubernetes, and 3000+ other providers.</li>
-          </ul>
-        </div>
+    <!-- STEP 2 -->
+    <section class="step fade-in" id="step2">
+      <div class="step__header">
+        <span class="step__number">2</span>
+        <h2 class="step__title">Installing Terraform</h2>
+        <span class="step__time">🔧 10 min</span>
+      </div>
+      <p>Before you can use Terraform, install it on your machine and configure AWS credentials.</p>
 
-        <div class="highlight-box">
-          <strong>Key Terms for Beginners:</strong><br>
-          <strong>Provider</strong> = The cloud platform you want to use (AWS, Azure, GCP).<br>
-          <strong>Resource</strong> = A thing you want to create (EC2 instance, S3 bucket, VPC).<br>
-          <strong>State</strong> = Terraform's memory. It remembers what it created so it can update or delete it later.<br>
-          <strong>HCL</strong> = HashiCorp Configuration Language. The simple language Terraform files are written in.
-        </div>
-      </section>
-
-      <!-- STEP 2: Installation -->
-      <section class="step fade-in" id="step2">
-        <div class="step__header">
-          <span class="step__number">2</span>
-          <h2 class="step__title">Installing Terraform</h2>
-        </div>
-        <p>Before you can use Terraform, you need to install it on your machine and configure AWS credentials.</p>
-
-        <div class="card">
-          <h3 style="color: #4fd1c5; margin-bottom: 12px;">Step 1: Install Terraform CLI</h3>
-          <div class="code-block">
-            <div class="code-block__bar"><span>macOS (Homebrew)</span><button class="code-block__copy" onclick="copyCode(this)">Copy</button></div>
-            <pre>brew tap hashicorp/tap
+      <div class="sub-step">
+        <div class="sub-step__title">Step 1: Install Terraform CLI</div>
+        <div class="code-block">
+          <div class="code-block__bar"><span class="code-block__lang">macOS (Homebrew)</span><button class="code-block__copy" onclick="copyCode(this)">Copy</button></div>
+          <pre>brew tap hashicorp/tap
 brew install hashicorp/tap/terraform</pre>
-          </div>
-          <div class="code-block">
-            <div class="code-block__bar"><span>Ubuntu/Debian</span><button class="code-block__copy" onclick="copyCode(this)">Copy</button></div>
-            <pre>sudo apt-get update && sudo apt-get install -y gnupg software-properties-common
+        </div>
+        <div class="code-block">
+          <div class="code-block__bar"><span class="code-block__lang">Ubuntu / Debian</span><button class="code-block__copy" onclick="copyCode(this)">Copy</button></div>
+          <pre>sudo apt-get update && sudo apt-get install -y gnupg software-properties-common
 wget -O- https://apt.releases.hashicorp.com/gpg | \
   gpg --dearmor | \
   sudo tee /usr/share/keyrings/hashicorp-archive-keyring.gpg > /dev/null
@@ -428,844 +513,755 @@ echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] \
   https://apt.releases.hashicorp.com $(lsb_release -cs) main" | \
   sudo tee /etc/apt/sources.list.d/hashicorp.list
 sudo apt-get update && sudo apt-get install terraform</pre>
-          </div>
-          <div class="code-block">
-            <div class="code-block__bar"><span>Verify installation</span><button class="code-block__copy" onclick="copyCode(this)">Copy</button></div>
-            <pre>terraform -version</pre>
-          </div>
         </div>
-
-        <div class="card">
-          <h3 style="color: #4fd1c5; margin-bottom: 12px;">Step 2: Configure AWS Credentials</h3>
-          <p style="margin-bottom: 12px; color: #a1a1aa;">Terraform needs your AWS Access Key and Secret Key to talk to AWS on your behalf.</p>
-          <div class="code-block">
-            <div class="code-block__bar"><span>Configure AWS CLI</span><button class="code-block__copy" onclick="copyCode(this)">Copy</button></div>
-            <pre>aws configure
-# It will ask for:
-# AWS Access Key ID:     YOUR_ACCESS_KEY
-# AWS Secret Access Key: YOUR_SECRET_KEY
-# Default region name:   us-east-1
-# Default output format: json</pre>
-          </div>
-          <div class="highlight-box warning">
-            <strong>⚠️ Security Warning:</strong> Never hardcode AWS keys in your Terraform files! Always use <code>aws configure</code> or environment variables. Terraform automatically picks up credentials from <code>~/.aws/credentials</code>.
-          </div>
+        <div class="code-block">
+          <div class="code-block__bar"><span class="code-block__lang">Verify</span><button class="code-block__copy" onclick="copyCode(this)">Copy</button></div>
+          <pre>terraform -version</pre>
         </div>
-      </section>
+      </div>
 
-      <!-- STEP 3: Core Workflow -->
-      <section class="step fade-in" id="step3">
-        <div class="step__header">
-          <span class="step__number">3</span>
-          <h2 class="step__title">The Core Workflow (Write → Plan → Apply)</h2>
+      <div class="sub-step">
+        <div class="sub-step__title">Step 2: Configure AWS Credentials</div>
+        <p>Terraform needs your AWS Access Key to talk to AWS on your behalf.</p>
+        <div class="code-block">
+          <div class="code-block__bar"><span class="code-block__lang">Terminal</span><button class="code-block__copy" onclick="copyCode(this)">Copy</button></div>
+          <pre><span class="cmd">aws configure</span>
+<span class="comment"># AWS Access Key ID:     YOUR_ACCESS_KEY</span>
+<span class="comment"># AWS Secret Access Key: YOUR_SECRET_KEY</span>
+<span class="comment"># Default region name:   us-east-1</span>
+<span class="comment"># Default output format: json</span></pre>
         </div>
-        
-        <div class="analogy">
-          <span class="analogy__label">💡 Real-World Analogy</span>
-          <p>Think of building a house. <code>terraform init</code> = hiring the construction crew. <code>terraform plan</code> = reviewing the blueprint before building. <code>terraform apply</code> = actually building the house. <code>terraform destroy</code> = demolishing the house.</p>
+      </div>
+
+      <div class="warn-box">
+        <div class="warn-box__label">⚠️ Security Warning</div>
+        <p>Never hardcode AWS keys in your Terraform files! Always use <code>aws configure</code> or environment variables. Terraform automatically picks up credentials from <code>~/.aws/credentials</code>.</p>
+      </div>
+    </section>
+
+    <!-- STEP 3 -->
+    <section class="step fade-in" id="step3">
+      <div class="step__header">
+        <span class="step__number">3</span>
+        <h2 class="step__title">The Core Workflow</h2>
+        <span class="step__time">📖 5 min read</span>
+      </div>
+
+      <div class="why-box">
+        <div class="why-box__label">💡 Real-World Analogy</div>
+        <p>Building a house: <code>terraform init</code> = hiring the crew. <code>terraform plan</code> = reviewing the blueprint. <code>terraform apply</code> = building it. <code>terraform destroy</code> = demolishing it.</p>
+      </div>
+
+      <table class="cost-table">
+        <tr><th>Command</th><th>What it does</th></tr>
+        <tr><td><code>terraform init</code></td><td>Downloads the AWS provider plugin. <strong>Run once</strong> when you start a new project.</td></tr>
+        <tr><td><code>terraform plan</code></td><td>Shows a preview of changes. <strong>Always run before apply!</strong></td></tr>
+        <tr><td><code>terraform apply</code></td><td>Creates/updates the infrastructure. Asks you to type <code>yes</code>.</td></tr>
+        <tr><td><code>terraform destroy</code></td><td>Deletes everything Terraform created. <strong>Use with caution!</strong></td></tr>
+      </table>
+
+      <div class="sub-step">
+        <div class="sub-step__title">🚀 Your First Terraform Project (Step-by-Step)</div>
+        <div class="code-block">
+          <div class="code-block__bar"><span class="code-block__lang">Terminal</span><button class="code-block__copy" onclick="copyCode(this)">Copy</button></div>
+          <pre><span class="comment"># Step 1: Create project folder</span>
+<span class="cmd">mkdir</span> my-first-terraform && <span class="cmd">cd</span> my-first-terraform
+
+<span class="comment"># Step 2: Create your first .tf file (we'll write content next)</span>
+<span class="cmd">touch</span> main.tf
+
+<span class="comment"># Step 3: Initialize (downloads AWS provider)</span>
+<span class="cmd">terraform init</span>
+
+<span class="comment"># Step 4: Preview changes</span>
+<span class="cmd">terraform plan</span>
+
+<span class="comment"># Step 5: Create infrastructure (type 'yes')</span>
+<span class="cmd">terraform apply</span>
+
+<span class="comment"># Step 6: Clean up to avoid AWS charges!</span>
+<span class="cmd">terraform destroy</span></pre>
         </div>
+      </div>
+    </section>
 
-        <div class="card">
-          <h3 style="color: #4fd1c5; margin-bottom: 12px;">The 4 Essential Commands</h3>
-          <table class="cheat-table">
-            <tr>
-              <th style="width: 200px;">Command</th>
-              <th>What it does</th>
-            </tr>
-            <tr>
-              <td><code>terraform init</code></td>
-              <td>Initializes the project. Downloads the AWS provider plugin. <strong>Run this once</strong> when you start a new project or add a new provider.</td>
-            </tr>
-            <tr>
-              <td><code>terraform plan</code></td>
-              <td>Shows you a preview of what will be created/changed/destroyed. <strong>Always run this before apply!</strong> It's your safety net.</td>
-            </tr>
-            <tr>
-              <td><code>terraform apply</code></td>
-              <td>Actually creates/updates the infrastructure. It will show the plan first and ask you to type <code>yes</code> to confirm.</td>
-            </tr>
-            <tr>
-              <td><code>terraform destroy</code></td>
-              <td>Deletes everything that Terraform created. <strong>Use with caution!</strong> It will ask for confirmation.</td>
-            </tr>
-          </table>
-        </div>
+    <!-- STEP 4 -->
+    <section class="step fade-in" id="step4">
+      <div class="step__header">
+        <span class="step__number">4</span>
+        <h2 class="step__title">HCL Syntax Deep Dive</h2>
+        <span class="step__time">📖 10 min read</span>
+      </div>
+      <p>Terraform files use <strong>HCL (HashiCorp Configuration Language)</strong>. Every <code>.tf</code> file in your project directory is automatically loaded.</p>
 
-        <div class="card">
-          <h3 style="color: #4fd1c5; margin-bottom: 12px;">Your First Terraform Project (Step-by-Step)</h3>
-          <div class="code-block">
-            <div class="code-block__bar"><span>Terminal — Follow these steps in order</span><button class="code-block__copy" onclick="copyCode(this)">Copy</button></div>
-            <pre># Step 1: Create a new project folder
-mkdir my-first-terraform && cd my-first-terraform
-
-# Step 2: Create your first .tf file (we'll write the content next)
-touch main.tf
-
-# Step 3: Initialize the project (downloads AWS provider)
-terraform init
-
-# Step 4: Preview what will happen
-terraform plan
-
-# Step 5: Create the infrastructure (type 'yes' when asked)
-terraform apply
-
-# Step 6: When done, clean up to avoid AWS charges!
-terraform destroy</pre>
-          </div>
-        </div>
-      </section>
-
-      <!-- STEP 4: HCL Syntax Deep Dive -->
-      <section class="step fade-in" id="step4">
-        <div class="step__header">
-          <span class="step__number">4</span>
-          <h2 class="step__title">HCL Syntax Deep Dive</h2>
-        </div>
-        <p>Terraform files use <strong>HCL (HashiCorp Configuration Language)</strong>. It's designed to be easy to read, even for beginners. Every <code>.tf</code> file in your project directory is automatically loaded by Terraform.</p>
-
-        <div class="card">
-          <h3 style="color: #4fd1c5; margin-bottom: 12px;">The Anatomy of a Terraform File</h3>
-          <div class="code-block">
-            <div class="code-block__bar"><span>hcl — main.tf (fully annotated)</span><button class="code-block__copy" onclick="copyCode(this)">Copy</button></div>
-            <pre><span class="comment"># ─── STEP 1: Tell Terraform WHICH cloud to use ─────────────────</span>
-<span class="comment"># The "provider" block connects Terraform to AWS.</span>
-<span class="comment"># It uses your credentials from `aws configure`.</span>
+      <div class="sub-step">
+        <div class="sub-step__title">📌 Anatomy of a Terraform File</div>
+        <div class="code-block">
+          <div class="code-block__bar"><span class="code-block__lang">HCL — main.tf (fully annotated)</span><button class="code-block__copy" onclick="copyCode(this)">Copy</button></div>
+          <pre><span class="comment"># ─── STEP 1: Tell Terraform WHICH cloud to use ─────────</span>
 <span class="keyword">provider</span> <span class="string">"aws"</span> {
-  <span class="property">region</span> = <span class="string">"us-east-1"</span>   <span class="comment"># Which AWS data center region</span>
+  <span class="value">region</span> = <span class="string">"us-east-1"</span>   <span class="comment"># AWS data center region</span>
 }
 
-<span class="comment"># ─── STEP 2: Define WHAT you want to create ─────────────────────</span>
-<span class="comment"># Syntax: resource "PROVIDER_TYPE" "YOUR_LOCAL_NAME" { ... }</span>
-<span class="comment">#</span>
-<span class="comment">#   "aws_instance" = AWS EC2 Instance (the resource type)</span>
-<span class="comment">#   "web_server"   = A name YOU choose (used to reference it)</span>
+<span class="comment"># ─── STEP 2: Define WHAT you want to create ─────────────</span>
+<span class="comment"># Syntax: resource "PROVIDER_TYPE" "YOUR_LOCAL_NAME" { }</span>
+<span class="comment">#   "aws_instance" = EC2 Instance (resource type)</span>
+<span class="comment">#   "web_server"   = Name YOU choose (for referencing)</span>
 <span class="keyword">resource</span> <span class="string">"aws_instance"</span> <span class="string">"web_server"</span> {
-  <span class="property">ami</span>           = <span class="string">"ami-0c55b159cbfafe1f0"</span>   <span class="comment"># Amazon Machine Image (OS template)</span>
-  <span class="property">instance_type</span> = <span class="string">"t2.micro"</span>               <span class="comment"># Size of the server (Free Tier)</span>
+  <span class="value">ami</span>           = <span class="string">"ami-0c55b159cbfafe1f0"</span>   <span class="comment"># OS template</span>
+  <span class="value">instance_type</span> = <span class="string">"t2.micro"</span>               <span class="comment"># Size (Free Tier)</span>
 
-  <span class="comment"># Tags are labels. They don't affect the server, but help you</span>
-  <span class="comment"># identify resources in the AWS Console.</span>
-  <span class="property">tags</span> = {
-    <span class="property">Name</span>        = <span class="string">"MyFirstTerraformEC2"</span>
-    <span class="property">Environment</span> = <span class="string">"dev"</span>
+  <span class="comment"># Tags = labels to identify in AWS Console</span>
+  <span class="value">tags</span> = {
+    <span class="value">Name</span>        = <span class="string">"MyFirstTerraformEC2"</span>
+    <span class="value">Environment</span> = <span class="string">"dev"</span>
   }
 }</pre>
-          </div>
         </div>
+      </div>
 
-        <div class="card">
-          <h3 style="color: #4fd1c5; margin-bottom: 12px;">Common Terraform File Structure</h3>
-          <p style="margin-bottom: 12px; color: #a1a1aa;">You <em>can</em> put everything in one file, but the convention is to split it into multiple files for clarity:</p>
-          <table class="cheat-table">
-            <tr>
-              <th>File</th>
-              <th>Purpose</th>
-            </tr>
-            <tr>
-              <td><code>main.tf</code></td>
-              <td>Your primary resources (EC2, VPC, S3, etc.)</td>
-            </tr>
-            <tr>
-              <td><code>variables.tf</code></td>
-              <td>Input variables (like function parameters)</td>
-            </tr>
-            <tr>
-              <td><code>outputs.tf</code></td>
-              <td>Values to display after <code>apply</code> (like the server's IP)</td>
-            </tr>
-            <tr>
-              <td><code>providers.tf</code></td>
-              <td>Provider configuration (AWS region, version constraints)</td>
-            </tr>
-            <tr>
-              <td><code>backend.tf</code></td>
-              <td>Where to store the state file (S3, local, etc.)</td>
-            </tr>
-            <tr>
-              <td><code>terraform.tfvars</code></td>
-              <td>Actual values for your variables (like a .env file)</td>
-            </tr>
-          </table>
-        </div>
-      </section>
+      <div class="sub-step">
+        <div class="sub-step__title">📁 Common File Structure</div>
+        <table class="cost-table">
+          <tr><th>File</th><th>Purpose</th></tr>
+          <tr><td><code>main.tf</code></td><td>Your primary resources (EC2, VPC, S3, etc.)</td></tr>
+          <tr><td><code>variables.tf</code></td><td>Input variables (like function parameters)</td></tr>
+          <tr><td><code>outputs.tf</code></td><td>Values to display after apply (like server IP)</td></tr>
+          <tr><td><code>providers.tf</code></td><td>Provider config (AWS region, version constraints)</td></tr>
+          <tr><td><code>backend.tf</code></td><td>Where to store state (S3, local, etc.)</td></tr>
+          <tr><td><code>terraform.tfvars</code></td><td>Actual values for variables (like a .env file)</td></tr>
+        </table>
+      </div>
+    </section>
 
-      <!-- STEP 5: Variables & Outputs -->
-      <section class="step fade-in" id="step5">
-        <div class="step__header">
-          <span class="step__number">5</span>
-          <h2 class="step__title">Variables & Outputs</h2>
-        </div>
+    <!-- STEP 5 -->
+    <section class="step fade-in" id="step5">
+      <div class="step__header">
+        <span class="step__number">5</span>
+        <h2 class="step__title">Variables & Outputs</h2>
+        <span class="step__time">📖 10 min read</span>
+      </div>
 
-        <div class="analogy">
-          <span class="analogy__label">💡 Real-World Analogy</span>
-          <p>Variables are like the blanks in a Mad Libs game. You define the blank ("I want a server of size ____"), and then fill it in later. This lets you reuse the same Terraform config for dev, staging, and prod by just changing the variables.</p>
-        </div>
+      <div class="why-box">
+        <div class="why-box__label">💡 Real-World Analogy</div>
+        <p>Variables are like blanks in a Mad Libs game. You define the blank ("I want a server of size ____"), and fill it in later. Reuse the same config for dev/staging/prod by just changing variables.</p>
+      </div>
 
-        <div class="card">
-          <h3 style="color: #4fd1c5; margin-bottom: 12px;">Defining Variables</h3>
-          <div class="code-block">
-            <div class="code-block__bar"><span>hcl — variables.tf</span><button class="code-block__copy" onclick="copyCode(this)">Copy</button></div>
-            <pre><span class="comment"># A simple variable with a default value</span>
-<span class="keyword">variable</span> <span class="string">"instance_type"</span> {
-  <span class="property">description</span> = <span class="string">"The size of the EC2 instance"</span>
-  <span class="property">type</span>        = <span class="variable">string</span>
-  <span class="property">default</span>     = <span class="string">"t2.micro"</span>   <span class="comment"># If no value provided, use this</span>
+      <div class="sub-step">
+        <div class="sub-step__title">📌 Defining Variables</div>
+        <div class="code-block">
+          <div class="code-block__bar"><span class="code-block__lang">HCL — variables.tf</span><button class="code-block__copy" onclick="copyCode(this)">Copy</button></div>
+          <pre><span class="keyword">variable</span> <span class="string">"instance_type"</span> {
+  <span class="value">description</span> = <span class="string">"The size of the EC2 instance"</span>
+  <span class="value">type</span>        = string
+  <span class="value">default</span>     = <span class="string">"t2.micro"</span>   <span class="comment"># If no value provided, use this</span>
 }
 
-<span class="comment"># A variable WITHOUT a default — Terraform will ASK you for it</span>
 <span class="keyword">variable</span> <span class="string">"environment"</span> {
-  <span class="property">description</span> = <span class="string">"The deployment environment (dev, staging, prod)"</span>
-  <span class="property">type</span>        = <span class="variable">string</span>
-}
-
-<span class="comment"># A number variable</span>
-<span class="keyword">variable</span> <span class="string">"server_count"</span> {
-  <span class="property">description</span> = <span class="string">"How many servers to create"</span>
-  <span class="property">type</span>        = <span class="variable">number</span>
-  <span class="property">default</span>     = <span class="string">1</span>
+  <span class="value">description</span> = <span class="string">"Deployment environment (dev, staging, prod)"</span>
+  <span class="value">type</span>        = string
+  <span class="comment"># No default — Terraform will ASK you for it</span>
 }</pre>
-          </div>
         </div>
+      </div>
 
-        <div class="card">
-          <h3 style="color: #4fd1c5; margin-bottom: 12px;">Using Variables in Resources</h3>
-          <div class="code-block">
-            <div class="code-block__bar"><span>hcl — main.tf</span><button class="code-block__copy" onclick="copyCode(this)">Copy</button></div>
-            <pre><span class="keyword">resource</span> <span class="string">"aws_instance"</span> <span class="string">"web"</span> {
-  <span class="property">ami</span>           = <span class="string">"ami-0c55b159cbfafe1f0"</span>
-  <span class="property">instance_type</span> = <span class="variable">var.instance_type</span>    <span class="comment"># ← Use the variable!</span>
-
-  <span class="property">tags</span> = {
-    <span class="property">Name</span> = <span class="string">"web-</span>${<span class="variable">var.environment</span>}<span class="string">"</span>   <span class="comment"># ← String interpolation</span>
+      <div class="sub-step">
+        <div class="sub-step__title">📌 Using Variables + Setting Values</div>
+        <div class="code-block">
+          <div class="code-block__bar"><span class="code-block__lang">HCL — main.tf</span><button class="code-block__copy" onclick="copyCode(this)">Copy</button></div>
+          <pre><span class="keyword">resource</span> <span class="string">"aws_instance"</span> <span class="string">"web"</span> {
+  <span class="value">ami</span>           = <span class="string">"ami-0c55b159cbfafe1f0"</span>
+  <span class="value">instance_type</span> = <span class="cmd">var.instance_type</span>    <span class="comment"># ← Use the variable!</span>
+  <span class="value">tags</span> = {
+    <span class="value">Name</span> = <span class="string">"web-${</span><span class="cmd">var.environment</span><span class="string">}"</span>   <span class="comment"># ← String interpolation</span>
   }
 }</pre>
-          </div>
         </div>
-
-        <div class="card">
-          <h3 style="color: #4fd1c5; margin-bottom: 12px;">Setting Variable Values</h3>
-          <div class="code-block">
-            <div class="code-block__bar"><span>hcl — terraform.tfvars</span><button class="code-block__copy" onclick="copyCode(this)">Copy</button></div>
-            <pre><span class="comment"># This file automatically loads when you run terraform apply</span>
-<span class="property">instance_type</span> = <span class="string">"t3.small"</span>
-<span class="property">environment</span>   = <span class="string">"dev"</span>
-<span class="property">server_count</span>  = <span class="string">2</span></pre>
-          </div>
+        <div class="code-block">
+          <div class="code-block__bar"><span class="code-block__lang">HCL — terraform.tfvars</span><button class="code-block__copy" onclick="copyCode(this)">Copy</button></div>
+          <pre><span class="comment"># This file auto-loads when you run terraform apply</span>
+<span class="value">instance_type</span> = <span class="string">"t3.small"</span>
+<span class="value">environment</span>   = <span class="string">"dev"</span></pre>
         </div>
+      </div>
 
-        <div class="card">
-          <h3 style="color: #4fd1c5; margin-bottom: 12px;">Defining Outputs</h3>
-          <p style="margin-bottom: 12px; color: #a1a1aa;">Outputs display useful info after <code>terraform apply</code> finishes (like the public IP of your new server).</p>
-          <div class="code-block">
-            <div class="code-block__bar"><span>hcl — outputs.tf</span><button class="code-block__copy" onclick="copyCode(this)">Copy</button></div>
-            <pre><span class="keyword">output</span> <span class="string">"server_public_ip"</span> {
-  <span class="property">description</span> = <span class="string">"The public IP of the web server"</span>
-  <span class="property">value</span>       = <span class="variable">aws_instance.web.public_ip</span>
-}
-
-<span class="keyword">output</span> <span class="string">"server_id"</span> {
-  <span class="property">description</span> = <span class="string">"The EC2 instance ID"</span>
-  <span class="property">value</span>       = <span class="variable">aws_instance.web.id</span>
+      <div class="sub-step">
+        <div class="sub-step__title">📌 Defining Outputs</div>
+        <p>Outputs display useful info after <code>terraform apply</code> (like the public IP).</p>
+        <div class="code-block">
+          <div class="code-block__bar"><span class="code-block__lang">HCL — outputs.tf</span><button class="code-block__copy" onclick="copyCode(this)">Copy</button></div>
+          <pre><span class="keyword">output</span> <span class="string">"server_public_ip"</span> {
+  <span class="value">description</span> = <span class="string">"The public IP of the web server"</span>
+  <span class="value">value</span>       = <span class="cmd">aws_instance.web.public_ip</span>
 }</pre>
-          </div>
         </div>
-      </section>
+      </div>
+    </section>
 
-      <!-- ═══════════════════════════════════════
-           DAY 2: STATE & BACKEND
-           ═══════════════════════════════════════ -->
-      <hr class="section-divider">
 
-      <!-- STEP 6: What is State? -->
-      <section class="step fade-in" id="step6">
-        <div class="step__header">
-          <span class="step__number">6</span>
-          <h2 class="step__title">What is Terraform State?</h2>
+    <!-- ═══════════════════════════════════════
+         DAY 2: STATE & BACKEND
+         ═══════════════════════════════════════ -->
+
+    <!-- STEP 6 -->
+    <section class="step fade-in" id="step6">
+      <div class="step__header">
+        <span class="step__number">6</span>
+        <h2 class="step__title">What is Terraform State?</h2>
+        <span class="step__time">📖 5 min read</span>
+      </div>
+
+      <div class="why-box">
+        <div class="why-box__label">💡 Real-World Analogy</div>
+        <p>The state file is a <strong>shopping list with checkmarks</strong>. When you run <code>terraform apply</code>, Terraform checks each item. If it's already checked (exists in AWS), it skips it. New item? Creates it. Removed item? Deletes it from AWS.</p>
+      </div>
+
+      <p>After <code>terraform apply</code>, Terraform creates <code>terraform.tfstate</code> — a JSON file mapping your <code>.tf</code> config to real AWS resources. Without it, Terraform wouldn't know what it already created.</p>
+
+      <div class="warn-box">
+        <div class="warn-box__label">🚨 Never do these things</div>
+        <p>• Never <strong>delete</strong> the state file (resources become orphaned in AWS)<br>
+        • Never <strong>edit</strong> it manually (use <code>terraform state</code> commands instead)<br>
+        • Never <strong>commit</strong> <code>terraform.tfstate</code> to Git (it may contain secrets!)</p>
+      </div>
+    </section>
+
+    <!-- STEP 7 -->
+    <section class="step fade-in" id="step7">
+      <div class="step__header">
+        <span class="step__number">7</span>
+        <h2 class="step__title">Remote State (AWS S3)</h2>
+        <span class="step__time">🔧 15 min</span>
+      </div>
+      <p>By default, state is saved locally. In a team, everyone needs the same state. Store it in S3.</p>
+
+      <div class="sub-step">
+        <div class="sub-step__title">Step 1: Create the S3 bucket (one-time)</div>
+        <div class="code-block">
+          <div class="code-block__bar"><span class="code-block__lang">Terminal</span><button class="code-block__copy" onclick="copyCode(this)">Copy</button></div>
+          <pre><span class="cmd">aws s3api create-bucket</span> \
+  <span class="flag">--bucket</span> <span class="string">my-terraform-state-bucket-12345</span> \
+  <span class="flag">--region</span> <span class="string">us-east-1</span></pre>
         </div>
+      </div>
 
-        <div class="analogy">
-          <span class="analogy__label">💡 Real-World Analogy</span>
-          <p>Think of the state file as a <strong>shopping list with checkmarks</strong>. When you run <code>terraform apply</code>, Terraform checks each item on the list. If an item is already checked (already exists in AWS), it skips it. If it's new, it creates it. If you remove an item from the list, Terraform deletes it from AWS.</p>
-        </div>
-
-        <p>After you run <code>terraform apply</code>, Terraform creates a file called <code>terraform.tfstate</code>. This JSON file maps your <code>.tf</code> configuration to real-world AWS resources. Without it, Terraform wouldn't know what it already created.</p>
-
-        <div class="highlight-box danger">
-          <strong>🚨 NEVER do these things to the state file:</strong><br>
-          • Never delete it (Terraform loses track of your resources — they become "orphaned" in AWS)<br>
-          • Never edit it manually (use <code>terraform state</code> commands instead)<br>
-          • Never commit <code>terraform.tfstate</code> to Git (it may contain secrets!)
-        </div>
-      </section>
-
-      <!-- STEP 7: Remote State -->
-      <section class="step fade-in" id="step7">
-        <div class="step__header">
-          <span class="step__number">7</span>
-          <h2 class="step__title">Remote State (AWS S3)</h2>
-        </div>
-        <p>By default, the state file is saved locally on your laptop. This is fine for learning, but in a team, everyone needs to share the same state. The solution? Store it in an S3 bucket.</p>
-        
-        <div class="card">
-          <h3 style="color: #4fd1c5; margin-bottom: 12px;">Step 1: Create the S3 bucket first (one-time setup)</h3>
-          <div class="code-block">
-            <div class="code-block__bar"><span>Terminal</span><button class="code-block__copy" onclick="copyCode(this)">Copy</button></div>
-            <pre>aws s3api create-bucket \
-  --bucket my-terraform-state-bucket-12345 \
-  --region us-east-1</pre>
-          </div>
-        </div>
-
-        <div class="card">
-          <h3 style="color: #4fd1c5; margin-bottom: 12px;">Step 2: Configure Terraform to use it</h3>
-          <div class="code-block">
-            <div class="code-block__bar"><span>hcl — backend.tf</span><button class="code-block__copy" onclick="copyCode(this)">Copy</button></div>
-            <pre><span class="keyword">terraform</span> {
+      <div class="sub-step">
+        <div class="sub-step__title">Step 2: Configure Terraform to use it</div>
+        <div class="code-block">
+          <div class="code-block__bar"><span class="code-block__lang">HCL — backend.tf</span><button class="code-block__copy" onclick="copyCode(this)">Copy</button></div>
+          <pre><span class="keyword">terraform</span> {
   <span class="keyword">backend</span> <span class="string">"s3"</span> {
-    <span class="property">bucket</span> = <span class="string">"my-terraform-state-bucket-12345"</span>
-    <span class="property">key</span>    = <span class="string">"project-name/terraform.tfstate"</span>
-    <span class="property">region</span> = <span class="string">"us-east-1"</span>
+    <span class="value">bucket</span> = <span class="string">"my-terraform-state-bucket-12345"</span>
+    <span class="value">key</span>    = <span class="string">"project-name/terraform.tfstate"</span>
+    <span class="value">region</span> = <span class="string">"us-east-1"</span>
   }
 }</pre>
-          </div>
-          <div class="highlight-box success">
-            <strong>✅ After adding a backend:</strong> Run <code>terraform init</code> again. Terraform will detect the new backend and ask if you want to migrate your local state to S3. Type <code>yes</code>.
-          </div>
         </div>
-      </section>
+      </div>
 
-      <!-- STEP 8: State Locking -->
-      <section class="step fade-in" id="step8">
-        <div class="step__header">
-          <span class="step__number">8</span>
-          <h2 class="step__title">State Locking (DynamoDB)</h2>
+      <div class="success-box">
+        <div class="success-box__label">✅ After adding a backend</div>
+        <p>Run <code>terraform init</code> again. Terraform detects the new backend and asks to migrate your local state to S3. Type <code>yes</code>.</p>
+      </div>
+    </section>
+
+    <!-- STEP 8 -->
+    <section class="step fade-in" id="step8">
+      <div class="step__header">
+        <span class="step__number">8</span>
+        <h2 class="step__title">State Locking (DynamoDB)</h2>
+        <span class="step__time">🔧 10 min</span>
+      </div>
+
+      <div class="why-box">
+        <div class="why-box__label">💡 Real-World Analogy</div>
+        <p>Two people editing the same Google Doc at once — changes conflict. State locking adds a "🔒 Editing…" banner. While one person runs <code>terraform apply</code>, nobody else can until they finish.</p>
+      </div>
+
+      <div class="sub-step">
+        <div class="sub-step__title">Step 1: Create the DynamoDB table</div>
+        <div class="code-block">
+          <div class="code-block__bar"><span class="code-block__lang">Terminal</span><button class="code-block__copy" onclick="copyCode(this)">Copy</button></div>
+          <pre><span class="cmd">aws dynamodb create-table</span> \
+  <span class="flag">--table-name</span> <span class="string">terraform-locks</span> \
+  <span class="flag">--attribute-definitions</span> <span class="string">AttributeName=LockID,AttributeType=S</span> \
+  <span class="flag">--key-schema</span> <span class="string">AttributeName=LockID,KeyType=HASH</span> \
+  <span class="flag">--billing-mode</span> <span class="string">PAY_PER_REQUEST</span></pre>
         </div>
+      </div>
 
-        <div class="analogy">
-          <span class="analogy__label">💡 Real-World Analogy</span>
-          <p>Imagine two people editing the same Google Doc at the same time — changes can conflict. State locking is like adding a "🔒 Editing…" banner. While one person is running <code>terraform apply</code>, nobody else can run it until the first person finishes.</p>
-        </div>
-
-        <div class="card">
-          <h3 style="color: #4fd1c5; margin-bottom: 12px;">Step 1: Create the DynamoDB table</h3>
-          <div class="code-block">
-            <div class="code-block__bar"><span>Terminal</span><button class="code-block__copy" onclick="copyCode(this)">Copy</button></div>
-            <pre>aws dynamodb create-table \
-  --table-name terraform-locks \
-  --attribute-definitions AttributeName=LockID,AttributeType=S \
-  --key-schema AttributeName=LockID,KeyType=HASH \
-  --billing-mode PAY_PER_REQUEST</pre>
-          </div>
-        </div>
-
-        <div class="card">
-          <h3 style="color: #4fd1c5; margin-bottom: 12px;">Step 2: Add locking to your backend</h3>
-          <div class="code-block">
-            <div class="code-block__bar"><span>hcl — backend.tf (complete)</span><button class="code-block__copy" onclick="copyCode(this)">Copy</button></div>
-            <pre><span class="keyword">terraform</span> {
+      <div class="sub-step">
+        <div class="sub-step__title">Step 2: Add locking to your backend</div>
+        <div class="code-block">
+          <div class="code-block__bar"><span class="code-block__lang">HCL — backend.tf (complete)</span><button class="code-block__copy" onclick="copyCode(this)">Copy</button></div>
+          <pre><span class="keyword">terraform</span> {
   <span class="keyword">backend</span> <span class="string">"s3"</span> {
-    <span class="property">bucket</span>         = <span class="string">"my-terraform-state-bucket-12345"</span>
-    <span class="property">key</span>            = <span class="string">"project-name/terraform.tfstate"</span>
-    <span class="property">region</span>         = <span class="string">"us-east-1"</span>
-    
-    <span class="comment"># State Locking — prevents two people from running apply at once</span>
-    <span class="property">dynamodb_table</span> = <span class="string">"terraform-locks"</span>
-    <span class="property">encrypt</span>        = <span class="keyword">true</span>
+    <span class="value">bucket</span>         = <span class="string">"my-terraform-state-bucket-12345"</span>
+    <span class="value">key</span>            = <span class="string">"project-name/terraform.tfstate"</span>
+    <span class="value">region</span>         = <span class="string">"us-east-1"</span>
+    <span class="comment"># State Locking — prevents concurrent applies</span>
+    <span class="value">dynamodb_table</span> = <span class="string">"terraform-locks"</span>
+    <span class="value">encrypt</span>        = <span class="keyword">true</span>
   }
 }</pre>
-          </div>
         </div>
-      </section>
+      </div>
+    </section>
 
-      <!-- ═══════════════════════════════════════
-           DAY 3: ADVANCED
-           ═══════════════════════════════════════ -->
-      <hr class="section-divider">
 
-      <!-- STEP 9: Modules -->
-      <section class="step fade-in" id="step9">
-        <div class="step__header">
-          <span class="step__number">9</span>
-          <h2 class="step__title">Modules (Reusable Code)</h2>
-        </div>
+    <!-- ═══════════════════════════════════════
+         DAY 3: ADVANCED
+         ═══════════════════════════════════════ -->
 
-        <div class="analogy">
-          <span class="analogy__label">💡 Real-World Analogy</span>
-          <p>A module is like a <strong>Lego set with instructions</strong>. Once you build the first set (e.g., a VPC module), you can stamp out copies for dev, staging, and prod just by calling it multiple times with different inputs.</p>
-        </div>
+    <!-- STEP 9 -->
+    <section class="step fade-in" id="step9">
+      <div class="step__header">
+        <span class="step__number">9</span>
+        <h2 class="step__title">Modules (Reusable Code)</h2>
+        <span class="step__time">📖 10 min read</span>
+      </div>
 
-        <p>Modules let you package a group of resources together and reuse them. Instead of copy-pasting 200 lines of VPC code, you create a module once, then call it.</p>
+      <div class="why-box">
+        <div class="why-box__label">💡 Real-World Analogy</div>
+        <p>A module is like a <strong>Lego set with instructions</strong>. Build the first set (VPC module), then stamp out copies for dev, staging, and prod by calling it with different inputs.</p>
+      </div>
 
-        <div class="card">
-          <h3 style="color: #4fd1c5; margin-bottom: 12px;">Calling a Module</h3>
-          <div class="code-block">
-            <div class="code-block__bar"><span>hcl — main.tf</span><button class="code-block__copy" onclick="copyCode(this)">Copy</button></div>
-            <pre><span class="comment"># Use a local module stored in ./modules/web-server/</span>
+      <p>Modules package a group of resources together so you can reuse them. No more copy-pasting 200 lines of VPC code.</p>
+
+      <div class="code-block">
+        <div class="code-block__bar"><span class="code-block__lang">HCL — main.tf</span><button class="code-block__copy" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="comment"># Use a local module stored in ./modules/web-server/</span>
 <span class="keyword">module</span> <span class="string">"web_cluster"</span> {
-  <span class="property">source</span>        = <span class="string">"./modules/web-server"</span>
-  
-  <span class="comment"># Pass variables to the module</span>
-  <span class="property">cluster_name</span>  = <span class="string">"production"</span>
-  <span class="property">instance_type</span> = <span class="string">"t3.medium"</span>
-  <span class="property">min_size</span>      = <span class="string">2</span>
-  <span class="property">max_size</span>      = <span class="string">10</span>
+  <span class="value">source</span>        = <span class="string">"./modules/web-server"</span>
+  <span class="value">cluster_name</span>  = <span class="string">"production"</span>
+  <span class="value">instance_type</span> = <span class="string">"t3.medium"</span>
+  <span class="value">min_size</span>      = 2
+  <span class="value">max_size</span>      = 10
 }
 
-<span class="comment"># You can also use modules from the Terraform Registry</span>
+<span class="comment"># Or use modules from the Terraform Registry</span>
 <span class="keyword">module</span> <span class="string">"vpc"</span> {
-  <span class="property">source</span>  = <span class="string">"terraform-aws-modules/vpc/aws"</span>
-  <span class="property">version</span> = <span class="string">"5.0.0"</span>
-  
-  <span class="property">name</span>    = <span class="string">"my-vpc"</span>
-  <span class="property">cidr</span>    = <span class="string">"10.0.0.0/16"</span>
+  <span class="value">source</span>  = <span class="string">"terraform-aws-modules/vpc/aws"</span>
+  <span class="value">version</span> = <span class="string">"5.0.0"</span>
+  <span class="value">name</span>    = <span class="string">"my-vpc"</span>
+  <span class="value">cidr</span>    = <span class="string">"10.0.0.0/16"</span>
 }</pre>
-          </div>
-        </div>
-      </section>
+      </div>
+    </section>
 
-      <!-- STEP 10: Workspaces -->
-      <section class="step fade-in" id="step10">
-        <div class="step__header">
-          <span class="step__number">10</span>
-          <h2 class="step__title">Workspaces (Multi-Environment)</h2>
-        </div>
-        <p>Workspaces allow you to manage multiple environments (dev, staging, prod) using the <strong>exact same Terraform files</strong>. Each workspace gets its own isolated state file.</p>
-        
-        <div class="card">
-          <h3 style="color: #4fd1c5; margin-bottom: 12px;">Workspace Commands</h3>
-          <div class="code-block">
-            <div class="code-block__bar"><span>Terminal</span><button class="code-block__copy" onclick="copyCode(this)">Copy</button></div>
-            <pre># List all workspaces (* marks the active one)
-terraform workspace list
+    <!-- STEP 10 -->
+    <section class="step fade-in" id="step10">
+      <div class="step__header">
+        <span class="step__number">10</span>
+        <h2 class="step__title">Workspaces (Environments)</h2>
+        <span class="step__time">📖 5 min read</span>
+      </div>
+      <p>Workspaces let you manage <strong>dev, staging, prod</strong> using the same Terraform files. Each workspace gets its own isolated state.</p>
 
-# Create a new workspace
-terraform workspace new dev
+      <div class="code-block">
+        <div class="code-block__bar"><span class="code-block__lang">Terminal</span><button class="code-block__copy" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="cmd">terraform workspace list</span>        <span class="comment"># List all (* = active)</span>
+<span class="cmd">terraform workspace new</span> dev      <span class="comment"># Create workspace</span>
+<span class="cmd">terraform workspace select</span> prod  <span class="comment"># Switch workspace</span>
+<span class="cmd">terraform workspace show</span>         <span class="comment"># Show current</span></pre>
+      </div>
 
-# Switch to a different workspace
-terraform workspace select prod
-
-# Show current workspace
-terraform workspace show</pre>
-          </div>
-        </div>
-
-        <div class="card">
-          <h3 style="color: #4fd1c5; margin-bottom: 12px;">Using Workspaces in Code</h3>
-          <div class="code-block">
-            <div class="code-block__bar"><span>hcl — main.tf</span><button class="code-block__copy" onclick="copyCode(this)">Copy</button></div>
-            <pre><span class="keyword">resource</span> <span class="string">"aws_instance"</span> <span class="string">"web"</span> {
-  <span class="property">ami</span>           = <span class="string">"ami-0c55b159cbfafe1f0"</span>
-  <span class="comment"># Use a bigger server in prod, smaller in dev</span>
-  <span class="property">instance_type</span> = <span class="variable">terraform.workspace</span> == <span class="string">"prod"</span> ? <span class="string">"t3.large"</span> : <span class="string">"t2.micro"</span>
-
-  <span class="property">tags</span> = {
-    <span class="property">Name</span>        = <span class="string">"web-</span>${<span class="variable">terraform.workspace</span>}<span class="string">"</span>
-    <span class="property">Environment</span> = <span class="variable">terraform.workspace</span>
+      <div class="sub-step">
+        <div class="sub-step__title">📌 Using Workspaces in Code</div>
+        <div class="code-block">
+          <div class="code-block__bar"><span class="code-block__lang">HCL — main.tf</span><button class="code-block__copy" onclick="copyCode(this)">Copy</button></div>
+          <pre><span class="keyword">resource</span> <span class="string">"aws_instance"</span> <span class="string">"web"</span> {
+  <span class="value">ami</span>           = <span class="string">"ami-0c55b159cbfafe1f0"</span>
+  <span class="comment"># Bigger server in prod, smaller in dev</span>
+  <span class="value">instance_type</span> = <span class="cmd">terraform.workspace</span> == <span class="string">"prod"</span> ? <span class="string">"t3.large"</span> : <span class="string">"t2.micro"</span>
+  <span class="value">tags</span> = {
+    <span class="value">Name</span>        = <span class="string">"web-${</span><span class="cmd">terraform.workspace</span><span class="string">}"</span>
+    <span class="value">Environment</span> = <span class="cmd">terraform.workspace</span>
   }
 }</pre>
-          </div>
         </div>
-      </section>
+      </div>
+    </section>
 
-      <!-- ═══════════════════════════════════════
-           PRACTICE PROJECTS
-           ═══════════════════════════════════════ -->
-      <hr class="section-divider">
 
-      <section class="step fade-in" id="proj-level1">
-        <div class="step__header">
-          <span class="step__number" style="background: #22c55e;">L1</span>
-          <h2 class="step__title" style="color: #4ade80;">Beginner: EC2 & Security Group</h2>
-        </div>
-        <div class="card">
-          <p>Your first Terraform project. Provision a web server and open port 80 to the internet.</p>
-          <div class="code-block" style="margin-top:10px">
-            <div class="code-block__bar"><span>hcl — main.tf</span><button class="code-block__copy" onclick="copyCode(this)">Copy</button></div>
-            <pre><span class="keyword">provider</span> <span class="string">"aws"</span> {
-  <span class="property">region</span> = <span class="string">"us-east-1"</span>
+    <!-- ═══════════════════════════════════════
+         PRACTICE PROJECTS
+         ═══════════════════════════════════════ -->
+
+    <section class="step fade-in" id="proj-level1">
+      <div class="step__header">
+        <span class="step__number" style="background: linear-gradient(135deg, #22c55e, #16a34a);">L1</span>
+        <h2 class="step__title" style="color: #4ade80;">Beginner: EC2 & Security Group</h2>
+      </div>
+      <p>Your first Terraform project. Provision a web server and open port 80.</p>
+      <div class="code-block">
+        <div class="code-block__bar"><span class="code-block__lang">HCL — main.tf</span><button class="code-block__copy" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="keyword">provider</span> <span class="string">"aws"</span> {
+  <span class="value">region</span> = <span class="string">"us-east-1"</span>
 }
 
 <span class="keyword">resource</span> <span class="string">"aws_security_group"</span> <span class="string">"web_sg"</span> {
-  <span class="property">name</span>        = <span class="string">"allow_http"</span>
-  <span class="property">description</span> = <span class="string">"Allow HTTP inbound traffic"</span>
-
+  <span class="value">name</span>        = <span class="string">"allow_http"</span>
+  <span class="value">description</span> = <span class="string">"Allow HTTP inbound traffic"</span>
   <span class="keyword">ingress</span> {
-    <span class="property">from_port</span>   = <span class="string">80</span>
-    <span class="property">to_port</span>     = <span class="string">80</span>
-    <span class="property">protocol</span>    = <span class="string">"tcp"</span>
-    <span class="property">cidr_blocks</span> = [<span class="string">"0.0.0.0/0"</span>]
+    <span class="value">from_port</span>   = 80
+    <span class="value">to_port</span>     = 80
+    <span class="value">protocol</span>    = <span class="string">"tcp"</span>
+    <span class="value">cidr_blocks</span> = [<span class="string">"0.0.0.0/0"</span>]
   }
-
   <span class="keyword">egress</span> {
-    <span class="property">from_port</span>   = <span class="string">0</span>
-    <span class="property">to_port</span>     = <span class="string">0</span>
-    <span class="property">protocol</span>    = <span class="string">"-1"</span>
-    <span class="property">cidr_blocks</span> = [<span class="string">"0.0.0.0/0"</span>]
+    <span class="value">from_port</span>   = 0
+    <span class="value">to_port</span>     = 0
+    <span class="value">protocol</span>    = <span class="string">"-1"</span>
+    <span class="value">cidr_blocks</span> = [<span class="string">"0.0.0.0/0"</span>]
   }
 }
 
 <span class="keyword">resource</span> <span class="string">"aws_instance"</span> <span class="string">"web"</span> {
-  <span class="property">ami</span>                    = <span class="string">"ami-0c55b159cbfafe1f0"</span>
-  <span class="property">instance_type</span>          = <span class="string">"t2.micro"</span>
-  <span class="property">vpc_security_group_ids</span> = [<span class="variable">aws_security_group.web_sg.id</span>]
-
-  <span class="property">tags</span> = {
-    <span class="property">Name</span> = <span class="string">"L1-WebServer"</span>
-  }
+  <span class="value">ami</span>                    = <span class="string">"ami-0c55b159cbfafe1f0"</span>
+  <span class="value">instance_type</span>          = <span class="string">"t2.micro"</span>
+  <span class="value">vpc_security_group_ids</span> = [<span class="cmd">aws_security_group.web_sg.id</span>]
+  <span class="value">tags</span> = { <span class="value">Name</span> = <span class="string">"L1-WebServer"</span> }
 }
 
 <span class="keyword">output</span> <span class="string">"public_ip"</span> {
-  <span class="property">value</span> = <span class="variable">aws_instance.web.public_ip</span>
+  <span class="value">value</span> = <span class="cmd">aws_instance.web.public_ip</span>
 }</pre>
-          </div>
-          <div class="highlight-box success">
-            <strong>✅ After apply:</strong> Run <code>terraform output public_ip</code> to get the IP. Open it in your browser (http://IP) — you should see a connection, proving the security group works! Don't forget to run <code>terraform destroy</code> when done.
-          </div>
-        </div>
-      </section>
+      </div>
+      <div class="success-box">
+        <div class="success-box__label">✅ After apply</div>
+        <p>Run <code>terraform output public_ip</code> to get the IP. Don't forget <code>terraform destroy</code> when done!</p>
+      </div>
+    </section>
 
-      <section class="step fade-in" id="proj-level2">
-        <div class="step__header">
-          <span class="step__number" style="background: #eab308;">L2</span>
-          <h2 class="step__title" style="color: #fbbf24;">Intermediate: Custom VPC Architecture</h2>
-        </div>
-        <div class="card">
-          <p>Provision the networking foundation for EKS or ECS. Create a VPC with public subnets, an Internet Gateway, and Route Tables.</p>
-          <div class="code-block" style="margin-top:10px">
-            <div class="code-block__bar"><span>hcl — network.tf</span><button class="code-block__copy" onclick="copyCode(this)">Copy</button></div>
-            <pre><span class="keyword">resource</span> <span class="string">"aws_vpc"</span> <span class="string">"main"</span> {
-  <span class="property">cidr_block</span>           = <span class="string">"10.0.0.0/16"</span>
-  <span class="property">enable_dns_hostnames</span> = <span class="keyword">true</span>
-  <span class="property">tags</span> = { <span class="property">Name</span> = <span class="string">"L2-VPC"</span> }
+    <section class="step fade-in" id="proj-level2">
+      <div class="step__header">
+        <span class="step__number" style="background: linear-gradient(135deg, #eab308, #ca8a04);">L2</span>
+        <h2 class="step__title" style="color: #fbbf24;">Intermediate: Custom VPC</h2>
+      </div>
+      <p>Create the networking foundation for EKS/ECS — VPC, subnets, Internet Gateway, Route Tables.</p>
+      <div class="code-block">
+        <div class="code-block__bar"><span class="code-block__lang">HCL — network.tf</span><button class="code-block__copy" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="keyword">resource</span> <span class="string">"aws_vpc"</span> <span class="string">"main"</span> {
+  <span class="value">cidr_block</span>           = <span class="string">"10.0.0.0/16"</span>
+  <span class="value">enable_dns_hostnames</span> = <span class="keyword">true</span>
+  <span class="value">tags</span> = { <span class="value">Name</span> = <span class="string">"L2-VPC"</span> }
 }
 
 <span class="keyword">resource</span> <span class="string">"aws_subnet"</span> <span class="string">"public_a"</span> {
-  <span class="property">vpc_id</span>                  = <span class="variable">aws_vpc.main.id</span>
-  <span class="property">cidr_block</span>              = <span class="string">"10.0.1.0/24"</span>
-  <span class="property">map_public_ip_on_launch</span> = <span class="keyword">true</span>
-  <span class="property">availability_zone</span>       = <span class="string">"us-east-1a"</span>
-  <span class="property">tags</span> = { <span class="property">Name</span> = <span class="string">"public-subnet-a"</span> }
+  <span class="value">vpc_id</span>                  = <span class="cmd">aws_vpc.main.id</span>
+  <span class="value">cidr_block</span>              = <span class="string">"10.0.1.0/24"</span>
+  <span class="value">map_public_ip_on_launch</span> = <span class="keyword">true</span>
+  <span class="value">availability_zone</span>       = <span class="string">"us-east-1a"</span>
+  <span class="value">tags</span> = { <span class="value">Name</span> = <span class="string">"public-subnet-a"</span> }
 }
 
 <span class="keyword">resource</span> <span class="string">"aws_subnet"</span> <span class="string">"public_b"</span> {
-  <span class="property">vpc_id</span>                  = <span class="variable">aws_vpc.main.id</span>
-  <span class="property">cidr_block</span>              = <span class="string">"10.0.2.0/24"</span>
-  <span class="property">map_public_ip_on_launch</span> = <span class="keyword">true</span>
-  <span class="property">availability_zone</span>       = <span class="string">"us-east-1b"</span>
-  <span class="property">tags</span> = { <span class="property">Name</span> = <span class="string">"public-subnet-b"</span> }
+  <span class="value">vpc_id</span>                  = <span class="cmd">aws_vpc.main.id</span>
+  <span class="value">cidr_block</span>              = <span class="string">"10.0.2.0/24"</span>
+  <span class="value">map_public_ip_on_launch</span> = <span class="keyword">true</span>
+  <span class="value">availability_zone</span>       = <span class="string">"us-east-1b"</span>
+  <span class="value">tags</span> = { <span class="value">Name</span> = <span class="string">"public-subnet-b"</span> }
 }
 
 <span class="keyword">resource</span> <span class="string">"aws_internet_gateway"</span> <span class="string">"igw"</span> {
-  <span class="property">vpc_id</span> = <span class="variable">aws_vpc.main.id</span>
-  <span class="property">tags</span> = { <span class="property">Name</span> = <span class="string">"L2-IGW"</span> }
+  <span class="value">vpc_id</span> = <span class="cmd">aws_vpc.main.id</span>
+  <span class="value">tags</span> = { <span class="value">Name</span> = <span class="string">"L2-IGW"</span> }
 }
 
 <span class="keyword">resource</span> <span class="string">"aws_route_table"</span> <span class="string">"public_rt"</span> {
-  <span class="property">vpc_id</span> = <span class="variable">aws_vpc.main.id</span>
+  <span class="value">vpc_id</span> = <span class="cmd">aws_vpc.main.id</span>
   <span class="keyword">route</span> {
-    <span class="property">cidr_block</span> = <span class="string">"0.0.0.0/0"</span>
-    <span class="property">gateway_id</span> = <span class="variable">aws_internet_gateway.igw.id</span>
+    <span class="value">cidr_block</span> = <span class="string">"0.0.0.0/0"</span>
+    <span class="value">gateway_id</span> = <span class="cmd">aws_internet_gateway.igw.id</span>
   }
-  <span class="property">tags</span> = { <span class="property">Name</span> = <span class="string">"public-route-table"</span> }
 }
 
-<span class="comment"># Associate subnets with the route table</span>
 <span class="keyword">resource</span> <span class="string">"aws_route_table_association"</span> <span class="string">"a"</span> {
-  <span class="property">subnet_id</span>      = <span class="variable">aws_subnet.public_a.id</span>
-  <span class="property">route_table_id</span> = <span class="variable">aws_route_table.public_rt.id</span>
+  <span class="value">subnet_id</span>      = <span class="cmd">aws_subnet.public_a.id</span>
+  <span class="value">route_table_id</span> = <span class="cmd">aws_route_table.public_rt.id</span>
 }
 
 <span class="keyword">resource</span> <span class="string">"aws_route_table_association"</span> <span class="string">"b"</span> {
-  <span class="property">subnet_id</span>      = <span class="variable">aws_subnet.public_b.id</span>
-  <span class="property">route_table_id</span> = <span class="variable">aws_route_table.public_rt.id</span>
+  <span class="value">subnet_id</span>      = <span class="cmd">aws_subnet.public_b.id</span>
+  <span class="value">route_table_id</span> = <span class="cmd">aws_route_table.public_rt.id</span>
 }</pre>
-          </div>
+      </div>
+    </section>
+
+    <section class="step fade-in" id="proj-level3">
+      <div class="step__header">
+        <span class="step__number" style="background: linear-gradient(135deg, #ef4444, #dc2626);">L3</span>
+        <h2 class="step__title" style="color: #f87171;">Advanced: S3 + CloudFront Module</h2>
+      </div>
+      <p>Create a globally distributed static website using Terraform Modules.</p>
+      <ul>
+        <li>Create a reusable module in <code>/modules/static-site</code>.</li>
+        <li>Provision an S3 bucket for static web hosting.</li>
+        <li>Provision a CloudFront Distribution targeting S3.</li>
+        <li>Configure Origin Access Control (OAC) for private bucket access.</li>
+        <li>Root <code>main.tf</code> calls your module with the domain as a variable.</li>
+      </ul>
+    </section>
+
+
+    <!-- ═══════════════════════════════════════
+         CHEATSHEET
+         ═══════════════════════════════════════ -->
+
+    <section class="step fade-in" id="cheatsheet">
+      <div class="step__header">
+        <span class="step__number" style="background: linear-gradient(135deg, #3b82f6, #2563eb);">📋</span>
+        <h2 class="step__title">Terraform Cheatsheet</h2>
+      </div>
+
+      <div class="sub-step">
+        <div class="sub-step__title">HCL Syntax Quick Reference</div>
+        <table class="cost-table">
+          <tr><th>Concept</th><th>Syntax</th></tr>
+          <tr><td>Provider</td><td><code>provider "aws" { region = "us-east-1" }</code></td></tr>
+          <tr><td>Resource</td><td><code>resource "aws_instance" "name" { ... }</code></td></tr>
+          <tr><td>Variable</td><td><code>variable "name" { type = string }</code></td></tr>
+          <tr><td>Output</td><td><code>output "name" { value = resource.attr }</code></td></tr>
+          <tr><td>Module</td><td><code>module "name" { source = "./path" }</code></td></tr>
+          <tr><td>Data Source</td><td><code>data "aws_ami" "name" { ... }</code></td></tr>
+          <tr><td>Local Value</td><td><code>locals { env = "dev" }</code></td></tr>
+          <tr><td>Use Variable</td><td><code>var.variable_name</code></td></tr>
+          <tr><td>Reference Resource</td><td><code>aws_instance.web.id</code></td></tr>
+          <tr><td>String Interpolation</td><td><code>"prefix-${var.name}-suffix"</code></td></tr>
+          <tr><td>Conditional</td><td><code>condition ? true_val : false_val</code></td></tr>
+          <tr><td>Count</td><td><code>count = 3</code></td></tr>
+          <tr><td>For Each</td><td><code>for_each = var.instances</code></td></tr>
+        </table>
+      </div>
+
+      <div class="sub-step">
+        <div class="sub-step__title">Common AWS Resource Types</div>
+        <table class="cost-table">
+          <tr><th>Resource Type</th><th>Creates</th></tr>
+          <tr><td><code>aws_instance</code></td><td>EC2 Virtual Machine</td></tr>
+          <tr><td><code>aws_security_group</code></td><td>Firewall rules for EC2</td></tr>
+          <tr><td><code>aws_vpc</code></td><td>Virtual Private Cloud</td></tr>
+          <tr><td><code>aws_subnet</code></td><td>Subnet inside a VPC</td></tr>
+          <tr><td><code>aws_internet_gateway</code></td><td>Internet gateway for VPC</td></tr>
+          <tr><td><code>aws_s3_bucket</code></td><td>S3 storage bucket</td></tr>
+          <tr><td><code>aws_iam_role</code></td><td>IAM role for permissions</td></tr>
+          <tr><td><code>aws_eks_cluster</code></td><td>EKS Kubernetes cluster</td></tr>
+          <tr><td><code>aws_db_instance</code></td><td>RDS database instance</td></tr>
+          <tr><td><code>aws_lb</code></td><td>Application Load Balancer</td></tr>
+        </table>
+      </div>
+    </section>
+
+
+    <!-- ═══════════════════════════════════════
+         ALL COMMANDS
+         ═══════════════════════════════════════ -->
+
+    <section class="step fade-in" id="commands">
+      <div class="step__header">
+        <span class="step__number" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);">⌨️</span>
+        <h2 class="step__title">All Terraform Commands</h2>
+      </div>
+
+      <div class="sub-step">
+        <div class="sub-step__title">Core Commands</div>
+        <table class="cost-table">
+          <tr><th style="width:260px">Command</th><th>Description</th></tr>
+          <tr><td><code>terraform init</code></td><td>Initialize project, download providers</td></tr>
+          <tr><td><code>terraform plan</code></td><td>Preview changes without applying</td></tr>
+          <tr><td><code>terraform apply</code></td><td>Create/update infrastructure</td></tr>
+          <tr><td><code>terraform destroy</code></td><td>Delete all managed infrastructure</td></tr>
+          <tr><td><code>terraform validate</code></td><td>Check syntax of .tf files</td></tr>
+          <tr><td><code>terraform fmt</code></td><td>Auto-format .tf files</td></tr>
+          <tr><td><code>terraform output</code></td><td>Show output values</td></tr>
+          <tr><td><code>terraform refresh</code></td><td>Sync state with real infrastructure</td></tr>
+        </table>
+      </div>
+
+      <div class="sub-step">
+        <div class="sub-step__title">State Management</div>
+        <table class="cost-table">
+          <tr><th style="width:260px">Command</th><th>Description</th></tr>
+          <tr><td><code>terraform state list</code></td><td>List all resources in state</td></tr>
+          <tr><td><code>terraform state show &lt;res&gt;</code></td><td>Show details of a resource</td></tr>
+          <tr><td><code>terraform state rm &lt;res&gt;</code></td><td>Remove from state (keeps in AWS)</td></tr>
+          <tr><td><code>terraform state mv</code></td><td>Rename a resource in state</td></tr>
+          <tr><td><code>terraform import &lt;res&gt; &lt;id&gt;</code></td><td>Import existing AWS resource</td></tr>
+        </table>
+      </div>
+
+      <div class="sub-step">
+        <div class="sub-step__title">Useful Flags</div>
+        <table class="cost-table">
+          <tr><th style="width:260px">Flag</th><th>Description</th></tr>
+          <tr><td><code>-auto-approve</code></td><td>Skip the "yes" confirmation</td></tr>
+          <tr><td><code>-out=plan.tfplan</code></td><td>Save plan to file for later apply</td></tr>
+          <tr><td><code>-target=&lt;resource&gt;</code></td><td>Only apply to specific resource</td></tr>
+          <tr><td><code>-var="key=value"</code></td><td>Pass variable value inline</td></tr>
+          <tr><td><code>-reconfigure</code></td><td>Re-init backend, ignore existing</td></tr>
+          <tr><td><code>-upgrade</code></td><td>Upgrade provider versions</td></tr>
+        </table>
+      </div>
+    </section>
+
+
+    <!-- ═══════════════════════════════════════
+         TROUBLESHOOTING
+         ═══════════════════════════════════════ -->
+
+    <section class="step fade-in" id="troubleshooting">
+      <div class="step__header">
+        <span class="step__number" style="background: linear-gradient(135deg, #f97316, #ea580c);">🔧</span>
+        <h2 class="step__title">Troubleshooting Guide</h2>
+      </div>
+
+      <div class="sub-step">
+        <div class="sub-step__title" style="color: #ef4444;">❌ Error: No valid credential sources found</div>
+        <p>Terraform can't find your AWS credentials.</p>
+        <div class="code-block">
+          <div class="code-block__bar"><span class="code-block__lang">Fix</span><button class="code-block__copy" onclick="copyCode(this)">Copy</button></div>
+          <pre><span class="cmd">aws configure</span>
+<span class="comment"># Or export environment variables:</span>
+<span class="cmd">export</span> <span class="value">AWS_ACCESS_KEY_ID</span>=<span class="string">"your-key"</span>
+<span class="cmd">export</span> <span class="value">AWS_SECRET_ACCESS_KEY</span>=<span class="string">"your-secret"</span>
+<span class="cmd">export</span> <span class="value">AWS_REGION</span>=<span class="string">"us-east-1"</span>
+<span class="comment"># Verify:</span>
+<span class="cmd">aws sts get-caller-identity</span></pre>
         </div>
-      </section>
+      </div>
 
-      <section class="step fade-in" id="proj-level3">
-        <div class="step__header">
-          <span class="step__number" style="background: #ef4444;">L3</span>
-          <h2 class="step__title" style="color: #f87171;">Advanced: S3 + CloudFront Static Site Module</h2>
+      <div class="sub-step">
+        <div class="sub-step__title" style="color: #ef4444;">❌ Error: Failed to load plugin / Provider not found</div>
+        <p>Provider plugin hasn't been downloaded.</p>
+        <div class="code-block">
+          <div class="code-block__bar"><span class="code-block__lang">Fix</span><button class="code-block__copy" onclick="copyCode(this)">Copy</button></div>
+          <pre><span class="cmd">terraform init</span>
+<span class="comment"># If still failing, clear cache:</span>
+<span class="cmd">rm</span> -rf .terraform .terraform.lock.hcl
+<span class="cmd">terraform init</span></pre>
         </div>
-        <div class="card">
-          <p>Create a highly available, globally distributed static website using Terraform Modules.</p>
-          <ul style="margin-top: 15px; margin-left: 20px; line-height: 1.6; color: #a1a1aa;">
-            <li>Create a reusable module in a <code>/modules/static-site</code> directory.</li>
-            <li>Provision an S3 bucket configured for static web hosting.</li>
-            <li>Provision an AWS CloudFront Distribution targeting the S3 bucket.</li>
-            <li>Configure Origin Access Control (OAC) so the bucket is private and only accessible via CloudFront.</li>
-            <li>Create a <code>main.tf</code> at the root that calls your module and passes the desired domain name as a variable.</li>
-          </ul>
+      </div>
+
+      <div class="sub-step">
+        <div class="sub-step__title" style="color: #ef4444;">❌ Error: Error acquiring the state lock</div>
+        <p>Someone else is running <code>terraform apply</code>, or a previous run crashed.</p>
+        <div class="code-block">
+          <div class="code-block__bar"><span class="code-block__lang">Fix</span><button class="code-block__copy" onclick="copyCode(this)">Copy</button></div>
+          <pre><span class="comment"># CAUTION: Only if you're SURE nobody else is running apply!</span>
+<span class="cmd">terraform force-unlock</span> <span class="string">LOCK_ID</span>
+<span class="comment"># The LOCK_ID is in the error message</span></pre>
         </div>
-      </section>
+      </div>
 
-      <!-- ═══════════════════════════════════════
-           CHEATSHEET
-           ═══════════════════════════════════════ -->
-      <hr class="section-divider">
-
-      <section class="step fade-in" id="cheatsheet">
-        <div class="step__header">
-          <span class="step__number" style="background: #3b82f6;">📋</span>
-          <h2 class="step__title" style="color: #60a5fa;">Terraform Cheatsheet</h2>
+      <div class="sub-step">
+        <div class="sub-step__title" style="color: #ef4444;">❌ Error: Resource already exists</div>
+        <p>Resource exists in AWS but not in Terraform state.</p>
+        <div class="code-block">
+          <div class="code-block__bar"><span class="code-block__lang">Fix</span><button class="code-block__copy" onclick="copyCode(this)">Copy</button></div>
+          <pre><span class="cmd">terraform import</span> aws_instance.web <span class="string">i-0abc123def456789</span>
+<span class="cmd">terraform plan</span>   <span class="comment"># Verify after importing</span></pre>
         </div>
+      </div>
 
-        <div class="card">
-          <h3 style="color: #4fd1c5; margin-bottom: 12px;">HCL Syntax Quick Reference</h3>
-          <table class="cheat-table">
-            <tr><th>Concept</th><th>Syntax</th></tr>
-            <tr><td>Provider</td><td><code>provider "aws" { region = "us-east-1" }</code></td></tr>
-            <tr><td>Resource</td><td><code>resource "aws_instance" "name" { ... }</code></td></tr>
-            <tr><td>Variable</td><td><code>variable "name" { type = string }</code></td></tr>
-            <tr><td>Output</td><td><code>output "name" { value = resource.attr }</code></td></tr>
-            <tr><td>Module</td><td><code>module "name" { source = "./path" }</code></td></tr>
-            <tr><td>Data Source</td><td><code>data "aws_ami" "name" { ... }</code></td></tr>
-            <tr><td>Local Value</td><td><code>locals { env = "dev" }</code></td></tr>
-            <tr><td>Use Variable</td><td><code>var.variable_name</code></td></tr>
-            <tr><td>Use Local</td><td><code>local.value_name</code></td></tr>
-            <tr><td>Reference Resource</td><td><code>aws_instance.web.id</code></td></tr>
-            <tr><td>String Interpolation</td><td><code>"prefix-${var.name}-suffix"</code></td></tr>
-            <tr><td>Conditional</td><td><code>condition ? true_val : false_val</code></td></tr>
-            <tr><td>Count (create N copies)</td><td><code>count = 3</code></td></tr>
-            <tr><td>For Each (loop over map)</td><td><code>for_each = var.instances</code></td></tr>
-          </table>
+      <div class="sub-step">
+        <div class="sub-step__title" style="color: #ef4444;">❌ Error: Backend config changed</div>
+        <p>You modified the backend block (e.g., changed the S3 bucket).</p>
+        <div class="code-block">
+          <div class="code-block__bar"><span class="code-block__lang">Fix</span><button class="code-block__copy" onclick="copyCode(this)">Copy</button></div>
+          <pre><span class="cmd">terraform init</span> <span class="flag">-reconfigure</span>
+<span class="comment"># Or to migrate state to new backend:</span>
+<span class="cmd">terraform init</span> <span class="flag">-migrate-state</span></pre>
         </div>
+      </div>
 
-        <div class="card">
-          <h3 style="color: #4fd1c5; margin-bottom: 12px;">Common AWS Resource Types</h3>
-          <table class="cheat-table">
-            <tr><th>Resource Type</th><th>Creates</th></tr>
-            <tr><td><code>aws_instance</code></td><td>EC2 Virtual Machine</td></tr>
-            <tr><td><code>aws_security_group</code></td><td>Firewall rules for EC2</td></tr>
-            <tr><td><code>aws_vpc</code></td><td>Virtual Private Cloud (network)</td></tr>
-            <tr><td><code>aws_subnet</code></td><td>Subnet inside a VPC</td></tr>
-            <tr><td><code>aws_internet_gateway</code></td><td>Internet gateway for VPC</td></tr>
-            <tr><td><code>aws_s3_bucket</code></td><td>S3 storage bucket</td></tr>
-            <tr><td><code>aws_iam_role</code></td><td>IAM role for permissions</td></tr>
-            <tr><td><code>aws_eks_cluster</code></td><td>EKS Kubernetes cluster</td></tr>
-            <tr><td><code>aws_db_instance</code></td><td>RDS database instance</td></tr>
-            <tr><td><code>aws_lb</code></td><td>Application Load Balancer</td></tr>
-          </table>
+      <div class="sub-step">
+        <div class="sub-step__title" style="color: #ef4444;">❌ terraform destroy is stuck</div>
+        <p>Some resources (RDS, EKS, NAT Gateways) take 10–20 minutes to delete.</p>
+        <div class="code-block">
+          <div class="code-block__bar"><span class="code-block__lang">Fix</span><button class="code-block__copy" onclick="copyCode(this)">Copy</button></div>
+          <pre><span class="comment"># Target a specific resource</span>
+<span class="cmd">terraform destroy</span> <span class="flag">-target</span>=aws_nat_gateway.main
+<span class="comment"># If Terraform is unresponsive: Ctrl+C, manually delete</span>
+<span class="comment"># in AWS Console, then remove from state:</span>
+<span class="cmd">terraform state rm</span> aws_nat_gateway.main</pre>
         </div>
-      </section>
+      </div>
 
-      <!-- ═══════════════════════════════════════
-           ALL COMMANDS
-           ═══════════════════════════════════════ -->
+      <div class="why-box" style="margin-top: 1.5rem;">
+        <div class="why-box__label">⚠️ Common Gotchas for Beginners</div>
+        <p>• <strong>Forgot <code>terraform init</code></strong> — always run init in a new directory<br>
+        • <strong>Wrong region</strong> — check you're looking at the right region in the Console<br>
+        • <strong>AMI IDs are region-specific</strong> — an AMI from us-east-1 won't work in eu-west-1<br>
+        • <strong>Free Tier</strong> — <code>t2.micro</code> is free for 750 hrs/month. <code>t3.large</code> costs money!<br>
+        • <strong>Forgot <code>terraform destroy</code></strong> — you WILL be charged for running resources<br>
+        • <strong>State in Git</strong> — add <code>*.tfstate</code> and <code>.terraform/</code> to <code>.gitignore</code></p>
+      </div>
+    </section>
 
-      <section class="step fade-in" id="commands">
-        <div class="step__header">
-          <span class="step__number" style="background: #8b5cf6;">⌨️</span>
-          <h2 class="step__title" style="color: #c084fc;">All Terraform Commands</h2>
-        </div>
 
-        <div class="card">
-          <h3 style="color: #4fd1c5; margin-bottom: 12px;">Core Commands</h3>
-          <table class="cheat-table">
-            <tr><th style="width: 280px;">Command</th><th>Description</th></tr>
-            <tr><td><code>terraform init</code></td><td>Initialize project, download providers</td></tr>
-            <tr><td><code>terraform plan</code></td><td>Preview changes without applying</td></tr>
-            <tr><td><code>terraform apply</code></td><td>Create/update infrastructure</td></tr>
-            <tr><td><code>terraform destroy</code></td><td>Delete all managed infrastructure</td></tr>
-            <tr><td><code>terraform validate</code></td><td>Check syntax of .tf files</td></tr>
-            <tr><td><code>terraform fmt</code></td><td>Auto-format .tf files to HCL standard</td></tr>
-            <tr><td><code>terraform output</code></td><td>Show output values</td></tr>
-            <tr><td><code>terraform refresh</code></td><td>Sync state with real infrastructure</td></tr>
-          </table>
-        </div>
-
-        <div class="card">
-          <h3 style="color: #4fd1c5; margin-bottom: 12px;">State Management Commands</h3>
-          <table class="cheat-table">
-            <tr><th style="width: 280px;">Command</th><th>Description</th></tr>
-            <tr><td><code>terraform state list</code></td><td>List all resources in state</td></tr>
-            <tr><td><code>terraform state show &lt;resource&gt;</code></td><td>Show details of a specific resource</td></tr>
-            <tr><td><code>terraform state rm &lt;resource&gt;</code></td><td>Remove a resource from state (without deleting it from AWS)</td></tr>
-            <tr><td><code>terraform state mv &lt;old&gt; &lt;new&gt;</code></td><td>Rename a resource in state</td></tr>
-            <tr><td><code>terraform state pull</code></td><td>Download remote state to stdout</td></tr>
-            <tr><td><code>terraform import &lt;resource&gt; &lt;id&gt;</code></td><td>Import existing AWS resource into Terraform</td></tr>
-          </table>
-        </div>
-
-        <div class="card">
-          <h3 style="color: #4fd1c5; margin-bottom: 12px;">Workspace Commands</h3>
-          <table class="cheat-table">
-            <tr><th style="width: 280px;">Command</th><th>Description</th></tr>
-            <tr><td><code>terraform workspace list</code></td><td>List all workspaces</td></tr>
-            <tr><td><code>terraform workspace new &lt;name&gt;</code></td><td>Create a new workspace</td></tr>
-            <tr><td><code>terraform workspace select &lt;name&gt;</code></td><td>Switch to a workspace</td></tr>
-            <tr><td><code>terraform workspace show</code></td><td>Show current workspace</td></tr>
-            <tr><td><code>terraform workspace delete &lt;name&gt;</code></td><td>Delete a workspace</td></tr>
-          </table>
-        </div>
-
-        <div class="card">
-          <h3 style="color: #4fd1c5; margin-bottom: 12px;">Useful Flags</h3>
-          <table class="cheat-table">
-            <tr><th style="width: 280px;">Flag</th><th>Description</th></tr>
-            <tr><td><code>terraform apply -auto-approve</code></td><td>Skip the "yes" confirmation prompt</td></tr>
-            <tr><td><code>terraform plan -out=plan.tfplan</code></td><td>Save plan to a file for later apply</td></tr>
-            <tr><td><code>terraform apply plan.tfplan</code></td><td>Apply a saved plan file</td></tr>
-            <tr><td><code>terraform apply -target=&lt;resource&gt;</code></td><td>Only apply changes to a specific resource</td></tr>
-            <tr><td><code>terraform apply -var="key=value"</code></td><td>Pass a variable value inline</td></tr>
-            <tr><td><code>terraform init -reconfigure</code></td><td>Re-initialize backend, ignore existing config</td></tr>
-            <tr><td><code>terraform init -upgrade</code></td><td>Upgrade provider versions</td></tr>
-          </table>
-        </div>
-      </section>
-
-      <!-- ═══════════════════════════════════════
-           TROUBLESHOOTING
-           ═══════════════════════════════════════ -->
-
-      <section class="step fade-in" id="troubleshooting">
-        <div class="step__header">
-          <span class="step__number" style="background: #f97316;">🔧</span>
-          <h2 class="step__title" style="color: #fb923c;">Troubleshooting Guide</h2>
-        </div>
-
-        <div class="card">
-          <h3 style="color: #ef4444; margin-bottom: 10px;">❌ Error: No valid credential sources found</h3>
-          <p style="color: #a1a1aa; margin-bottom: 10px;">Terraform cannot find your AWS credentials.</p>
-          <div class="code-block">
-            <div class="code-block__bar"><span>Fix</span><button class="code-block__copy" onclick="copyCode(this)">Copy</button></div>
-            <pre># Option 1: Configure via AWS CLI
-aws configure
-
-# Option 2: Export as environment variables
-export AWS_ACCESS_KEY_ID="your-key"
-export AWS_SECRET_ACCESS_KEY="your-secret"
-export AWS_REGION="us-east-1"
-
-# Verify it works
-aws sts get-caller-identity</pre>
-          </div>
-        </div>
-
-        <div class="card">
-          <h3 style="color: #ef4444; margin-bottom: 10px;">❌ Error: Failed to load plugin / Provider not found</h3>
-          <p style="color: #a1a1aa; margin-bottom: 10px;">The required provider plugin hasn't been downloaded.</p>
-          <div class="code-block">
-            <div class="code-block__bar"><span>Fix</span><button class="code-block__copy" onclick="copyCode(this)">Copy</button></div>
-            <pre># Re-initialize and download providers
-terraform init
-
-# If still failing, clear the cache and retry
-rm -rf .terraform .terraform.lock.hcl
-terraform init</pre>
-          </div>
-        </div>
-
-        <div class="card">
-          <h3 style="color: #ef4444; margin-bottom: 10px;">❌ Error: Error acquiring the state lock</h3>
-          <p style="color: #a1a1aa; margin-bottom: 10px;">Someone else is running <code>terraform apply</code>, or a previous run crashed and left a stale lock.</p>
-          <div class="code-block">
-            <div class="code-block__bar"><span>Fix</span><button class="code-block__copy" onclick="copyCode(this)">Copy</button></div>
-            <pre># CAUTION: Only do this if you are SURE nobody else is running apply!
-terraform force-unlock LOCK_ID
-
-# The LOCK_ID is shown in the error message.
-# Example: terraform force-unlock a1b2c3d4-e5f6-7890-abcd-ef1234567890</pre>
-          </div>
-        </div>
-
-        <div class="card">
-          <h3 style="color: #ef4444; margin-bottom: 10px;">❌ Error: Resource already exists</h3>
-          <p style="color: #a1a1aa; margin-bottom: 10px;">The resource exists in AWS but Terraform doesn't know about it (it's not in the state file).</p>
-          <div class="code-block">
-            <div class="code-block__bar"><span>Fix</span><button class="code-block__copy" onclick="copyCode(this)">Copy</button></div>
-            <pre># Import the existing resource into Terraform state
-terraform import aws_instance.web i-0abc123def456789
-
-# After importing, run plan to verify
-terraform plan</pre>
-          </div>
-        </div>
-
-        <div class="card">
-          <h3 style="color: #ef4444; margin-bottom: 10px;">❌ Error: Cycle detected in resource dependencies</h3>
-          <p style="color: #a1a1aa; margin-bottom: 10px;">Resource A depends on B, and B depends on A — creating an infinite loop.</p>
-          <div class="code-block">
-            <div class="code-block__bar"><span>Fix</span><button class="code-block__copy" onclick="copyCode(this)">Copy</button></div>
-            <pre># Visualize the dependency graph to find the cycle
-terraform graph | dot -Tpng > graph.png
-
-# Then refactor your code to break the circular dependency.
-# Common fix: Use "depends_on" only where truly needed,
-# and avoid referencing resource attributes in a loop.</pre>
-          </div>
-        </div>
-
-        <div class="card">
-          <h3 style="color: #ef4444; margin-bottom: 10px;">❌ Error: Backend config changed — reinitialize</h3>
-          <p style="color: #a1a1aa; margin-bottom: 10px;">You modified the backend block (e.g., changed the S3 bucket name).</p>
-          <div class="code-block">
-            <div class="code-block__bar"><span>Fix</span><button class="code-block__copy" onclick="copyCode(this)">Copy</button></div>
-            <pre># Re-initialize with the -reconfigure flag
-terraform init -reconfigure
-
-# Or if you want to migrate the old state to the new backend:
-terraform init -migrate-state</pre>
-          </div>
-        </div>
-
-        <div class="card">
-          <h3 style="color: #ef4444; margin-bottom: 10px;">❌ terraform destroy is stuck / taking forever</h3>
-          <p style="color: #a1a1aa; margin-bottom: 10px;">Some resources (like RDS, EKS, or NAT Gateways) take 10–20 minutes to delete. If it's truly stuck:</p>
-          <div class="code-block">
-            <div class="code-block__bar"><span>Fix</span><button class="code-block__copy" onclick="copyCode(this)">Copy</button></div>
-            <pre># Target a specific resource to destroy first
-terraform destroy -target=aws_nat_gateway.main
-
-# If Terraform is unresponsive, Ctrl+C to cancel, then
-# manually delete the resource in the AWS Console and
-# remove it from state:
-terraform state rm aws_nat_gateway.main</pre>
-          </div>
-        </div>
-
-        <div class="card">
-          <h3 style="color: #eab308; margin-bottom: 10px;">⚠️ Common Gotchas for Beginners</h3>
-          <ul style="margin-left: 20px; line-height: 2; color: #a1a1aa;">
-            <li><strong style="color: #e2e8f0;">Forgot to run <code>terraform init</code></strong> — always run init in a new directory or after adding a provider.</li>
-            <li><strong style="color: #e2e8f0;">Wrong region</strong> — if you can't find your resources in the Console, check you're looking in the right region.</li>
-            <li><strong style="color: #e2e8f0;">AMI IDs are region-specific</strong> — an AMI that works in us-east-1 won't work in eu-west-1.</li>
-            <li><strong style="color: #e2e8f0;">Free Tier limits</strong> — <code>t2.micro</code> is free for 750 hrs/month. Using <code>t3.large</code> will cost money!</li>
-            <li><strong style="color: #e2e8f0;">Forgot <code>terraform destroy</code></strong> — you WILL be charged for running resources. Always destroy after practice.</li>
-            <li><strong style="color: #e2e8f0;">State file in Git</strong> — add <code>*.tfstate</code> and <code>.terraform/</code> to your <code>.gitignore</code>.</li>
-          </ul>
-        </div>
-      </section>
-
+    <!-- Footer -->
+    <div class="footer">
+      Built for the 90-Day DevOps Challenge · Terraform Module
     </div>
+
   </main>
 
+  <!-- Back to Top -->
+  <button class="back-top" id="backTop" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+
   <script>
-    // Smooth scrolling & active state for sidebar links
-    document.querySelectorAll('.sidebar__link').forEach(link => {
-      link.addEventListener('click', function(e) {
-        document.querySelectorAll('.sidebar__link').forEach(l => l.classList.remove('active'));
-        this.classList.add('active');
+    /* ── Progress bar ─── */
+    const bar = document.getElementById('progressBar');
+    window.addEventListener('scroll', () => {
+      const h = document.documentElement;
+      const pct = (h.scrollTop / (h.scrollHeight - h.clientHeight)) * 100;
+      bar.style.width = pct + '%';
+      document.getElementById('backTop').classList.toggle('visible', h.scrollTop > 600);
+    });
+
+    /* ── Fade-in on scroll ─── */
+    const io = new IntersectionObserver(entries => {
+      entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+    }, { threshold: 0.08 });
+    document.querySelectorAll('.fade-in').forEach(el => io.observe(el));
+
+    /* ── Active sidebar link ─── */
+    const sections = document.querySelectorAll('.step, .hero, .arch-diagram');
+    const links = document.querySelectorAll('.sidebar__link');
+
+    // Prevent iframe hash changes from bubbling up to React router
+    links.forEach(link => {
+      link.addEventListener('click', e => {
+        e.preventDefault();
+        const targetId = link.getAttribute('href').substring(1);
+        const targetEl = document.getElementById(targetId);
+        if (targetEl) {
+          targetEl.scrollIntoView({ behavior: 'smooth' });
+        }
       });
     });
 
+    const observerOptions = { root: null, rootMargin: '-30% 0px -60% 0px', threshold: 0 };
+    const sectionObserver = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const id = entry.target.id;
+          links.forEach(link => {
+            link.classList.toggle('active', link.getAttribute('href') === '#' + id);
+          });
+        }
+      });
+    }, observerOptions);
+    sections.forEach(sec => { if (sec.id) sectionObserver.observe(sec); });
+
+    /* ── Copy code ─── */
     function copyCode(btn) {
-      const codeBlock = btn.closest('.code-block');
-      const pre = codeBlock.querySelector('pre');
-      const textToCopy = pre.innerText;
-      
-      navigator.clipboard.writeText(textToCopy).then(() => {
-        const originalText = btn.innerText;
-        btn.innerText = 'Copied!';
-        btn.style.color = '#4fd1c5';
-        setTimeout(() => {
-          btn.innerText = originalText;
-          btn.style.color = '#8b949e';
-        }, 2000);
-      }).catch(err => {
-        console.error('Failed to copy: ', err);
+      const pre = btn.closest('.code-block').querySelector('pre');
+      navigator.clipboard.writeText(pre.innerText).then(() => {
+        btn.textContent = 'Copied!';
+        btn.style.color = '#10b981';
+        setTimeout(() => { btn.textContent = 'Copy'; btn.style.color = ''; }, 2000);
       });
     }
   </script>
